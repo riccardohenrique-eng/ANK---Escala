@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Escala NoKilo">
+<meta name="theme-color" content="#742984">
+<title>Escala — Açaí NoKilo</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --brand:#742984;--brand-d:#5e2070;--brand-light:#f3e8f9;--brand-mid:#c47fd8;
+  --accent:#F68A28;--accent-light:#fff4e8;--accent-d:#d9721a;
+  --white:#ffffff;--bg:#f8f6fb;--border:#e8e0f0;
+  --text:#1a1a2e;--muted:#7a6b8a;--subtle:#b8a8c8;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:13px}
+.app{display:flex;height:100vh;height:100dvh}
+
+/* ── SIDEBAR desktop ── */
+.sidebar{width:210px;min-width:210px;background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;transition:transform .25s}
+.logo-area{padding:18px 16px 14px;border-bottom:1px solid var(--border)}
+.logo-name{font-size:14px;font-weight:700;color:var(--brand)}
+.logo-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.logo-tag{display:inline-block;background:var(--accent);color:#fff;font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;margin-top:5px;letter-spacing:.4px}
+.nav-grp{padding:12px 8px 2px;font-size:10px;font-weight:700;color:var(--subtle);letter-spacing:.7px;text-transform:uppercase}
+.nav-it{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:7px;margin:1px 6px;cursor:pointer;font-size:12px;color:var(--muted);transition:background .12s,color .12s;-webkit-tap-highlight-color:transparent}
+.nav-it:hover,.nav-it:active{background:var(--brand-light);color:var(--brand)}
+.nav-it.on{background:var(--brand-light);color:var(--brand);font-weight:600}
+.nav-it i{font-size:15px;min-width:17px}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0 16px;height:54px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.tb-title{font-size:15px;font-weight:700;color:var(--brand)}
+.tb-sub{font-size:10px;color:var(--muted);margin-top:1px}
+.content{flex:1;overflow-y:auto;overflow-x:hidden;padding:16px;-webkit-overflow-scrolling:touch}
+.view{display:none}.view.on{display:block}
+
+/* ── BOTTOM NAV mobile ── */
+.bottom-nav{display:none;background:var(--white);border-top:1px solid var(--border);padding:6px 0 max(6px,env(safe-area-inset-bottom));flex-shrink:0}
+.bn-items{display:flex;justify-content:space-around}
+.bn-it{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 10px;border-radius:8px;cursor:pointer;font-size:9px;font-weight:600;color:var(--muted);min-width:52px;-webkit-tap-highlight-color:transparent}
+.bn-it i{font-size:20px}
+.bn-it.on{color:var(--brand)}
+.bn-it.on i{color:var(--brand)}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .12s;-webkit-tap-highlight-color:transparent}
+.btn-p{background:var(--brand);color:#fff}.btn-p:active{background:var(--brand-d)}
+.btn-o{background:var(--white);color:var(--brand);border:1.5px solid var(--brand)}.btn-o:active{background:var(--brand-light)}
+.btn-g{background:#f0f0f0;color:#555;border:1px solid #ddd}.btn-g:active{background:#e5e5e5}
+
+/* ── PERIOD TABS ── */
+.ptabs{display:flex;gap:0;background:var(--bg);border-radius:9px;padding:3px;margin-bottom:14px;width:100%;overflow-x:auto}
+.ptab{padding:6px 13px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;color:var(--muted);transition:all .12s;white-space:nowrap;-webkit-tap-highlight-color:transparent}
+.ptab.on{background:var(--brand);color:#fff}
+
+/* ── SCHEDULE GRID ── */
+.sgwrap{border-radius:10px;overflow:hidden;border:1px solid var(--border);width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+table.sgt{min-width:100%;border-collapse:collapse;table-layout:fixed}
+table.sgt th,table.sgt td{padding:0;margin:0;border:none}
+.sgt-head{background:var(--brand)}
+.th-name{width:110px;min-width:110px;padding:9px 8px;text-align:left;font-size:10px;font-weight:700;color:#fff;letter-spacing:.3px;border-right:1px solid rgba(255,255,255,.15)}
+.th-day{min-width:72px;padding:7px 2px;text-align:center;font-size:10px;font-weight:700;color:#fff;border-right:1px solid rgba(255,255,255,.15)}
+.th-day:last-child{border-right:none}
+.th-day-num{font-size:13px;font-weight:700;color:#fff;line-height:1.1}
+.th-day-lbl{font-size:9px;color:rgba(255,255,255,.8);text-transform:uppercase;letter-spacing:.4px}
+.td-name{padding:7px 8px;font-size:10px;font-weight:600;color:var(--brand);border-right:1px solid var(--border);background:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:110px;max-width:110px}
+.td-shift{padding:5px 3px;text-align:center;border-right:1px solid var(--border);vertical-align:middle;min-width:72px}
+.td-shift:last-child{border-right:none}
+.sgt tr:nth-child(even) .td-name{background:#faf7fd}
+.sgt tr:nth-child(even) .td-shift{background:#faf7fd}
+.sgt td{border-bottom:1px solid var(--border)}
+.sgt tr:last-child .td-name,.sgt tr:last-child .td-shift{border-bottom:none}
+
+/* ── PILLS ── */
+.spill{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 2px;border-radius:5px;font-size:9px;font-weight:700;line-height:1.25;text-align:center;width:100%;gap:1px}
+.spill-time{font-size:8px;font-weight:600;line-height:1.2;white-space:nowrap}
+.spill-type{font-size:10px;font-weight:800;letter-spacing:.3px}
+.sp-ab{background:#e8f5e9;color:#1b5e20}
+.sp-fe{background:#fde8e8;color:#b71c1c}
+.sp-in{background:#fff8e1;color:#bf360c}
+.sp-fo{background:#f5f5f5;color:#757575}
+.sp-di{background:#e3f0ff;color:#0d47a1}
+.sp-fa{background:#fce4ec;color:#880e4f}
+.sp-at{background:#fff3e0;color:#e65100}
+.sp-edit{border:1.5px dashed var(--brand-mid);background:var(--brand-light);color:var(--brand);cursor:pointer}
+
+/* ── CARDS ── */
+.stats-row{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:16px}
+.scard{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:11px 13px}
+.scard-v{font-size:22px;font-weight:700;color:var(--brand)}
+.scard-l{font-size:10px;color:var(--muted);margin-top:2px}
+.scard.ac .scard-v{color:var(--accent)}
+.sec-lbl{font-size:10px;font-weight:700;color:var(--subtle);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px}
+
+/* ── DAY VIEW ── */
+.dayv-hdr{background:var(--brand);border-radius:10px;padding:14px 16px;margin-bottom:14px;color:#fff;display:flex;justify-content:space-between;align-items:center}
+.dayv-date{font-size:18px;font-weight:700;color:#fff}
+.dayv-sub{font-size:10px;color:rgba(255,255,255,.75);margin-top:2px}
+.dayv-cnt{font-size:24px;font-weight:700;color:#fff}
+.dayv-cnt-l{font-size:10px;color:rgba(255,255,255,.7)}
+.dsel{padding:8px 11px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;background:var(--white);color:var(--text);width:100%;margin-bottom:14px}
+
+/* ── COLLAB ── */
+.collab-sel{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}
+.cbtn{display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:25px;border:2px solid var(--border);cursor:pointer;font-size:11px;font-weight:600;color:var(--muted);background:var(--white);-webkit-tap-highlight-color:transparent}
+.cbtn.on{border-color:var(--brand);background:var(--brand-light);color:var(--brand)}
+
+/* ── CALENDAR ── */
+.cal-dow{display:grid;grid-template-columns:repeat(7,1fr);background:var(--brand);border-radius:10px 10px 0 0}
+.cal-dow div{padding:7px 0;text-align:center;font-size:9px;font-weight:700;color:#fff}
+.cal-cells{display:grid;grid-template-columns:repeat(7,1fr);border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;overflow:hidden}
+.cal-cell{min-height:58px;padding:5px;border-right:1px solid var(--border);border-bottom:1px solid var(--border)}
+.cal-cell:nth-child(7n){border-right:none}
+.cal-num{font-size:10px;font-weight:700;color:var(--text);margin-bottom:3px}
+.cal-ev{padding:2px 4px;border-radius:3px;font-size:8px;font-weight:700;margin-bottom:1px;line-height:1.4}
+.cal-empty{background:#fbfafc}
+
+/* ── EDITOR ── */
+.editor-wrap{background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px}
+.editor-head{background:var(--brand);padding:13px 16px;display:flex;align-items:center;justify-content:space-between}
+.editor-head-t{font-size:13px;font-weight:700;color:#fff}
+.editor-head-s{font-size:10px;color:rgba(255,255,255,.75);margin-top:2px}
+.editor-body{padding:14px 16px}
+.cmd-area{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;min-height:80px;resize:vertical;font-family:inherit;color:var(--text);-webkit-appearance:none}
+.cmd-area:focus{outline:none;border-color:var(--brand)}
+.cmd-examples{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:11px}
+.cmd-ex{padding:5px 10px;background:var(--brand-light);border-radius:20px;font-size:11px;color:var(--brand);font-weight:600;cursor:pointer;border:1px solid rgba(116,41,132,.2);-webkit-tap-highlight-color:transparent}
+.edit-log{margin-top:13px;background:var(--bg);border-radius:8px;padding:11px}
+.edit-log-title{font-size:10px;font-weight:700;color:var(--muted);margin-bottom:7px;text-transform:uppercase;letter-spacing:.5px}
+.edit-log-item{display:flex;align-items:flex-start;gap:7px;padding:5px 0;border-bottom:1px solid var(--border);font-size:11px}
+.edit-log-item:last-child{border-bottom:none}
+.log-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);margin-top:3px;flex-shrink:0}
+.log-time{color:var(--muted);font-size:9px;min-width:38px}
+.log-msg{color:var(--text);line-height:1.4}
+.edit-modal{background:rgba(116,41,132,.08);border-radius:10px;padding:14px;margin-top:12px}
+.em-grid{display:grid;grid-template-columns:1fr;gap:9px}
+.em-label{font-size:10px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px}
+.em-select{padding:9px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:14px;background:var(--white);color:var(--text);width:100%;-webkit-appearance:none}
+.em-select:focus{outline:none;border-color:var(--brand)}
+.av{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;font-weight:700;color:#fff;flex-shrink:0}
+
+/* ── TEAM ── */
+.team-card{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:13px}
+
+/* ── TIMELINE ── */
+.tl-grid{background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.tl-head{display:grid;grid-template-columns:90px 1fr;background:var(--brand)}
+.tl-row{display:grid;grid-template-columns:90px 1fr;border-bottom:1px solid var(--border)}
+.tl-row:last-child{border-bottom:none}
+
+/* ── LEGEND CHIPS ── */
+.leg{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:13px}
+.leg span{display:flex;align-items:center;gap:4px;padding:3px 9px;border-radius:6px;font-size:10px;font-weight:700}
+
+/* ── RESPONSIVE: mobile ── */
+@media(max-width:640px){
+  .sidebar{display:none}
+  .bottom-nav{display:block}
+  .stats-row{grid-template-columns:repeat(2,1fr)}
+  .content{padding:12px 12px 8px}
+  .topbar{padding:0 12px;height:50px}
+  .sgwrap{border-radius:8px}
+}
+@media(min-width:641px){
+  .stats-row{grid-template-columns:repeat(4,1fr)}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- SIDEBAR (Mac/iPad) -->
+<div class="sidebar">
+  <div class="logo-area">
+    <div class="logo-name">Açaí NoKilo</div>
+    <div class="logo-sub">Cruz das Almas — BA</div>
+    <div class="logo-tag">ESCALA 2026</div>
+  </div>
+  <div class="nav-grp">Visualizações</div>
+  <div class="nav-it on" onclick="nav('overview')" id="nv-overview"><i class="ti ti-layout-dashboard"></i>Visão geral</div>
+  <div class="nav-it" onclick="nav('schedule')" id="nv-schedule"><i class="ti ti-calendar-week"></i>Escala do período</div>
+  <div class="nav-it" onclick="nav('day')" id="nv-day"><i class="ti ti-sun"></i>Visualizar o dia</div>
+  <div class="nav-it" onclick="nav('collab')" id="nv-collab"><i class="ti ti-user-circle"></i>Por colaborador</div>
+  <div class="nav-it" onclick="nav('timeline')" id="nv-timeline"><i class="ti ti-timeline"></i>Linha do tempo</div>
+  <div class="nav-grp">Gestão</div>
+  <div class="nav-it" onclick="nav('editor')" id="nv-editor"><i class="ti ti-edit"></i>Editar escala</div>
+  <div class="nav-it" onclick="nav('team')" id="nv-team"><i class="ti ti-users"></i>Equipe</div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div class="tb-title" id="pg-title">Visão Geral</div>
+      <div class="tb-sub">08/06/2026 – 21/06/2026</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:7px">
+      <span style="font-size:10px;color:var(--accent);padding:4px 10px;background:var(--accent-light);border-radius:7px;font-weight:600">Jun/2026</span>
+      <button class="btn btn-p" onclick="nav('editor')" style="padding:5px 11px;font-size:11px"><i class="ti ti-edit"></i>Editar</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- OVERVIEW -->
+    <div class="view on" id="vw-overview">
+      <div class="stats-row">
+        <div class="scard"><div class="scard-v">6</div><div class="scard-l">Colaboradores CLT</div></div>
+        <div class="scard ac"><div class="scard-v">2</div><div class="scard-l">Diaristas ativas</div></div>
+        <div class="scard"><div class="scard-v">14</div><div class="scard-l">Dias no período</div></div>
+        <div class="scard"><div class="scard-v">7d</div><div class="scard-l">Funcionamento/sem.</div></div>
+      </div>
+      <div class="sec-lbl">Escala — 08/06 a 14/06</div>
+      <div class="sgwrap" style="margin-bottom:16px"><div id="ov-grid"></div></div>
+      <div class="sec-lbl">Resumo semana 1</div>
+      <div id="ov-summary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px"></div>
+      <div class="sec-lbl">Legenda</div>
+      <div class="leg">
+        <span style="background:#e8f5e9;color:#1b5e20">ABE – Abertura</span>
+        <span style="background:#fde8e8;color:#b71c1c">FEC – Fechamento</span>
+        <span style="background:#fff8e1;color:#bf360c">INT – Intermediário</span>
+        <span style="background:#e3f0ff;color:#0d47a1">DIA – Diarista</span>
+        <span style="background:#f5f5f5;color:#757575">FOL – Folga</span>
+        <span style="background:#fce4ec;color:#880e4f">FÉR – Férias</span>
+      </div>
+    </div>
+
+    <!-- SCHEDULE -->
+    <div class="view" id="vw-schedule">
+      <div class="ptabs" id="ptabs-bar">
+        <div class="ptab on" onclick="setPd('w1',this)">Semana 1</div>
+        <div class="ptab" onclick="setPd('w2',this)">Semana 2</div>
+        <div class="ptab" onclick="setPd('ft',this)">15 dias</div>
+        <div class="ptab" onclick="setPd('mo',this)">Mês</div>
+      </div>
+      <div class="leg">
+        <span style="background:#e8f5e9;color:#1b5e20">ABE</span>
+        <span style="background:#fde8e8;color:#b71c1c">FEC</span>
+        <span style="background:#fff8e1;color:#bf360c">INT</span>
+        <span style="background:#e3f0ff;color:#0d47a1">DIA</span>
+        <span style="background:#f5f5f5;color:#757575">FOL</span>
+        <span style="background:#fce4ec;color:#880e4f">FÉR</span>
+      </div>
+      <div class="sgwrap"><div id="sc-grid"></div></div>
+    </div>
+
+    <!-- DAY -->
+    <div class="view" id="vw-day">
+      <select class="dsel" id="day-sel" onchange="renderDay()">
+        <option value="0">Segunda — 08/06</option><option value="1">Terça — 09/06</option>
+        <option value="2">Quarta — 10/06</option><option value="3">Quinta — 11/06</option>
+        <option value="4">Sexta — 12/06</option><option value="5">Sábado — 13/06</option>
+        <option value="6">Domingo — 14/06</option><option value="7">Segunda — 15/06</option>
+        <option value="8">Terça — 16/06</option><option value="9">Quarta — 17/06</option>
+        <option value="10">Quinta — 18/06</option><option value="11">Sexta — 19/06</option>
+        <option value="12">Sábado — 20/06</option><option value="13">Domingo — 21/06</option>
+      </select>
+      <div id="day-content"></div>
+    </div>
+
+    <!-- COLLAB -->
+    <div class="view" id="vw-collab">
+      <div class="collab-sel" id="collab-btns"></div>
+      <div id="collab-cal"></div>
+    </div>
+
+    <!-- TIMELINE -->
+    <div class="view" id="vw-timeline">
+      <div class="sec-lbl">Linha do tempo — 08/06 a 21/06</div>
+      <div id="tl-cont"></div>
+    </div>
+
+    <!-- EDITOR -->
+    <div class="view" id="vw-editor">
+      <div class="editor-wrap">
+        <div class="editor-head">
+          <div>
+            <div class="editor-head-t"><i class="ti ti-edit"></i> Editor de escala</div>
+            <div class="editor-head-s">Comando natural ou toque em qualquer turno</div>
+          </div>
+          <button class="btn" style="background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.35);font-size:10px;padding:5px 10px" onclick="clearLog()"><i class="ti ti-trash"></i></button>
+        </div>
+        <div class="editor-body">
+          <div class="sec-lbl" style="margin-bottom:7px">Exemplos rápidos</div>
+          <div class="cmd-examples">
+            <div class="cmd-ex" onclick="setCmd('No dia 08/06, a Maria não veio. Marque como falta.')">Maria faltou 08/06</div>
+            <div class="cmd-ex" onclick="setCmd('No dia 12/06, acionar a Marília como diarista.')">Acionar diarista 12/06</div>
+            <div class="cmd-ex" onclick="setCmd('Trocar o turno da Alana no dia 10/06 para fechamento.')">Trocar turno Alana</div>
+            <div class="cmd-ex" onclick="setCmd('A Marta entrou de férias a partir do dia 15/06.')">Férias Marta 15/06</div>
+            <div class="cmd-ex" onclick="setCmd('Registrar atestado para a Joeli no dia 11/06.')">Atestado Joeli</div>
+          </div>
+          <textarea class="cmd-area" id="cmd-input" placeholder="Ex: No dia 12/06, acionar a Marília como diarista.&#10;Ex: Trocar turno da Alana no dia 10/06 para fechamento."></textarea>
+          <div style="display:flex;gap:7px;margin-top:9px;flex-wrap:wrap">
+            <button class="btn btn-p" onclick="processCmd()"><i class="ti ti-wand"></i>Aplicar</button>
+            <button class="btn btn-g" onclick="resetAll()"><i class="ti ti-refresh"></i>Restaurar</button>
+          </div>
+          <div id="edit-modal-area"></div>
+          <div class="edit-log" id="edit-log" style="display:none">
+            <div class="edit-log-title"><i class="ti ti-history"></i> Histórico</div>
+            <div id="edit-log-items"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sec-lbl">Grade editável — toque para alterar</div>
+      <div class="sgwrap"><div id="ed-grid"></div></div>
+    </div>
+
+    <!-- TEAM -->
+    <div class="view" id="vw-team">
+      <div class="sec-lbl">Colaboradores CLT</div>
+      <div id="team-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px"></div>
+      <div class="sec-lbl">Diaristas</div>
+      <div id="diar-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
+    </div>
+
+  </div><!-- /content -->
+
+  <!-- BOTTOM NAV (iPhone) -->
+  <div class="bottom-nav">
+    <div class="bn-items">
+      <div class="bn-it on" onclick="nav('overview')" id="bn-overview"><i class="ti ti-layout-dashboard"></i>Geral</div>
+      <div class="bn-it" onclick="nav('schedule')" id="bn-schedule"><i class="ti ti-calendar-week"></i>Escala</div>
+      <div class="bn-it" onclick="nav('day')" id="bn-day"><i class="ti ti-sun"></i>Dia</div>
+      <div class="bn-it" onclick="nav('collab')" id="bn-collab"><i class="ti ti-user-circle"></i>Pessoa</div>
+      <div class="bn-it" onclick="nav('editor')" id="bn-editor"><i class="ti ti-edit"></i>Editar</div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+const TEAM=[
+  {n:'Maria',    i:'MA',c:'#742984'},
+  {n:'Marta',    i:'MT',c:'#a040c0'},
+  {n:'Maria José',i:'MJ',c:'#F68A28'},
+  {n:'Joeli',    i:'JO',c:'#c62828'},
+  {n:'Alana',    i:'AL',c:'#1565c0'},
+  {n:'Duda',     i:'DU',c:'#2e7d32'},
+];
+const DIAR=[{n:'Marília',i:'MA',c:'#F68A28'},{n:'Rebeca',i:'RE',c:'#742984'}];
+const DAYS=[
+  {l:'Segunda',s:'SEG',d:'08/06'},{l:'Terça',s:'TER',d:'09/06'},{l:'Quarta',s:'QUA',d:'10/06'},
+  {l:'Quinta',s:'QUI',d:'11/06'},{l:'Sexta',s:'SEX',d:'12/06'},{l:'Sábado',s:'SÁB',d:'13/06'},
+  {l:'Domingo',s:'DOM',d:'14/06'},{l:'Segunda',s:'SEG',d:'15/06'},{l:'Terça',s:'TER',d:'16/06'},
+  {l:'Quarta',s:'QUA',d:'17/06'},{l:'Quinta',s:'QUI',d:'18/06'},{l:'Sexta',s:'SEX',d:'19/06'},
+  {l:'Sábado',s:'SÁB',d:'20/06'},{l:'Domingo',s:'DOM',d:'21/06'},
+];
+const BASE=[
+  ['09:30–16:30 (abertura)','09:30–16:30 (abertura)','16h–22h (fechamento)','Folga','Folga','16h–22h (fechamento)','14h–20h (Diarista)'],
+  ['16h–22h (fechamento)','Folga','Folga','10:30–17:30 (abertura)','16h–22h (fechamento)','10:30–17:30 (abertura)',''],
+  ['Folga','16h–22h (fechamento)','09:30–16:30 (abertura)','16h–22h (fechamento)','09:30–16:30 (abertura)','Folga',''],
+  ['Folga','10:30–17:30 (abertura)','16h–22h (fechamento)','10:30–17:30 (abertura)','Folga','16h–22h (fechamento)',''],
+  ['14h–20h (intermediário)','16h–22h (fechamento)','Folga','10:30–17:30 (abertura)','10:30–17:30 (abertura)','16h–22h (fechamento)',''],
+  ['09:30–16:00 (abertura)','Folga','09:30–16:00 (abertura)','16h–22h (fechamento)','16h–22h (fechamento)','15h–21h (intermediário)',''],
+  ['16h–22h (fechamento)','15h–21h (intermediário)','11:30–17:30 (abertura)','Folga','11:30–17:30 (abertura)','Folga','16:30–22h (Diarista)'],
+  ['Folga','Férias','09:30–16:00 (abertura)','16h–22h (fechamento)','09:30–16:30 (abertura)','16h–22h (fechamento)',''],
+  ['16h–22h (fechamento)','Férias','16h–22h (fechamento)','10:30–17:30 (abertura)','Folga','10:30–17:30 (abertura)',''],
+  ['09:30–16:00 (abertura)','Férias','Folga','Folga','16h–22h (fechamento)','16h–22h (fechamento)','09:30–15:30 (Diarista)'],
+  ['16h–22h (fechamento)','Férias','16h–22h (fechamento)','10:30–17:30 (abertura)','10:30–17:30 (abertura)','Folga',''],
+  ['16h–22h (fechamento)','Férias','Folga','10:30–17:30 (abertura)','16h–22h (fechamento)','Folga','10:30–16:30 (Diarista)'],
+  ['Folga','Férias','09:30–16:00 (abertura)','Folga','09:30–16:00 (abertura)','16h–22h (fechamento)','15h–21h (Diarista)'],
+  ['11:30–17:30 (abertura)','Férias','11:30–17:30 (abertura)','16h–22h (fechamento)','Folga','15h–21h (intermediário)','16:30–22h (Diarista)'],
+];
+let ESCALA=BASE.map(r=>[...r]);
+const OPTS=['09:30–16:30 (abertura)','10:30–17:30 (abertura)','11:30–17:30 (abertura)','09:30–16:00 (abertura)','14h–20h (intermediário)','13h–19h (intermediário)','15h–21h (intermediário)','16h–22h (fechamento)','16:30–22h (fechamento)','Folga','Férias','Atestado','Falta'];
+const OPTS_DI=['09:30–15:30 (Diarista)','10:30–16:30 (Diarista)','14h–20h (Diarista)','15h–21h (Diarista)','16:30–22h (Diarista)','11:30–17:30 (Diarista)','Não escalado'];
+const editLog=[];
+const ABBR={ab:'ABE',fe:'FEC',in:'INT',fo:'FOL',di:'DIA',fa:'FÉR',at:'ATE',vz:'—'};
+const CLS={ab:'sp-ab',fe:'sp-fe',in:'sp-in',fo:'sp-fo',di:'sp-di',fa:'sp-fa',at:'sp-at'};
+
+function gst(s){
+  if(!s||s==='')return'vz';
+  const l=s.toLowerCase();
+  if(l.includes('abertura'))return'ab';
+  if(l.includes('fechamento'))return'fe';
+  if(l.includes('intermediário'))return'in';
+  if(l.includes('folga'))return'fo';
+  if(l.includes('diarista'))return'di';
+  if(l.includes('férias'))return'fa';
+  if(l.includes('falta')||l.includes('atestado'))return'at';
+  return'fo';
+}
+function xt(s){
+  if(!s)return'';
+  const m=s.match(/(\d{1,2}[h:]\d{0,2}[\w]*\s*[–-]\s*\d{1,2}[h:]\d{0,2}[\w]*)/);
+  return m?m[1].replace(/\s/g,''):'';
+}
+function spill(s,editable,ri,ci){
+  const t=gst(s);const abbr=ABBR[t]||'—';const time=xt(s);const cls=CLS[t]||'sp-fo';
+  const editCls=editable?' sp-edit':'';
+  const oc=editable?` onclick="openCellEdit(${ri},${ci})"` :'';
+  if(t==='vz'){
+    if(editable)return`<span class="spill sp-edit"${oc} style="font-size:13px;padding:5px 2px">+</span>`;
+    return`<span style="color:var(--subtle);font-size:10px;display:block;text-align:center">—</span>`;
+  }
+  if(t==='fo'||t==='fa'||t==='at')return`<span class="spill ${cls}${editCls}"${oc}><span class="spill-type">${abbr}</span></span>`;
+  return`<span class="spill ${cls}${editCls}"${oc}><span class="spill-time">${time}</span><span class="spill-type">${abbr}</span></span>`;
+}
+function avt(m,sz){
+  sz=sz||22;
+  return`<span class="av" style="width:${sz}px;height:${sz}px;background:${m.c};font-size:${sz<=24?'8':'11'}px">${m.i}</span>`;
+}
+function buildGrid(days,si,editable,cid){
+  let h=`<table class="sgt"><thead><tr class="sgt-head"><th class="th-name">Colaborador</th>`;
+  days.forEach(d=>{h+=`<th class="th-day"><div class="th-day-lbl">${d.s}</div><div class="th-day-num">${d.d.split('/')[0]}</div></th>`;});
+  h+=`</tr></thead><tbody>`;
+  TEAM.forEach((m,mi)=>{
+    h+=`<tr><td class="td-name">${avt(m)} ${m.n}</td>`;
+    days.forEach((_,di)=>{const ri=si+di;h+=`<td class="td-shift">${spill(ESCALA[ri][mi],editable,ri,mi)}</td>`;});
+    h+=`</tr>`;
+  });
+  h+=`<tr style="background:#fffbf5"><td class="td-name" style="font-size:10px;color:var(--accent);font-weight:700"><i class="ti ti-user-star" style="font-size:12px"></i> Diarista</td>`;
+  days.forEach((_,di)=>{const ri=si+di;h+=`<td class="td-shift">${spill(ESCALA[ri][6]||'',editable,ri,6)}</td>`;});
+  h+=`</tr></tbody></table>`;
+  document.getElementById(cid).innerHTML=h;
+}
+function buildOvGrid(){
+  buildGrid(DAYS.slice(0,7),0,false,'ov-grid');
+  const c=document.getElementById('ov-summary');if(!c)return;
+  let h='';
+  TEAM.forEach((m,mi)=>{
+    const w=ESCALA.slice(0,7).map(d=>d[mi]);
+    const ab=w.filter(s=>gst(s)==='ab').length,fe=w.filter(s=>gst(s)==='fe').length,inp=w.filter(s=>gst(s)==='in').length,fo=w.filter(s=>gst(s)==='fo').length;
+    const ok=ab+inp>=3&&fe>=2;
+    h+=`<div style="background:var(--white);border:1px solid var(--border);border-radius:8px;padding:10px">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:7px">${avt(m,20)}<span style="font-size:11px;font-weight:700;color:var(--brand)">${m.n}</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;font-size:10px">
+        <div style="color:var(--muted)">ABE: <strong style="color:#2e7d32">${ab}</strong></div>
+        <div style="color:var(--muted)">FEC: <strong style="color:#c62828">${fe}</strong></div>
+        <div style="color:var(--muted)">INT: <strong style="color:#e65100">${inp}</strong></div>
+        <div style="color:var(--muted)">FOL: <strong>${fo}</strong></div>
+      </div>
+      <div style="margin-top:7px;padding:2px 6px;border-radius:20px;font-size:9px;font-weight:700;background:${ok?'#e8f5e9':'#fff4e8'};color:${ok?'#2e7d32':'#e65100'};text-align:center">${ok?'Meta OK':'Verificar'}</div>
+    </div>`;
+  });
+  c.innerHTML=h;
+}
+let curPd='w1';
+function setPd(p,el){
+  curPd=p;document.querySelectorAll('.ptab').forEach(t=>t.classList.remove('on'));el.classList.add('on');
+  let days,si;
+  if(p==='w1'){days=DAYS.slice(0,7);si=0;}else if(p==='w2'){days=DAYS.slice(7,14);si=7;}else{days=DAYS;si=0;}
+  buildGrid(days,si,false,'sc-grid');
+}
+function renderDay(){
+  const idx=parseInt(document.getElementById('day-sel').value);
+  const d=DAYS[idx];const sh=ESCALA[idx];
+  const ativos=TEAM.filter((_,i)=>{const t=gst(sh[i]);return t!=='fo'&&t!=='fa'&&t!=='vz'&&t!=='at';});
+  const diar=sh[6];const cont=document.getElementById('day-content');
+  let h=`<div class="dayv-hdr"><div><div style="font-size:10px;color:rgba(255,255,255,.7);font-weight:600">${d.l.toUpperCase()}</div><div class="dayv-date">${d.d}</div><div class="dayv-sub">Junho 2026</div></div><div style="text-align:right"><div class="dayv-cnt">${ativos.length+(diar?1:0)}</div><div class="dayv-cnt-l">pessoas</div></div></div>`;
+  const ti={ab:{l:'Abertura',c:'#2e7d32',bg:'#e8f5e9'},fe:{l:'Fechamento',c:'#c62828',bg:'#fde8e8'},in:{l:'Intermediário',c:'#e65100',bg:'#fff8e1'}};
+  ['ab','fe','in'].forEach(tt=>{
+    const mem=TEAM.filter((_,i)=>gst(sh[i])===tt);if(!mem.length)return;const t=ti[tt];
+    h+=`<div style="margin-bottom:12px"><div style="font-size:9px;font-weight:700;color:${t.c};text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">${t.l}</div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">`;
+    mem.forEach(m=>{const mi=TEAM.indexOf(m);h+=`<div style="background:${t.bg};border-radius:8px;padding:10px;display:flex;align-items:center;gap:8px">${avt(m,30)}<div><div style="font-size:12px;font-weight:700;color:var(--brand)">${m.n}</div><div style="font-size:10px;color:${t.c};font-weight:600;margin-top:1px">${xt(sh[mi])}</div></div></div>`;});
+    h+=`</div></div>`;
+  });
+  if(diar)h+=`<div style="margin-bottom:12px"><div style="font-size:9px;font-weight:700;color:#0d47a1;text-transform:uppercase;margin-bottom:6px">Diarista</div><div style="background:#e3f0ff;border-radius:8px;padding:10px;display:inline-flex;align-items:center;gap:8px"><div style="width:30px;height:30px;border-radius:50%;background:#1565c0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:700">DA</div><div><div style="font-size:12px;font-weight:700;color:var(--brand)">Diarista</div><div style="font-size:10px;color:#0d47a1;font-weight:600">${xt(diar)}</div></div></div></div>`;
+  const aus=TEAM.filter((_,i)=>['fo','fa','at'].includes(gst(sh[i])));
+  if(aus.length){h+=`<div><div style="font-size:9px;font-weight:700;color:var(--subtle);text-transform:uppercase;margin-bottom:6px">Ausentes</div><div style="display:flex;flex-wrap:wrap;gap:6px">`;aus.forEach(m=>{const mi=TEAM.indexOf(m);const t=gst(sh[mi]);const bg=t==='fa'?'#fce4ec':t==='at'?'#fff3e0':'#f5f5f5';const tc=t==='fa'?'#880e4f':t==='at'?'#e65100':'#757575';const tl=t==='fa'?'Férias':t==='at'?'Atestado':'Folga';h+=`<div style="display:flex;align-items:center;gap:5px;background:${bg};border-radius:20px;padding:4px 10px">${avt(m,20)}<span style="font-size:10px;color:${tc}">${m.n} — ${tl}</span></div>`;});h+=`</div></div>`;}
+  cont.innerHTML=h;
+}
+let selCollab=0;
+function renderCollab(idx){
+  selCollab=idx;
+  const btns=document.getElementById('collab-btns');const cal=document.getElementById('collab-cal');
+  btns.innerHTML=TEAM.map((m,i)=>`<div class="cbtn ${i===idx?'on':''}" onclick="renderCollab(${i})">${avt(m,18)} ${m.n}</div>`).join('');
+  const m=TEAM[idx];const shifts=ESCALA.map(d=>d[idx]);
+  const cmap={};DAYS.forEach((d,di)=>{cmap[parseInt(d.d.split('/')[0])]=shifts[di];});
+  const cc={ab:'#2e7d32',fe:'#c62828',in:'#e65100',fo:'#bdbdbd',di:'#1565c0',fa:'#ad1457',at:'#e65100',vz:'transparent'};
+  const bg={ab:'#e8f5e9',fe:'#fde8e8',in:'#fff8e1',fo:'#f5f5f5',di:'#e3f0ff',fa:'#fce4ec',at:'#fff3e0',vz:'#fafafa'};
+  let h=`<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden">
+    <div style="background:${m.c};padding:12px 14px;display:flex;align-items:center;gap:10px">${avt(m,38)}<div><div style="font-size:14px;font-weight:700;color:#fff">${m.n}</div><div style="font-size:10px;color:rgba(255,255,255,.75)">CLT Horista</div></div><div style="margin-left:auto;text-align:right"><div style="font-size:20px;font-weight:700;color:#fff">${shifts.filter(s=>{const t=gst(s);return t!=='fo'&&t!=='fa'&&t!=='vz'&&t!=='at';}).length}</div><div style="font-size:9px;color:rgba(255,255,255,.7)">dias trab.</div></div></div>
+    <div style="padding:12px">
+      <div class="cal-dow"><div>D</div><div>S</div><div>T</div><div>Q</div><div>Q</div><div>S</div><div>S</div></div>
+      <div class="cal-cells">`;
+  for(let i=0;i<1;i++)h+=`<div class="cal-cell cal-empty"></div>`;
+  for(let d=1;d<=30;d++){const s=cmap[d]||'';const t=gst(s);h+=`<div class="cal-cell" style="background:${bg[t]}"><div class="cal-num">${d}</div>${s&&t!=='vz'?`<div class="cal-ev" style="background:${cc[t]}25;color:${cc[t]}">${ABBR[t]||''}</div>`:''}${s&&t!=='fo'&&t!=='vz'?`<div style="font-size:7px;color:${cc[t]};line-height:1.3">${xt(s)}</div>`:''}</div>`;}
+  h+=`</div></div>`;
+  const ab=shifts.filter(s=>gst(s)==='ab').length,fe=shifts.filter(s=>gst(s)==='fe').length,inp=shifts.filter(s=>gst(s)==='in').length,fo=shifts.filter(s=>gst(s)==='fo').length,fa=shifts.filter(s=>gst(s)==='fa').length;
+  h+=`<div style="padding:0 12px 12px;display:grid;grid-template-columns:repeat(5,1fr);gap:5px">`;
+  [{v:ab,l:'ABE',c:'#2e7d32',bg:'#e8f5e9'},{v:fe,l:'FEC',c:'#c62828',bg:'#fde8e8'},{v:inp,l:'INT',c:'#e65100',bg:'#fff8e1'},{v:fo,l:'FOL',c:'#757575',bg:'#f5f5f5'},{v:fa,l:'FÉR',c:'#880e4f',bg:'#fce4ec'}].forEach(({v,l,c,bg})=>{h+=`<div style="background:${bg};border-radius:6px;padding:6px;text-align:center"><div style="font-size:16px;font-weight:700;color:${c}">${v}</div><div style="font-size:8px;color:${c}">${l}</div></div>`;});
+  h+=`</div></div>`;cal.innerHTML=h;
+}
+function renderTimeline(){
+  const cont=document.getElementById('tl-cont');
+  let h=`<div class="tl-grid"><div class="tl-head"><div style="padding:7px 12px;font-size:9px;font-weight:700;color:rgba(255,255,255,.8)">Data</div><div style="padding:7px 8px;display:flex;justify-content:space-between;font-size:9px;color:rgba(255,255,255,.75)"><span>09h</span><span>12h</span><span>15h</span><span>18h</span><span>22h</span></div></div>`;
+  DAYS.forEach((d,di)=>{
+    const sh=ESCALA[di];const bgr=di%2===0?'var(--white)':'#faf8fd';
+    const used=TEAM.filter((_,mi)=>{const t=gst(sh[mi]);return t!=='fo'&&t!=='fa'&&t!=='vz'&&t!=='at';});
+    h+=`<div class="tl-row" style="background:${bgr}"><div style="padding:6px 12px;border-right:1px solid var(--border)"><div style="font-size:10px;font-weight:700;color:var(--brand)">${d.l}</div><div style="font-size:9px;color:var(--muted)">${d.d}</div></div><div style="padding:3px 6px;position:relative;min-height:${Math.max(used.length,1)*13+8}px">`;
+    used.forEach((m,ri)=>{const mi=TEAM.indexOf(m);const t=gst(sh[mi]);const pm={ab:{l:0,w:32},fe:{l:60,w:38},in:{l:38,w:34},di:{l:44,w:36}};const pos=pm[t]||{l:0,w:30};const cc2={ab:'#2e7d32',fe:'#c62828',in:'#e65100',di:'#1565c0'};h+=`<div style="position:absolute;left:${pos.l}%;width:${pos.w}%;background:${cc2[t]};border-radius:3px;height:10px;top:${3+ri*12}px;display:flex;align-items:center;padding:0 4px;overflow:hidden"><span style="font-size:7px;color:#fff;font-weight:700">${m.i}</span></div>`;});
+    if(sh[6])h+=`<div style="position:absolute;left:48%;width:33%;background:#1565c0;border-radius:3px;height:10px;top:${3+used.length*12}px;opacity:.75;display:flex;align-items:center;padding:0 4px"><span style="font-size:7px;color:#fff;font-weight:700">DIA</span></div>`;
+    h+=`</div></div>`;
+  });
+  h+=`</div>`;cont.innerHTML=h;
+}
+function renderTeam(){
+  const g=document.getElementById('team-grid');const dg=document.getElementById('diar-grid');
+  g.innerHTML=TEAM.map((m,mi)=>{
+    const ab=ESCALA.filter(d=>gst(d[mi])==='ab').length,fe=ESCALA.filter(d=>gst(d[mi])==='fe').length,tot=ESCALA.filter(d=>{const t=gst(d[mi]);return t!=='fo'&&t!=='fa'&&t!=='vz'&&t!=='at';}).length;
+    return`<div class="team-card"><div style="display:flex;align-items:center;gap:9px;margin-bottom:9px">${avt(m,34)}<div><div style="font-size:12px;font-weight:700;color:var(--brand)">${m.n}</div><div style="font-size:10px;color:var(--muted)">CLT Horista</div></div></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;text-align:center"><div style="background:#e8f5e9;border-radius:5px;padding:5px"><div style="font-size:13px;font-weight:700;color:#2e7d32">${ab}</div><div style="font-size:8px;color:#2e7d32">ABE</div></div><div style="background:#fde8e8;border-radius:5px;padding:5px"><div style="font-size:13px;font-weight:700;color:#c62828">${fe}</div><div style="font-size:8px;color:#c62828">FEC</div></div><div style="background:var(--brand-light);border-radius:5px;padding:5px"><div style="font-size:13px;font-weight:700;color:var(--brand)">${tot}</div><div style="font-size:8px;color:var(--brand)">Dias</div></div></div></div>`;
+  }).join('');
+  dg.innerHTML=DIAR.map(m=>`<div class="team-card" style="display:flex;align-items:center;gap:10px">${avt(m,38)}<div><div style="font-size:12px;font-weight:700;color:var(--brand)">${m.n}</div><div style="font-size:10px;color:var(--muted)">Diarista</div><div style="margin-top:6px;display:inline-flex;align-items:center;gap:3px;background:var(--accent-light);border-radius:20px;padding:3px 8px;font-size:9px;font-weight:700;color:var(--accent)">Sex / Sáb / Dom</div></div></div>`).join('');
+}
+function buildEditorGrid(){buildGrid(DAYS,0,true,'ed-grid');}
+function openCellEdit(ri,ci){
+  const d=DAYS[ri];const name=ci===6?'Diarista':TEAM[ci].n;
+  const cur=ESCALA[ri][ci]||'';const opts=ci===6?OPTS_DI:OPTS;
+  document.getElementById('edit-modal-area').innerHTML=`<div class="edit-modal">
+    <div style="font-size:12px;font-weight:700;color:var(--brand);margin-bottom:10px"><i class="ti ti-pencil"></i> ${name} — ${d.l} ${d.d}</div>
+    <div class="em-grid">
+      <div><label class="em-label">Turno atual</label><div style="padding:7px 10px;background:var(--bg);border-radius:7px;font-size:12px;color:var(--muted)">${cur||'Vazio'}</div></div>
+      <div><label class="em-label">Novo turno</label><select class="em-select" id="cell-new-val">${opts.map(o=>`<option value="${o}"${o===cur?' selected':''}>${o}</option>`).join('')}</select></div>
+    </div>
+    <div style="display:flex;gap:7px;margin-top:10px">
+      <button class="btn btn-p" onclick="applyCellEdit(${ri},${ci})"><i class="ti ti-check"></i>Confirmar</button>
+      <button class="btn btn-g" onclick="document.getElementById('edit-modal-area').innerHTML=''">Cancelar</button>
+    </div>
+  </div>`;
+}
+function applyCellEdit(ri,ci){
+  const nv=document.getElementById('cell-new-val').value;const old=ESCALA[ri][ci]||'';
+  ESCALA[ri][ci]=nv;const nm=ci===6?'Diarista':TEAM[ci].n;
+  addLog(`${nm} — ${DAYS[ri].l} ${DAYS[ri].d}: "${old||'vazio'}" → "${nv}"`);
+  document.getElementById('edit-modal-area').innerHTML=`<div style="background:#e8f5e9;border-radius:8px;padding:9px 12px;margin-top:9px;font-size:11px;color:#2e7d32;display:flex;align-items:center;gap:6px"><i class="ti ti-check"></i>Alteração aplicada.</div>`;
+  setTimeout(()=>{document.getElementById('edit-modal-area').innerHTML='';},1500);
+  buildEditorGrid();buildOvGrid();
+}
+function setCmd(txt){document.getElementById('cmd-input').value=txt;}
+function processCmd(){
+  const raw=document.getElementById('cmd-input').value.trim();
+  if(!raw){return;}
+  const changes=parseCmd(raw);
+  if(!changes.length){document.getElementById('edit-modal-area').innerHTML=`<div style="background:#fff4e8;border-radius:8px;padding:9px 12px;margin-top:9px;font-size:11px;color:var(--accent)">Não foi possível interpretar. Use a grade abaixo.</div>`;return;}
+  changes.forEach(({ri,ci,val,desc})=>{ESCALA[ri][ci]=val;addLog(desc);});
+  buildEditorGrid();buildOvGrid();document.getElementById('cmd-input').value='';
+  document.getElementById('edit-modal-area').innerHTML=`<div style="background:#e8f5e9;border-radius:8px;padding:9px 12px;margin-top:9px;font-size:11px;color:#2e7d32;display:flex;align-items:center;gap:6px"><i class="ti ti-check"></i>${changes.length} alteração(ões) aplicada(s).</div>`;
+  setTimeout(()=>{document.getElementById('edit-modal-area').innerHTML='';},2000);
+}
+function parseCmd(txt){
+  const t=txt.toLowerCase();const changes=[];
+  const dm={'08/06':0,'09/06':1,'10/06':2,'11/06':3,'12/06':4,'13/06':5,'14/06':6,'15/06':7,'16/06':8,'17/06':9,'18/06':10,'19/06':11,'20/06':12,'21/06':13};
+  const nm2={maria:0,marta:1,'maria josé':1,'maria jose':1,joeli:3,alana:4,duda:5,diarista:6,marília:6,rebeca:6};
+  const fd=()=>{for(const k in dm){if(t.includes(k))return dm[k];}return -1;};
+  const fp=()=>{for(const k in nm2){if(t.includes(k))return nm2[k];}return -1;};
+  const ri=fd();const ci=fp();if(ri===-1)return[];
+  const d=DAYS[ri];
+  const rs=()=>{
+    if(t.includes('falta')||t.includes('faltou')||t.includes('atestado'))return'Atestado';
+    if(t.includes('férias')||t.includes('ferias'))return'Férias';
+    if(t.includes('folga'))return'Folga';
+    if(t.includes('abertura')){if(d.l==='Segunda'||d.l==='Quarta')return'09:30–16:30 (abertura)';if(d.l==='Domingo')return'11:30–17:30 (abertura)';return'10:30–17:30 (abertura)';}
+    if(t.includes('fechamento'))return'16h–22h (fechamento)';
+    if(t.includes('intermediário')||t.includes('intermediario'))return'14h–20h (intermediário)';
+    if(t.includes('diarista')){if(t.includes('marília')||t.includes('marilia'))return'14h–20h (Diarista)';return'16:30–22h (Diarista)';}
+    return null;
+  };
+  if(ci!==-1){const nv=rs();if(!nv)return[];const n=ci===6?'Diarista':TEAM[ci].n;changes.push({ri,ci,val:nv,desc:`${n} — ${d.l} ${d.d}: → "${nv}"`});}
+  else{
+    if(t.includes('falta')||t.includes('faltou')||t.includes('atestado')){TEAM.forEach((_,i)=>{changes.push({ri,ci:i,val:'Atestado',desc:`${TEAM[i].n} — ${d.l} ${d.d}: Atestado`});});}
+    if(t.includes('diarista')&&(t.includes('acionar')||t.includes('chamar'))){changes.push({ri,ci:6,val:'16:30–22h (Diarista)',desc:`Diarista — ${d.l} ${d.d}: escalada`});}
+    if((t.includes('férias')||t.includes('ferias'))&&t.includes('marta')){for(let r=ri;r<14;r++){changes.push({ri:r,ci:1,val:'Férias',desc:`Marta — ${DAYS[r].l} ${DAYS[r].d}: Férias`});}}
+  }
+  return changes;
+}
+function addLog(msg){
+  editLog.unshift({t:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),m:msg});
+  const el=document.getElementById('edit-log');const items=document.getElementById('edit-log-items');
+  el.style.display='block';
+  items.innerHTML=editLog.slice(0,8).map(e=>`<div class="edit-log-item"><div class="log-dot"></div><span class="log-time">${e.t}</span><span class="log-msg">${e.m}</span></div>`).join('');
+}
+function clearLog(){editLog.length=0;const el=document.getElementById('edit-log');el.style.display='none';document.getElementById('edit-log-items').innerHTML='';}
+function resetAll(){if(!confirm('Restaurar escala para o padrão?'))return;ESCALA=BASE.map(r=>[...r]);buildEditorGrid();buildOvGrid();addLog('Escala restaurada.');}
+function nav(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+  ['nv-','bn-'].forEach(p=>{const el=document.getElementById(p+id);if(el){document.querySelectorAll('[id^="'+p+'"]').forEach(n=>n.classList.remove('on'));el.classList.add('on');}});
+  const tt={overview:'Visão Geral',schedule:'Escala do Período',day:'Visualizar o Dia',collab:'Por Colaborador',timeline:'Linha do Tempo',editor:'Editar Escala',team:'Equipe'};
+  document.getElementById('pg-title').textContent=tt[id]||id;
+  document.getElementById('vw-'+id).classList.add('on');
+  if(id==='day')renderDay();
+  if(id==='collab')renderCollab(selCollab);
+  if(id==='timeline')renderTimeline();
+  if(id==='team')renderTeam();
+  if(id==='editor')buildEditorGrid();
+  if(id==='schedule'){let days,si;if(curPd==='w1'){days=DAYS.slice(0,7);si=0;}else if(curPd==='w2'){days=DAYS.slice(7,14);si=7;}else{days=DAYS;si=0;}buildGrid(days,si,false,'sc-grid');}
+}
+buildOvGrid();
+let days=DAYS.slice(0,7);
+buildGrid(days,0,false,'sc-grid');
+renderDay();renderCollab(0);renderTimeline();renderTeam();buildEditorGrid();
+</script>
+</body>
+</html>
