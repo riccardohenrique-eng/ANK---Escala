@@ -1,290 +1,301 @@
 <style>
 :root{
-  --acai:#742984; --acai-deep:#4a1a58; --acai-light:#f3e8f9;
-  --manga:#F68A28; --manga-light:#fff1e2;
-  --bg:#FBF7F2; --panel:#ffffff; --border:#e9e0f0;
-  --ink:#241a2c; --muted:#7a6b8a; --subtle:#b8a8c8;
-  --ok:#2e7d32; --ok-bg:#eaf5ea;
-  --warn:#a5680a; --warn-bg:#fdf1de;
-  --danger:#b6293b; --danger-bg:#fbe9ec;
-  --ab:#c07a12; --ab-bg:#fbeed7;
-  --int:#1f7a7a; --int-bg:#e2f3f3;
-  --fe:#5b3a8e; --fe-bg:#ece3f7;
-  --fo:#8a8194; --fo-bg:#f1eef4;
-  --di:#b04a86; --di-bg:#f8e6f1;
-  --radius:10px;
-  --shadow:0 1px 2px rgba(74,26,88,.06),0 4px 16px rgba(74,26,88,.06);
+  --bg:#F5F5F7; --panel:#FFFFFF; --panel-2:#FAFAFA; --panel-3:#EFEFF1;
+  --border:#E5E5EA; --border-strong:#D1D1D6;
+  --text:#1D1D1F; --text-2:#6E6E73; --text-3:#AEAEB2;
+  --accent:#7B2C91; --accent-strong:#5E2270; --accent-wash:#F4EAF8;
+  --danger:#D70015; --danger-wash:#FDEDEC;
+  --ok:#1F8A3D; --ok-wash:#EAF7EC;
+  --radius:10px; --radius-lg:13px;
 }
 @media (prefers-color-scheme: dark){
   :root{
-    --bg:#221a29; --panel:#2c2233; --border:#3d3049;
-    --ink:#f1eaf6; --muted:#b3a3c2; --subtle:#6e5c80;
-    --acai-light:#3a2545; --manga-light:#3f2c1c;
-    --ok-bg:#1d2f20; --warn-bg:#332811; --danger-bg:#3a1f24;
-    --ab-bg:#3a2c14; --int-bg:#173232; --fe-bg:#2e2440; --fo-bg:#2e2836; --di-bg:#3a2432;
-    --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 20px rgba(0,0,0,.35);
+    --bg:#000000; --panel:#1C1C1E; --panel-2:#232325; --panel-3:#2C2C2E;
+    --border:#38383A; --border-strong:#48484A;
+    --text:#F5F5F7; --text-2:#98989D; --text-3:#636366;
+    --accent:#C079DA; --accent-strong:#D79AE8; --accent-wash:#2A1E2F;
+    --danger:#FF6961; --danger-wash:#2E1614;
+    --ok:#3CD35F; --ok-wash:#122318;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#221a29; --panel:#2c2233; --border:#3d3049;
-  --ink:#f1eaf6; --muted:#b3a3c2; --subtle:#6e5c80;
-  --acai-light:#3a2545; --manga-light:#3f2c1c;
-  --ok-bg:#1d2f20; --warn-bg:#332811; --danger-bg:#3a1f24;
-  --ab-bg:#3a2c14; --int-bg:#173232; --fe-bg:#2e2440; --fo-bg:#2e2836; --di-bg:#3a2432;
+  --bg:#000000; --panel:#1C1C1E; --panel-2:#232325; --panel-3:#2C2C2E;
+  --border:#38383A; --border-strong:#48484A;
+  --text:#F5F5F7; --text-2:#98989D; --text-3:#636366;
+  --accent:#C079DA; --accent-strong:#D79AE8; --accent-wash:#2A1E2F;
+  --danger:#FF6961; --danger-wash:#2E1614;
+  --ok:#3CD35F; --ok-wash:#122318;
 }
 :root[data-theme="light"]{
-  --bg:#FBF7F2; --panel:#ffffff; --border:#e9e0f0;
-  --ink:#241a2c; --muted:#7a6b8a; --subtle:#b8a8c8;
-  --acai-light:#f3e8f9; --manga-light:#fff1e2;
-  --ok-bg:#eaf5ea; --warn-bg:#fdf1de; --danger-bg:#fbe9ec;
-  --ab-bg:#fbeed7; --int-bg:#e2f3f3; --fe-bg:#ece3f7; --fo-bg:#f1eef4; --di-bg:#f8e6f1;
+  --bg:#F5F5F7; --panel:#FFFFFF; --panel-2:#FAFAFA; --panel-3:#EFEFF1;
+  --border:#E5E5EA; --border-strong:#D1D1D6;
+  --text:#1D1D1F; --text-2:#6E6E73; --text-3:#AEAEB2;
+  --accent:#7B2C91; --accent-strong:#5E2270; --accent-wash:#F4EAF8;
+  --danger:#D70015; --danger-wash:#FDEDEC;
+  --ok:#1F8A3D; --ok-wash:#EAF7EC;
 }
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;font-size:14px;line-height:1.45}
-.wrap{max-width:1120px;margin:0 auto;padding:20px 16px 60px}
-header.top{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
-.mark{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--acai),var(--acai-deep));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px;flex-shrink:0;box-shadow:var(--shadow)}
-.title h1{font-size:19px;margin:0;font-weight:800;letter-spacing:-.01em}
-.title p{margin:1px 0 0;font-size:12px;color:var(--muted)}
+*{box-sizing:border-box;-webkit-font-smoothing:antialiased}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif;font-size:15px;line-height:1.42;letter-spacing:-.006em}
+.wrap{max-width:980px;margin:0 auto;padding:28px 18px 70px}
 
-nav.tabs{display:flex;gap:4px;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:4px;margin-bottom:16px;overflow-x:auto}
-nav.tabs button{appearance:none;border:none;background:transparent;color:var(--muted);font-weight:700;font-size:12.5px;padding:8px 14px;border-radius:7px;cursor:pointer;white-space:nowrap}
-nav.tabs button.on{background:var(--acai);color:#fff}
+header.top{margin-bottom:22px}
+header.top h1{font-size:28px;margin:0;font-weight:700;letter-spacing:-.02em;text-wrap:balance}
+header.top p{margin:4px 0 0;font-size:14px;color:var(--text-2)}
+
+.segmented{display:flex;background:var(--panel-2);border:1px solid var(--border);border-radius:10px;padding:2px;margin-bottom:22px;gap:2px}
+.segmented button{flex:1;appearance:none;border:none;background:transparent;color:var(--text-2);font:inherit;font-size:13.5px;font-weight:590;padding:8px 10px;border-radius:8px;cursor:pointer}
+.segmented button.on{background:var(--panel);color:var(--text)}
 .tabpage{display:none}
 .tabpage.on{display:block}
 
-.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden}
-.card > .card-head{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;cursor:pointer;user-select:none}
-.card > .card-head h2{font-size:13px;margin:0;font-weight:700;display:flex;align-items:center;gap:8px}
-.card > .card-head .chev{color:var(--subtle);font-size:12px;transition:transform .15s}
-.card.closed > .card-head .chev{transform:rotate(-90deg)}
-.card > .card-body{padding:0 16px 16px}
-.card.closed > .card-body{display:none}
+.grp-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-2);margin:26px 2px 8px}
+.grp-title:first-child{margin-top:0}
+.grp{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
+.grp + .grp-title{margin-top:26px}
 
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
-.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-@media(max-width:640px){.grid2,.grid3,.grid4{grid-template-columns:1fr}}
-label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px}
-input[type=text],input[type=date],input[type=month],input[type=number],input[type=time],select{
-  width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--ink);font-size:13px;font-family:inherit
+.section{margin-bottom:8px}
+.section-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;user-select:none;border-bottom:1px solid var(--border)}
+.section.closed .section-head{border-bottom:none}
+.section-head h2{font-size:15px;margin:0;font-weight:600}
+.section-head .sub{font-size:12.5px;color:var(--text-2);font-weight:400;margin-top:1px}
+.section-head .chev{color:var(--text-3);transition:transform .15s;flex-shrink:0}
+.section.closed .chev{transform:rotate(-90deg)}
+.section-body{padding:16px}
+.section.closed .section-body{display:none}
+
+.row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.row:last-child{border-bottom:none}
+.row .rlabel{font-size:14.5px;color:var(--text);flex-shrink:0}
+.row .rhint{font-size:12px;color:var(--text-2);margin-top:1px}
+.row .rctrl{max-width:200px;width:100%}
+.row .rctrl input,.row .rctrl select{text-align:right}
+
+.radio-row{display:flex;align-items:flex-start;gap:11px;padding:13px 16px;border-bottom:1px solid var(--border);cursor:pointer}
+.radio-row:last-child{border-bottom:none}
+.radio-row .rdot{width:19px;height:19px;border-radius:50%;border:1.6px solid var(--border-strong);flex-shrink:0;margin-top:1px;position:relative;transition:border-color .12s}
+.radio-row.on .rdot{border-color:var(--accent)}
+.radio-row.on .rdot::after{content:'';position:absolute;inset:3.5px;border-radius:50%;background:var(--accent)}
+.radio-row b{display:block;font-size:14.5px;font-weight:590}
+.radio-row span{display:block;font-size:12.5px;color:var(--text-2);margin-top:2px;line-height:1.4}
+
+label.flabel{display:block;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-2);margin-bottom:6px}
+input[type=text],input[type=date],input[type=month],input[type=number],input[type=time],select.field-input{
+  width:100%;padding:9px 11px;border:1px solid var(--border-strong);border-radius:8px;background:var(--panel);color:var(--text);font-size:14.5px;font-family:inherit
 }
-input:focus,select:focus{outline:2px solid var(--acai);outline-offset:1px}
-.field{margin-bottom:12px}
-.hint{font-size:11px;color:var(--subtle);margin-top:4px}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.field{padding:14px 16px;border-bottom:1px solid var(--border)}
+.field:last-child{border-bottom:none}
+.hint{font-size:12px;color:var(--text-2);margin-top:6px;line-height:1.45}
 
-.chipset{display:flex;flex-wrap:wrap;gap:6px}
-.chip{border:1px solid var(--border);background:var(--bg);border-radius:999px;padding:5px 10px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;color:var(--ink)}
-.chip input{margin:0;accent-color:var(--acai)}
-.chip.on{background:var(--acai-light);border-color:var(--acai);color:var(--acai)}
+.chipset{display:flex;flex-wrap:wrap;gap:7px}
+.chip{border:1px solid var(--border-strong);background:var(--panel);border-radius:8px;padding:6px 11px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;color:var(--text)}
+.chip input{margin:0;accent-color:var(--accent)}
+.chip.on{background:var(--accent-wash);border-color:var(--accent);color:var(--accent-strong)}
 
-.modeswitch{display:flex;gap:8px;margin-bottom:6px}
-.modebtn{flex:1;border:1.5px solid var(--border);background:var(--bg);border-radius:10px;padding:10px 12px;cursor:pointer;text-align:left}
-.modebtn.on{border-color:var(--acai);background:var(--acai-light)}
-.modebtn b{display:block;font-size:12.5px;color:var(--ink)}
-.modebtn span{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+table.team-cfg{width:100%;border-collapse:collapse}
+table.team-cfg th{text-align:left;color:var(--text-2);font-weight:600;text-transform:uppercase;font-size:10.5px;letter-spacing:.05em;padding:9px 16px;border-bottom:1px solid var(--border)}
+table.team-cfg td{padding:8px 16px;border-bottom:1px solid var(--border)}
+table.team-cfg tr:last-child td{border-bottom:none}
+table.team-cfg input[type=text]{font-weight:590}
+table.team-cfg input[type=number]{width:96px;text-align:right}
 
-.dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.btn{appearance:none;border:1px solid transparent;border-radius:9px;padding:10px 17px;font-weight:590;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;font-family:inherit}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent-strong)}
+.btn-secondary{background:var(--panel);color:var(--accent);border-color:var(--border-strong)}
+.btn-secondary:hover{background:var(--panel-2)}
+.btn-plain{background:transparent;color:var(--text-2);border:none;padding:9px 4px}
+.btn-plain:hover{color:var(--text)}
+.btn-row{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px}
 
-table.team-cfg{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
-table.team-cfg th{text-align:left;color:var(--muted);font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:.04em;padding:4px 6px}
-table.team-cfg td{padding:4px 6px}
-table.team-cfg input[type=color]{width:28px;height:28px;padding:0;border:none;background:none}
-table.team-cfg input[type=number]{width:80px}
-
-.btn{appearance:none;border:none;border-radius:8px;padding:10px 16px;font-weight:700;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
-.btn-primary{background:var(--acai);color:#fff}
-.btn-primary:hover{background:var(--acai-deep)}
-.btn-ghost{background:transparent;color:var(--acai);border:1px solid var(--acai-light)}
-.btn-ghost:hover{background:var(--acai-light)}
-.btn-manga{background:var(--manga);color:#2b1a06}
-.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
-
-.absence-row{display:grid;grid-template-columns:1.4fr 2fr auto;gap:8px;align-items:center;margin-bottom:6px}
+.absence-row{display:grid;grid-template-columns:1.3fr 2fr auto;gap:10px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--border)}
+.absence-row:last-child{border-bottom:none}
+.absence-row select{padding:7px 9px;font-size:13.5px}
 .absence-row .days{display:flex;gap:4px;flex-wrap:wrap}
-.daybtn{width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--muted);font-size:10px;font-weight:700;cursor:pointer}
-.daybtn.on{background:var(--fe);border-color:var(--fe);color:#fff}
-.iconbtn{background:none;border:none;color:var(--subtle);cursor:pointer;font-size:15px;padding:4px}
+.daybtn{width:27px;height:27px;border-radius:7px;border:1px solid var(--border-strong);background:var(--panel);color:var(--text-2);font-size:10px;font-weight:600;cursor:pointer}
+.daybtn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.iconbtn{background:none;border:none;color:var(--text-3);cursor:pointer;font-size:16px;padding:5px;line-height:1}
 .iconbtn:hover{color:var(--danger)}
 
-.summary-row{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px}
-.pcard{flex:0 0 auto;min-width:118px;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:10px 12px}
-.pcard .nm{display:flex;align-items:center;gap:6px;font-weight:700;font-size:12px;margin-bottom:6px}
-.pcard .mt{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
-.pcard .mt b{color:var(--ink)}
-.pcard .mt.over b{color:var(--danger)}
+.stat-row{display:flex;gap:0;overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--panel)}
+.stat{flex:1;min-width:110px;padding:13px 14px;border-right:1px solid var(--border)}
+.stat:last-child{border-right:none}
+.stat .snm{font-size:13px;font-weight:590;margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat .sm{display:flex;justify-content:space-between;font-size:11.5px;color:var(--text-2);font-variant-numeric:tabular-nums;margin-bottom:2px}
+.stat .sm b{color:var(--text);font-weight:600}
+.stat .sm.over b{color:var(--danger)}
 
-.alerts{display:flex;flex-direction:column;gap:6px;margin:10px 0}
-.alert{background:var(--danger-bg);color:var(--danger);border-radius:8px;padding:8px 12px;font-size:12.5px;display:flex;gap:8px}
-.alert.info{background:var(--warn-bg);color:var(--warn)}
-.alert .ic{flex-shrink:0}
-.ok-banner{background:var(--ok-bg);color:var(--ok);border-radius:8px;padding:8px 12px;font-size:12.5px}
+.banner{display:flex;gap:10px;align-items:flex-start;padding:11px 13px;border-radius:9px;background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--text-3);font-size:13.5px;margin-bottom:8px}
+.banner.danger{border-left-color:var(--danger);background:var(--danger-wash)}
+.banner.info{border-left-color:var(--text-3)}
+.banner.ok{border-left-color:var(--ok);background:var(--ok-wash)}
+.banner .ic{flex-shrink:0;margin-top:1px;color:inherit}
+.banner.danger .ic{color:var(--danger)}
+.banner.ok .ic{color:var(--ok)}
+.banner-list{margin:14px 0}
 
-.tablewrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px}
-table.escala{border-collapse:collapse;width:100%;min-width:760px;font-size:12.5px}
-table.escala th,table.escala td{padding:6px 8px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);vertical-align:middle}
+.tablewrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-lg)}
+table.escala{border-collapse:collapse;width:100%;min-width:820px;font-size:13.5px}
+table.escala th,table.escala td{padding:9px 12px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);vertical-align:top}
 table.escala th:last-child,table.escala td:last-child{border-right:none}
-table.escala thead th{background:var(--acai-light);color:var(--acai-deep);font-size:11px;text-transform:uppercase;letter-spacing:.03em;position:sticky;top:0}
-table.escala td.daycell{white-space:nowrap;font-weight:700}
-table.escala td.daycell .dt{font-weight:400;color:var(--muted);font-size:11px;display:block}
-table.escala td.task{font-size:10.5px;color:var(--manga);font-weight:700;display:block;margin-top:2px}
-select.cell{width:100%;border:1px solid transparent;border-radius:7px;padding:5px 6px;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer}
-select.cell.ab{background:var(--ab-bg);color:var(--ab)}
-select.cell.int{background:var(--int-bg);color:var(--int)}
-select.cell.fe{background:var(--fe-bg);color:var(--fe)}
-select.cell.fo{background:var(--fo-bg);color:var(--fo)}
-select.cell.of{background:var(--fo-bg);color:var(--subtle)}
-.timelabel{display:block;font-size:9.5px;font-weight:400;color:inherit;opacity:.85;margin-top:1px}
-.brk-ok{display:inline-block;margin-top:2px;font-size:9px;font-weight:700;color:var(--ok);background:var(--ok-bg);border-radius:5px;padding:1px 5px}
-.brk-warn{display:inline-block;margin-top:2px;font-size:9px;font-weight:700;color:var(--danger);background:var(--danger-bg);border-radius:5px;padding:1px 5px}
-input.diarista-input{width:100%;min-width:150px;border:1px solid var(--border);border-radius:7px;padding:6px 7px;font-size:11.5px;background:var(--di-bg);color:var(--di);font-weight:600}
+table.escala tr:last-child td{border-bottom:none}
+table.escala thead th{background:var(--panel-2);color:var(--text);font-size:13px;font-weight:600;text-align:left;position:sticky;top:0}
+table.escala td.daycell{white-space:nowrap;font-weight:600;background:var(--panel-2)}
+table.escala td.daycell .dt{font-weight:400;color:var(--text-2);font-size:12px;display:block;margin-top:1px}
+table.escala td.daycell .task{font-size:11px;color:var(--text-2);display:block;margin-top:5px;padding-top:5px;border-top:1px solid var(--border)}
+select.cell{width:100%;appearance:none;border:none;background:transparent;border-radius:6px;padding:4px 5px;font-size:13.5px;font-weight:590;font-family:inherit;cursor:pointer;color:var(--text)}
+select.cell:hover{background:var(--panel-2)}
+select.cell.fo{color:var(--text-3);font-weight:400}
+.timelabel{display:block;font-size:11.5px;color:var(--text-2);margin-top:1px;padding-left:5px}
+.brk-line{display:flex;align-items:center;gap:4px;font-size:10.5px;font-weight:590;margin-top:5px;padding-left:5px}
+.brk-line.ok{color:var(--ok)}
+.brk-line.warn{color:var(--danger)}
+input.diarista-input{width:100%;min-width:150px;border:none;border-bottom:1px solid var(--border-strong);border-radius:0;padding:5px 2px;font-size:12.5px;background:transparent;color:var(--text)}
+input.diarista-input:focus{outline:none;border-bottom-color:var(--accent)}
 
-.costbar{display:flex;justify-content:space-between;align-items:center;background:var(--manga-light);border-radius:10px;padding:10px 14px;margin-top:10px;font-size:13px}
-.costbar b{font-size:16px;color:var(--manga)}
+.costbar{display:flex;justify-content:space-between;align-items:baseline;background:var(--panel);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;margin-top:12px}
+.costbar span{font-size:13.5px;color:var(--text-2)}
+.costbar b{font-size:22px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
 
-.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:10px}
-.legend span{display:inline-flex;align-items:center;gap:5px}
-.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.note{font-size:12.5px;color:var(--text-2);line-height:1.5;padding:12px 14px;margin-top:12px;border-top:1px solid var(--border)}
+footer.foot{text-align:center;color:var(--text-3);font-size:12px;margin-top:30px}
 
-.note{font-size:11.5px;color:var(--muted);background:var(--bg);border:1px dashed var(--border);border-radius:8px;padding:8px 10px;margin-top:10px}
-footer.foot{text-align:center;color:var(--subtle);font-size:11px;margin-top:24px}
+table.ponto{width:100%;border-collapse:collapse;font-size:13px}
+table.ponto th{text-align:left;color:var(--text-2);font-weight:600;text-transform:uppercase;font-size:10.5px;letter-spacing:.04em;padding:9px 10px;border-bottom:1px solid var(--border);background:var(--panel-2)}
+table.ponto td{padding:8px 10px;border-bottom:1px solid var(--border)}
+table.ponto tr:last-child td{border-bottom:none}
+table.ponto input[type=time]{width:92px;padding:6px 7px;font-size:13px}
+table.ponto .pname{font-weight:590}
 
-table.ponto{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
-table.ponto th{text-align:left;color:var(--muted);font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:.03em;padding:5px 6px;border-bottom:1px solid var(--border)}
-table.ponto td{padding:5px 6px;border-bottom:1px solid var(--border)}
-table.ponto input[type=time]{width:88px}
+.payroll-table{width:100%;border-collapse:collapse;font-size:13.5px}
+.payroll-table th{text-align:left;background:var(--panel-2);color:var(--text-2);font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;padding:9px 14px}
+.payroll-table td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+.payroll-table tr:last-child td{border-bottom:none}
+.payroll-table td.cat{font-weight:590;white-space:nowrap}
+.payroll-table td.val{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+.payroll-table td.why{color:var(--text-2);font-size:12.5px;line-height:1.5}
+.payroll-table tr.total td{border-top:1.5px solid var(--text);font-weight:700}
+.payroll-table tr.total td.cat,.payroll-table tr.total td.val{font-size:15px}
 
-.payroll-table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:8px}
-.payroll-table th{text-align:left;background:var(--acai-light);color:var(--acai-deep);font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;padding:7px 9px}
-.payroll-table td{padding:7px 9px;border-bottom:1px solid var(--border);vertical-align:top}
-.payroll-table td.val{text-align:right;font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
-.payroll-table td.why{color:var(--muted);font-size:11.5px}
-.payroll-table tr.total td{border-top:2px solid var(--acai);font-weight:800;color:var(--acai-deep)}
-.pill{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px}
-.pill.ok{background:var(--ok-bg);color:var(--ok)}
-.pill.warn{background:var(--warn-bg);color:var(--warn)}
-.pill.danger{background:var(--danger-bg);color:var(--danger)}
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 9px;border-radius:6px;border:1px solid var(--border-strong);color:var(--text-2);background:var(--panel-2)}
+.badge.warn{color:var(--danger);border-color:var(--danger);background:var(--danger-wash)}
 
-.periodbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
-.periodbar select,.periodbar input{width:auto}
+.periodbar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.periodbar select,.periodbar input{width:auto;padding:8px 10px;font-size:13.5px}
 
-.emptybox{text-align:center;color:var(--subtle);font-size:12.5px;padding:26px 10px}
+.emp-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius-lg);margin-top:14px;overflow:hidden}
+.emp-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.emp-head h3{font-size:15.5px;margin:0;font-weight:650}
+.emp-body{padding:16px}
+
+.emptybox{text-align:center;color:var(--text-3);font-size:13.5px;padding:34px 12px}
+
+svg.ic{display:block}
 </style>
 
 <div class="wrap">
   <header class="top">
-    <div class="mark">AK</div>
-    <div class="title">
-      <h1>Escala &amp; Ponto — Açaí No Kilo</h1>
-      <p>Cruz das Almas · cobertura, pausas reais, ponto digital e pré-cálculo de folha</p>
-    </div>
+    <h1>Escala &amp; Ponto</h1>
+    <p>Açaí No Kilo · Cruz das Almas — cobertura, pausas reais, ponto digital e folha</p>
   </header>
 
-  <nav class="tabs">
-    <button class="on" onclick="showTab('tab-escala',this)">📋 Escala</button>
-    <button onclick="showTab('tab-ponto',this)">🕐 Ponto digital</button>
-    <button onclick="showTab('tab-relatorio',this)">📊 Relatórios &amp; folha</button>
+  <nav class="segmented">
+    <button class="on" onclick="showTab('tab-escala',this)">Escala</button>
+    <button onclick="showTab('tab-ponto',this)">Ponto digital</button>
+    <button onclick="showTab('tab-relatorio',this)">Relatórios</button>
   </nav>
 
   <!-- ===================== TAB ESCALA ===================== -->
   <div class="tabpage on" id="tab-escala">
 
-  <section class="card closed" id="card-config">
-    <div class="card-head" onclick="toggleCard('card-config')">
-      <h2>⚙️ Equipe e regras fixas</h2>
-      <span class="chev">▾</span>
+  <section class="section closed" id="card-config">
+    <div class="section-head" onclick="toggleCard('card-config')">
+      <h2>Equipe e regras fixas</h2>
+      <span class="chev"></span>
     </div>
-    <div class="card-body">
+    <div class="section-body">
 
-      <label>Modelo de jornada</label>
-      <div class="modeswitch">
-        <div class="modebtn" id="mode-A" onclick="setMode('A')">
-          <b>Opção A — pausa quando possível</b>
-          <span>Mantém os horários atuais (turnos de 6h a 7h) e as 2 folgas/semana. Dá pausa real sempre que 3+ pessoas estiverem na loja; quando não dá, fica corrido + adicional de 50%.</span>
+      <label class="flabel">Modelo de jornada</label>
+      <div class="grp" style="margin-bottom:16px">
+        <div class="radio-row" id="mode-A" onclick="setMode('A')">
+          <span class="rdot"></span>
+          <div>
+            <b>Opção A — pausa quando possível</b>
+            <span>Mantém os horários atuais (turnos de 6h a 7h) e as 2 folgas/semana. Pausa real sempre que 3 ou mais pessoas estiverem na loja; quando não dá, fica corrido com o adicional de 50%.</span>
+          </div>
         </div>
-        <div class="modebtn" id="mode-B" onclick="setMode('B')">
-          <b>Opção B — turnos de 6h</b>
-          <span>Turnos mais curtos (a pausa exigida cai para 15 min na maioria dos dias). Em seg/qua/sáb, 1 das aberturas ainda faz uma "ponte" de 6h30 corrida (com adicional) para não deixar a loja vazia às 15h30–16h.</span>
+        <div class="radio-row" id="mode-B" onclick="setMode('B')">
+          <span class="rdot"></span>
+          <div>
+            <b>Opção B — turnos de 6h</b>
+            <span>Turnos mais curtos; a pausa exigida cai para 15 min na maioria dos dias. Em seg/qua/sáb, uma das aberturas ainda faz uma extensão de 6h30 corrida para cobrir 15h30–16h.</span>
+          </div>
         </div>
-      </div>
-      <div class="field" style="margin-top:10px">
-        <label class="chip" style="width:fit-content"><input type="checkbox" id="cfg-cct" onchange="saveConfig(false)"> Convenção coletiva autoriza reduzir a pausa de turnos &gt;6h para 30 min</label>
-        <p class="hint">Deixe desmarcado até confirmar isso com o sindicato do comércio de Cruz das Almas/BA — o padrão legal sem CCT é 1h.</p>
       </div>
 
-      <label>Funcionárias fixas (nome, cor e valor da hora — fica só neste navegador)</label>
-      <table class="team-cfg" id="team-table"></table>
-      <div class="btn-row"><button class="btn btn-ghost" onclick="addEmployee()">+ adicionar funcionária</button></div>
+      <div class="grp" style="margin-bottom:16px">
+        <div class="row">
+          <div><span class="rlabel">Convenção coletiva reduz a pausa &gt;6h para 30 min</span><div class="rhint">Deixe desligado até confirmar com o sindicato do comércio de Cruz das Almas/BA.</div></div>
+          <div class="rctrl" style="max-width:44px"><input type="checkbox" id="cfg-cct" onchange="saveConfig(false)" style="width:20px;height:20px"></div>
+        </div>
+      </div>
 
-      <div class="grid3" style="margin-top:16px">
-        <div class="field">
-          <label>Máx. fechamentos / semana</label>
-          <input type="number" id="cfg-maxFe" min="0" max="7">
-        </div>
-        <div class="field">
-          <label>Máx. aberturas / semana</label>
-          <input type="number" id="cfg-maxAb" min="0" max="7">
-        </div>
-        <div class="field">
-          <label>Folgas alvo / semana</label>
-          <input type="number" id="cfg-folgaAlvo" min="0" max="6">
-        </div>
+      <label class="flabel">Funcionárias fixas</label>
+      <div class="grp">
+        <table class="team-cfg" id="team-table"></table>
       </div>
-      <div class="grid2">
-        <div class="field">
-          <label>Diária diarista — dia de semana (R$)</label>
-          <input type="number" id="cfg-rateWeekday">
-        </div>
-        <div class="field">
-          <label>Diária diarista — fim de semana/feriado (R$)</label>
-          <input type="number" id="cfg-rateWeekend">
-        </div>
+      <div class="btn-row"><button class="btn btn-secondary" onclick="addEmployee()">Adicionar funcionária</button></div>
+
+      <label class="flabel" style="margin-top:20px">Limites e valores</label>
+      <div class="grp">
+        <div class="row"><span class="rlabel">Máx. fechamentos / semana</span><div class="rctrl"><input type="number" id="cfg-maxFe" min="0" max="7"></div></div>
+        <div class="row"><span class="rlabel">Máx. aberturas / semana</span><div class="rctrl"><input type="number" id="cfg-maxAb" min="0" max="7"></div></div>
+        <div class="row"><span class="rlabel">Folgas alvo / semana</span><div class="rctrl"><input type="number" id="cfg-folgaAlvo" min="0" max="6"></div></div>
+        <div class="row"><span class="rlabel">Diária diarista — dia de semana</span><div class="rctrl"><input type="number" id="cfg-rateWeekday"></div></div>
+        <div class="row"><span class="rlabel">Diária diarista — fim de semana/feriado</span><div class="rctrl"><input type="number" id="cfg-rateWeekend"></div></div>
       </div>
+
       <div class="btn-row">
         <button class="btn btn-primary" onclick="saveConfig(true)">Salvar regras</button>
-        <button class="btn btn-ghost" onclick="resetConfig()">Restaurar padrão</button>
+        <button class="btn btn-plain" onclick="resetConfig()">Restaurar padrão</button>
       </div>
     </div>
   </section>
 
-  <section class="card" id="card-week">
-    <div class="card-head" onclick="toggleCard('card-week')">
-      <h2>📅 Dados desta semana</h2>
-      <span class="chev">▾</span>
+  <section class="section" id="card-week">
+    <div class="section-head" onclick="toggleCard('card-week')">
+      <h2>Dados desta semana</h2>
+      <span class="chev"></span>
     </div>
-    <div class="card-body">
-      <div class="field">
-        <label>Semana (escolha qualquer dia — ajusta para a segunda-feira)</label>
-        <input type="date" id="week-start">
-      </div>
-
-      <div class="field">
-        <label>Feriado nesta semana?</label>
-        <div class="chipset" id="holiday-chips"></div>
-      </div>
-
-      <div class="grid2">
+    <div class="section-body">
+      <div class="grp">
         <div class="field">
-          <label>Previsão de calor/movimento — sábado</label>
-          <select id="heat-sat"><option value="leve">Ameno (5 pessoas)</option><option value="moderado">Moderado (5 pessoas)</option><option value="quente">Calor forte (6 pessoas)</option></select>
+          <label class="flabel">Semana</label>
+          <input type="date" id="week-start">
+          <p class="hint">Escolha qualquer dia — a ferramenta ajusta para a segunda-feira daquela semana.</p>
         </div>
         <div class="field">
-          <label>Previsão de calor/movimento — domingo</label>
-          <select id="heat-sun"><option value="leve">Ameno (5 pessoas)</option><option value="moderado">Moderado (5 pessoas)</option><option value="quente">Calor forte (6 pessoas)</option></select>
+          <label class="flabel">Feriado nesta semana</label>
+          <div class="chipset" id="holiday-chips"></div>
+        </div>
+        <div class="field">
+          <label class="flabel">Previsão de movimento — sábado</label>
+          <select class="field-input" id="heat-sat"><option value="leve">Ameno — 5 pessoas</option><option value="moderado">Moderado — 5 pessoas</option><option value="quente">Calor forte — 6 pessoas</option></select>
+        </div>
+        <div class="field">
+          <label class="flabel">Previsão de movimento — domingo</label>
+          <select class="field-input" id="heat-sun"><option value="leve">Ameno — 5 pessoas</option><option value="moderado">Moderado — 5 pessoas</option><option value="quente">Calor forte — 6 pessoas</option></select>
+        </div>
+        <div class="field">
+          <label class="flabel">Diaristas disponíveis nesta semana</label>
+          <input type="text" id="diarista-names" placeholder="Ex: Marília, Rebeca">
+          <p class="hint">Separe por vírgula. Usadas para reforçar sábado/domingo (e feriados), na ordem informada.</p>
         </div>
       </div>
 
-      <div class="field">
-        <label>Ausências (férias, atestado, folga combinada)</label>
-        <div id="absence-list"></div>
-        <button class="btn btn-ghost" onclick="addAbsenceRow()">+ adicionar ausência</button>
-      </div>
-
-      <div class="field">
-        <label>Diaristas disponíveis nesta semana</label>
-        <input type="text" id="diarista-names" placeholder="Ex: Marília, Rebeca">
-        <p class="hint">Separe por vírgula. Serão usadas para reforçar sábado/domingo (e feriados), na ordem informada.</p>
-      </div>
+      <label class="flabel" style="margin-top:20px">Ausências</label>
+      <div class="grp" id="absence-list"></div>
+      <div class="btn-row"><button class="btn btn-secondary" onclick="addAbsenceRow()">Adicionar ausência</button></div>
 
       <div class="btn-row">
         <button class="btn btn-primary" onclick="runGenerate()">Gerar escala da semana</button>
@@ -292,26 +303,18 @@ table.ponto input[type=time]{width:88px}
     </div>
   </section>
 
-  <section class="card" id="card-result" style="display:none">
-    <div class="card-head" onclick="toggleCard('card-result')">
-      <h2>📋 Escala gerada <span id="mode-badge" class="pill ok" style="margin-left:6px"></span></h2>
-      <span class="chev">▾</span>
+  <section class="section" id="card-result" style="display:none">
+    <div class="section-head" onclick="toggleCard('card-result')">
+      <h2>Escala gerada <span id="mode-badge" class="badge" style="margin-left:6px"></span></h2>
+      <span class="chev"></span>
     </div>
-    <div class="card-body">
+    <div class="section-body">
       <div id="alerts-box"></div>
 
-      <div class="summary-row" id="summary-row"></div>
+      <div class="stat-row" id="summary-row"></div>
 
-      <div class="tablewrap" style="margin-top:12px">
+      <div class="tablewrap" style="margin-top:14px">
         <table class="escala" id="escala-table"></table>
-      </div>
-
-      <div class="legend">
-        <span><i style="background:var(--ab)"></i>Abertura</span>
-        <span><i style="background:var(--int)"></i>Intermediário</span>
-        <span><i style="background:var(--fe)"></i>Fechamento</span>
-        <span><i style="background:var(--fo)"></i>Folga</span>
-        <span><i style="background:var(--di)"></i>Diarista</span>
       </div>
 
       <div class="costbar">
@@ -319,11 +322,11 @@ table.ponto input[type=time]{width:88px}
         <b id="cost-total">R$ 0</b>
       </div>
 
-      <p class="note">🟢 = pausa real dada nessa sobreposição de horário. 🔴 = turno corrido (sem pausa) — gera adicional indenizatório de 50% sobre a hora normal referente ao tempo suprimido (Art. 71 §4º CLT). Isso já entra automaticamente no relatório de folha.</p>
+      <p class="note">Pausa real dada quando havia sobreposição suficiente de horário. Onde não deu — turno corrido — gera o adicional indenizatório de 50% sobre a hora normal referente ao tempo suprimido (Art. 71 §4º CLT), já contabilizado no relatório de folha.</p>
 
       <div class="btn-row">
-        <button class="btn btn-manga" onclick="copyTable()">Copiar tabela (colar no Sheets)</button>
-        <button class="btn btn-primary" onclick="confirmWeek()">Confirmar semana (salva rotação e alimenta os relatórios)</button>
+        <button class="btn btn-secondary" onclick="copyTable()">Copiar tabela</button>
+        <button class="btn btn-primary" onclick="confirmWeek()">Confirmar semana</button>
       </div>
     </div>
   </section>
@@ -332,20 +335,22 @@ table.ponto input[type=time]{width:88px}
 
   <!-- ===================== TAB PONTO ===================== -->
   <div class="tabpage" id="tab-ponto">
-    <section class="card">
-      <div class="card-head" onclick="toggleCard('card-ponto')" id="card-ponto-head">
-        <h2>🕐 Registro de ponto do dia</h2>
-        <span class="chev">▾</span>
+    <section class="section">
+      <div class="section-head" onclick="toggleCard('card-ponto')">
+        <div><h2>Registro de ponto do dia</h2><div class="sub">Entrada, pausa e saída reais de cada funcionária</div></div>
+        <span class="chev"></span>
       </div>
-      <div class="card-body" id="card-ponto-body">
-        <div class="field">
-          <label>Data</label>
-          <input type="date" id="ponto-date">
+      <div class="section-body">
+        <div class="grp" style="margin-bottom:14px">
+          <div class="field">
+            <label class="flabel">Data</label>
+            <input type="date" id="ponto-date">
+          </div>
         </div>
         <div class="tablewrap">
           <table class="ponto" id="ponto-table"></table>
         </div>
-        <p class="hint">Os horários programados da escala confirmada aparecem pré-preenchidos em Entrada/Saída — ajuste para o horário real batido pela funcionária. Deixe Início/Fim da pausa em branco se ela não tirou pausa naquele dia (fica marcado como turno corrido no relatório). Esse registro é a prova real usada nos relatórios — quando a checagem por celular existir, ela vai preencher esses mesmos campos automaticamente.</p>
+        <p class="note">Entrada/Saída vêm pré-preenchidas com o horário programado da escala confirmada — ajuste para o horário real batido. Deixe início/fim de pausa em branco se ela não tirou pausa (conta como turno corrido no relatório). Quando o check-in por celular existir, ele alimenta esses mesmos campos automaticamente.</p>
         <div class="btn-row">
           <button class="btn btn-primary" onclick="savePonto()">Salvar ponto do dia</button>
         </div>
@@ -355,43 +360,48 @@ table.ponto input[type=time]{width:88px}
 
   <!-- ===================== TAB RELATORIO ===================== -->
   <div class="tabpage" id="tab-relatorio">
-    <section class="card">
-      <div class="card-head" onclick="toggleCard('card-relatorio')">
-        <h2>📊 Relatório por colaboradora</h2>
-        <span class="chev">▾</span>
+    <section class="section">
+      <div class="section-head" onclick="toggleCard('card-relatorio')">
+        <h2>Relatório por colaboradora</h2>
+        <span class="chev"></span>
       </div>
-      <div class="card-body">
+      <div class="section-body">
         <div class="periodbar">
-          <select id="rep-emp"></select>
-          <select id="rep-period" onchange="renderReport()">
+          <select id="rep-emp" class="field-input" style="width:auto"></select>
+          <select id="rep-period" class="field-input" style="width:auto" onchange="renderReport()">
             <option value="week">Semana</option>
             <option value="month">Mês (acumulado)</option>
           </select>
           <input type="date" id="rep-week" onchange="renderReport()">
           <input type="month" id="rep-month" style="display:none" onchange="renderReport()">
-          <button class="btn btn-ghost" onclick="renderReport()">Atualizar</button>
+          <button class="btn btn-secondary" onclick="renderReport()">Atualizar</button>
         </div>
         <div id="report-box"></div>
-        <p class="note">Este relatório é um pré-cálculo para orientar a montagem da folha — sempre revisado pelo contador antes de emitir contracheques. Fonte dos horários: ponto digital quando registrado; senão, o horário programado da escala confirmada.</p>
+        <p class="note">Pré-cálculo para orientar a montagem da folha — sempre revisado pelo contador antes de emitir contracheques. Fonte dos horários: ponto digital quando registrado; senão, o horário programado da escala confirmada.</p>
       </div>
     </section>
   </div>
 
-  <footer class="foot">Dados salvos apenas neste navegador (localStorage) · Açaí No Kilo — Cruz das Almas/BA</footer>
+  <footer class="foot">Dados salvos apenas neste navegador · Açaí No Kilo — Cruz das Almas/BA</footer>
 </div>
 
 <script>
+const ICON_CHEVRON='<svg class="ic" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+const ICON_CHECK='<svg class="ic" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+const ICON_ALERT='<svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>';
+const ICON_INFO='<svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>';
+
 const STORE_KEY='ank_escala_v1';
 const DOW_LABELS=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
 const DOW_SHORT=['SEG','TER','QUA','QUI','SEX','SÁB','DOM'];
 const CLEAN_TASKS={0:'Limpar freezers da bancada',2:'Limpar freezers da cozinha',5:'Limpeza da cozinha'};
 const DEFAULT_TEAM=[
-  {id:'maria',name:'Maria',color:'#742984',hourlyRate:0},
-  {id:'marta',name:'Marta',color:'#a040c0',hourlyRate:0},
-  {id:'mjose',name:'Maria José',color:'#F68A28',hourlyRate:0},
-  {id:'joeli',name:'Joeli',color:'#c62828',hourlyRate:0},
-  {id:'alana',name:'Alana',color:'#1565c0',hourlyRate:0},
-  {id:'duda',name:'Duda',color:'#2e7d32',hourlyRate:0},
+  {id:'maria',name:'Maria',hourlyRate:0},
+  {id:'marta',name:'Marta',hourlyRate:0},
+  {id:'mjose',name:'Maria José',hourlyRate:0},
+  {id:'joeli',name:'Joeli',hourlyRate:0},
+  {id:'alana',name:'Alana',hourlyRate:0},
+  {id:'duda',name:'Duda',hourlyRate:0},
 ];
 
 function defaultState(){
@@ -429,7 +439,7 @@ let currentResult = null;
 function toggleCard(id){ document.getElementById(id).classList.toggle('closed'); }
 function showTab(id,btn){
   document.querySelectorAll('.tabpage').forEach(p=>p.classList.remove('on'));
-  document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('nav.segmented button').forEach(b=>b.classList.remove('on'));
   document.getElementById(id).classList.add('on');
   btn.classList.add('on');
   if(id==='tab-ponto') renderPontoTable();
@@ -445,12 +455,11 @@ function setMode(m){
 }
 function renderTeamTable(){
   const tbl=document.getElementById('team-table');
-  tbl.innerHTML='<tr><th>Cor</th><th>Nome</th><th>R$/hora</th><th></th></tr>' + STATE.team.map((e,i)=>`
+  tbl.innerHTML='<tr><th>Nome</th><th>R$/hora</th><th></th></tr>' + STATE.team.map((e,i)=>`
     <tr>
-      <td><input type="color" value="${e.color}" onchange="STATE.team[${i}].color=this.value"></td>
-      <td><input type="text" value="${e.name}" onchange="STATE.team[${i}].name=this.value"></td>
+      <td><input type="text" value="${e.name}" onchange="STATE.team[${i}].name=this.value; saveState();"></td>
       <td><input type="number" step="0.01" min="0" value="${e.hourlyRate||0}" onchange="STATE.team[${i}].hourlyRate=parseFloat(this.value)||0; saveState();"></td>
-      <td><button class="iconbtn" title="Remover" onclick="removeEmployee(${i})">✕</button></td>
+      <td><button class="iconbtn" title="Remover" onclick="removeEmployee(${i})">&times;</button></td>
     </tr>`).join('');
   document.getElementById('cfg-maxFe').value=STATE.caps.maxFechamentos;
   document.getElementById('cfg-maxAb').value=STATE.caps.maxAberturas;
@@ -462,7 +471,7 @@ function renderTeamTable(){
 }
 function addEmployee(){
   const n=prompt('Nome da funcionária:'); if(!n) return;
-  STATE.team.push({id:'e'+Date.now(), name:n, color:'#'+Math.floor(Math.random()*0xffffff).toString(16).padStart(6,'0'), hourlyRate:0});
+  STATE.team.push({id:'e'+Date.now(), name:n, hourlyRate:0});
   renderTeamTable();
 }
 function removeEmployee(i){
@@ -527,7 +536,7 @@ function addAbsenceRow(empId,days){
   row.innerHTML=`
     <select onchange="syncAllAbsences()">${empOptions}</select>
     <div class="days">${DOW_SHORT.map((s,i)=>`<button type="button" class="daybtn ${days&&days.includes(i)?'on':''}" data-i="${i}" onclick="this.classList.toggle('on'); syncAllAbsences();">${s}</button>`).join('')}</div>
-    <button class="iconbtn" title="Remover" onclick="document.getElementById('${rowId}').remove(); syncAllAbsences();">✕</button>
+    <button class="iconbtn" title="Remover" onclick="document.getElementById('${rowId}').remove(); syncAllAbsences();">&times;</button>
   `;
   list.appendChild(row);
   syncAllAbsences();
@@ -614,7 +623,7 @@ function assignBreaksForDay(grid, diaristaAssignments, dow, mode, cctReduced, pr
   return results;
 }
 function recomputeAllBreaks(grid, diaristaAssignments, days, mode, cctReduced){
-  const priorityOrder = STATE.team.map(e=>e.id); // stable order; fairness rotation handled by who got ponte/break historically via history below
+  const priorityOrder = STATE.team.map(e=>e.id);
   days.forEach(day=>{
     const res = assignBreaksForDay(grid, diaristaAssignments, day.dow, mode, cctReduced, priorityOrder);
     STATE.team.forEach(e=>{
@@ -723,7 +732,6 @@ function generateSchedule(){
 
     const abChosen=pickFor(comp.ab,'ab');
     if(t.bridgeDay && mode==='B' && abChosen.length===2){
-      // rotate who takes the 6h30 "ponte" based on lowest cumulative ponte count
       abChosen.sort((a,b)=> (hist[a.id]?.ponte||0) - (hist[b.id]?.ponte||0));
       const ponteEmp=abChosen[0], normalEmp=abChosen[1];
       grid[ponteEmp.id][dow]={type:'abertura',time:t.aberturaPonte,ponte:true};
@@ -777,29 +785,29 @@ function runGenerate(){
 
 // ---------- RENDER RESULT ----------
 const TYPE_LABEL={abertura:'Abertura',intermediario:'Intermediário',fechamento:'Fechamento',folga:'Folga',ferias:'Férias',atestado:'Atestado',falta:'Falta'};
-function cellClass(type){ return {abertura:'ab',intermediario:'int',fechamento:'fe',folga:'fo',ferias:'of',atestado:'of',falta:'of'}[type]||'fo'; }
+function cellClass(type){ return type==='folga' ? 'fo' : ''; }
 function renderResult(){
   const r=currentResult;
   const tbl=document.getElementById('escala-table');
-  let head='<thead><tr><th>Dia</th>'+STATE.team.map(e=>`<th><span class="dot" style="background:${e.color};display:inline-block;margin-right:4px"></span>${e.name}</th>`).join('')+'<th>Diaristas</th></tr></thead>';
+  let head='<thead><tr><th>Dia</th>'+STATE.team.map(e=>`<th>${e.name}</th>`).join('')+'<th>Diaristas</th></tr></thead>';
   let body='<tbody>';
   r.days.forEach(day=>{
     const dow=day.dow;
-    body+=`<tr><td class="daycell">${day.label}${day.isHoliday?' 🎉':''}<span class="dt">${fmt(day.date)}</span>${r.cleaningAssignedTo[dow]?`<span class="task">${r.cleaningAssignedTo[dow].task}</span>`:''}</td>`;
+    body+=`<tr><td class="daycell">${day.label}${day.isHoliday?' · feriado':''}<span class="dt">${fmt(day.date)}</span>${r.cleaningAssignedTo[dow]?`<span class="task">${r.cleaningAssignedTo[dow].task}</span>`:''}</td>`;
     STATE.team.forEach(e=>{
       const cell=r.grid[e.id][dow]||{type:'folga',time:null};
       const cls=cellClass(cell.type);
       let brk='';
       if(cell.breakInfo && cell.breakInfo.duration>0){
         brk = cell.breakInfo.given
-          ? `<span class="brk-ok">🟢 pausa ${cell.breakInfo.duration}min ${cell.breakInfo.window?cell.breakInfo.window.join('–'):''}</span>`
-          : `<span class="brk-warn">🔴 corrido — adicional devido</span>`;
+          ? `<span class="brk-line ok">${ICON_CHECK} pausa ${cell.breakInfo.duration}min</span>`
+          : `<span class="brk-line warn">${ICON_ALERT} corrido — adicional devido</span>`;
       }
       body+=`<td>
         <select class="cell ${cls}" data-emp="${e.id}" data-dow="${dow}" onchange="editCell(this)">
           ${['abertura','intermediario','fechamento','folga','ferias','atestado','falta'].map(t2=>`<option value="${t2}" ${t2===cell.type?'selected':''}>${TYPE_LABEL[t2]}</option>`).join('')}
         </select>
-        ${cell.time?`<span class="timelabel">${cell.time}${cell.ponte?' (ponte)':''}</span>`:''}
+        ${cell.time?`<span class="timelabel">${cell.time}${cell.ponte?' · turno estendido':''}</span>`:''}
         ${brk}
       </td>`;
     });
@@ -848,11 +856,11 @@ function renderSummaryAndAlerts(){
   sumBox.innerHTML=STATE.team.map(e=>{
     const s=stats[e.id];
     const feOver=s.fe>caps.maxFechamentos, abOver=s.ab>caps.maxAberturas;
-    return `<div class="pcard">
-      <div class="nm"><span class="dot" style="background:${e.color}"></span>${e.name}</div>
-      <div class="mt ${feOver?'over':''}"><span>Fechamentos</span><b>${s.fe}/${caps.maxFechamentos}</b></div>
-      <div class="mt ${abOver?'over':''}"><span>Aberturas</span><b>${s.ab}/${caps.maxAberturas}</b></div>
-      <div class="mt"><span>Folgas</span><b>${s.folga}</b></div>
+    return `<div class="stat">
+      <div class="snm">${e.name}</div>
+      <div class="sm ${feOver?'over':''}"><span>Fechamentos</span><b>${s.fe}/${caps.maxFechamentos}</b></div>
+      <div class="sm ${abOver?'over':''}"><span>Aberturas</span><b>${s.ab}/${caps.maxAberturas}</b></div>
+      <div class="sm"><span>Folgas</span><b>${s.folga}</b></div>
     </div>`;
   }).join('');
 
@@ -881,9 +889,9 @@ function renderSummaryAndAlerts(){
 
   const box=document.getElementById('alerts-box');
   if(alerts.length===0){
-    box.innerHTML='<div class="ok-banner">✓ Escala dentro de todas as metas de cobertura e rotação.</div>';
+    box.innerHTML=`<div class="banner ok"><span class="ic">${ICON_CHECK}</span>Escala dentro de todas as metas de cobertura e rotação.</div>`;
   }else{
-    box.innerHTML='<div class="alerts">'+alerts.map(a=>`<div class="alert ${a.level==='info'?'info':''}"><span class="ic">${a.level==='info'?'ⓘ':'⚠️'}</span>${a.msg}</div>`).join('')+'</div>';
+    box.innerHTML='<div class="banner-list">'+alerts.map(a=>`<div class="banner ${a.level==='info'?'info':'danger'}"><span class="ic">${a.level==='info'?ICON_INFO:ICON_ALERT}</span>${a.msg}</div>`).join('')+'</div>';
   }
 
   let cost=0,diarDays=0;
@@ -951,7 +959,6 @@ function confirmWeek(){
 
 // ================= PONTO DIGITAL =================
 function findScheduledCell(dateStr){
-  const d=new Date(dateStr+'T00:00:00');
   const monday=mondayOf(dateStr);
   const wk=STATE.history.find(w=>w.weekStart===iso(monday));
   if(!wk) return null;
@@ -982,8 +989,8 @@ function renderPontoTable(){
     }
     const rec=saved[e.id]||{};
     body+=`<tr>
-      <td><span class="dot" style="background:${e.color};display:inline-block;margin-right:5px"></span>${e.name}</td>
-      <td style="color:var(--muted);font-size:11px">${programado}</td>
+      <td class="pname">${e.name}</td>
+      <td style="color:var(--text-2);font-size:12px">${programado}</td>
       <td><input type="time" data-emp="${e.id}" data-f="in" value="${rec.in!==undefined?rec.in:prefIn}"></td>
       <td><input type="time" data-emp="${e.id}" data-f="breakStart" value="${rec.breakStart||''}"></td>
       <td><input type="time" data-emp="${e.id}" data-f="breakEnd" value="${rec.breakEnd||''}"></td>
@@ -1023,16 +1030,15 @@ function populateReportEmployees(){
 function hoursFromRange(rangeStr){ const [s,e]=parseRange(rangeStr); return (e-s)/60; }
 
 function dayFacts(dateStr){
-  // returns {worked:bool, type, scheduledHours, actualHours, breakMissingMin, isHoliday, source}
   const monday=mondayOf(dateStr);
   const wk=STATE.history.find(w=>w.weekStart===iso(monday));
-  let dowMeta=null, cell=null;
+  let dowMeta=null;
   if(wk){ dowMeta=wk.days.find(x=>x.date===dateStr); }
   const ponto=(STATE.ponto[dateStr]||{});
   return {wk,dowMeta,ponto};
 }
 
-function computeEmployeeDay(empId,dateStr,hourlyRate){
+function computeEmployeeDay(empId,dateStr){
   const {wk,dowMeta,ponto}=dayFacts(dateStr);
   const cell = (wk && dowMeta) ? wk.perEmployee[empId]?.byDow?.[dowMeta.dow] : null;
   const p = ponto[empId];
@@ -1065,7 +1071,7 @@ function computePayrollForRange(empId, dateList, hourlyRate){
   let normalHours=0, extraHours=0, missingBreakMin=0, diasTrabalhados=0, holidaysWorked=0;
   const rows=[];
   dateList.forEach(dateStr=>{
-    const f=computeEmployeeDay(empId,dateStr,hourlyRate);
+    const f=computeEmployeeDay(empId,dateStr);
     if(f.worked){
       diasTrabalhados++;
       const normal=Math.min(f.hours,8);
@@ -1118,26 +1124,26 @@ function renderReport(){
   emps.forEach(e=>{
     const rate=e.hourlyRate||0;
     const p=computePayrollForRange(e.id,dateList,rate);
-    html+=`<div class="card" style="margin-top:14px">
-      <div class="card-head"><h2><span class="dot" style="background:${e.color}"></span> ${e.name}${rate===0?' <span class="pill warn">informe o valor da hora em Equipe &amp; regras</span>':''}</h2></div>
-      <div class="card-body">
-        <div class="grid4">
-          <div class="pcard"><div class="nm">Dias trabalhados</div><div class="mt"><b>${p.diasTrabalhados}</b></div></div>
-          <div class="pcard"><div class="nm">Horas normais</div><div class="mt"><b>${p.normalHours.toFixed(1)}h</b></div></div>
-          <div class="pcard"><div class="nm">Horas extras</div><div class="mt"><b>${p.extraHours.toFixed(1)}h</b></div></div>
-          <div class="pcard"><div class="nm">Pausa não dada</div><div class="mt"><b>${p.missingBreakMin}min</b></div></div>
+    html+=`<div class="emp-card">
+      <div class="emp-head"><h3>${e.name}</h3>${rate===0?'<span class="badge warn">informe o valor da hora</span>':''}</div>
+      <div class="emp-body">
+        <div class="stat-row" style="margin-bottom:14px">
+          <div class="stat"><div class="snm">Dias trabalhados</div><div class="sm"><span></span><b>${p.diasTrabalhados}</b></div></div>
+          <div class="stat"><div class="snm">Horas normais</div><div class="sm"><span></span><b>${p.normalHours.toFixed(1)}h</b></div></div>
+          <div class="stat"><div class="snm">Horas extras</div><div class="sm"><span></span><b>${p.extraHours.toFixed(1)}h</b></div></div>
+          <div class="stat"><div class="snm">Pausa não dada</div><div class="sm"><span></span><b>${p.missingBreakMin}min</b></div></div>
         </div>
         <div class="tablewrap">
         <table class="payroll-table">
           <tr><th>Categoria</th><th>Por quê</th><th>Valor</th></tr>
-          <tr><td>Horas normais</td><td class="why">${p.normalHours.toFixed(1)}h efetivamente trabalhadas × ${moneyBR(rate)}/h.</td><td class="val">${moneyBR(p.valorNormal)}</td></tr>
-          <tr><td>Horas extras (+50%)</td><td class="why">Toda hora além de 8h/dia ou 44h/semana tem acréscimo mínimo de 50% (Art. 7º, XVI, CF).</td><td class="val">${moneyBR(p.valorExtra)}</td></tr>
-          <tr><td>Adicional intervalo suprimido (+50%)</td><td class="why">${p.missingBreakMin} min de pausa devida e não registrada no ponto, pagos como indenização de 50% sobre a hora normal (Art. 71 §4º CLT).</td><td class="val">${moneyBR(p.valorIntervalo)}</td></tr>
-          <tr><td>DSR (descanso semanal remunerado)</td><td class="why">Quem recebe por hora tem direito ao dia de descanso pago, calculado como (remuneração normal da semana ÷ dias trabalhados) × 1 dia (Lei 605/49). Folgas além da 1ª não geram pagamento adicional.</td><td class="val">${moneyBR(p.dsr)}</td></tr>
-          <tr class="total"><td>Total do período</td><td class="why"></td><td class="val">${moneyBR(p.total)}</td></tr>
+          <tr><td class="cat">Horas normais</td><td class="why">${p.normalHours.toFixed(1)}h efetivamente trabalhadas × ${moneyBR(rate)}/h.</td><td class="val">${moneyBR(p.valorNormal)}</td></tr>
+          <tr><td class="cat">Horas extras (+50%)</td><td class="why">Toda hora além de 8h/dia ou 44h/semana tem acréscimo mínimo de 50% (Art. 7º, XVI, CF).</td><td class="val">${moneyBR(p.valorExtra)}</td></tr>
+          <tr><td class="cat">Intervalo suprimido (+50%)</td><td class="why">${p.missingBreakMin} min de pausa devida e não registrada no ponto, pagos como indenização de 50% sobre a hora normal (Art. 71 §4º CLT).</td><td class="val">${moneyBR(p.valorIntervalo)}</td></tr>
+          <tr><td class="cat">DSR</td><td class="why">Descanso semanal remunerado: (remuneração normal da semana ÷ dias trabalhados) × 1 dia (Lei 605/49). Folgas além da 1ª não geram pagamento adicional.</td><td class="val">${moneyBR(p.dsr)}</td></tr>
+          <tr class="total"><td class="cat">Total do período</td><td class="why"></td><td class="val">${moneyBR(p.total)}</td></tr>
         </table>
         </div>
-        ${p.holidaysWorked>0?`<p class="note">⚠️ ${p.holidaysWorked} feriado(s) trabalhado(s) neste período — confirme se houve folga compensatória na mesma semana. Se não houve, a Súmula 146 do TST exige pagamento em dobro do dia; esse valor não está incluído acima e precisa ser calculado à parte.</p>`:''}
+        ${p.holidaysWorked>0?`<p class="note">${p.holidaysWorked} feriado(s) trabalhado(s) neste período — confirme se houve folga compensatória na mesma semana. Se não houve, a Súmula 146 do TST exige pagamento em dobro do dia; esse valor não está incluído acima e precisa ser calculado à parte.</p>`:''}
       </div>
     </div>`;
   });
@@ -1154,8 +1160,8 @@ function renderReport(){
         }
       });
     });
-    html = `<div class="costbar" style="margin-bottom:4px"><span>Total estimado — equipe fixa (${dateList.length} dias no período)</span><b>${moneyBR(totalGeral)}</b></div>
-    <div class="costbar" style="background:var(--acai-light)"><span>Diaristas no período</span><b style="color:var(--acai)">${moneyBR(diarCost)}</b></div>` + html;
+    html = `<div class="costbar" style="margin-bottom:10px"><span>Total estimado — equipe fixa (${dateList.length} dias no período)</span><b>${moneyBR(totalGeral)}</b></div>
+    <div class="costbar" style="margin-bottom:4px"><span>Diaristas no período</span><b>${moneyBR(diarCost)}</b></div>` + html;
   }
 
   box.innerHTML=html;
@@ -1163,6 +1169,7 @@ function renderReport(){
 
 // ---------- INIT ----------
 function init(){
+  document.querySelectorAll('.chev').forEach(el=> el.innerHTML=ICON_CHEVRON );
   renderTeamTable();
   document.getElementById('week-start').value = mondayOf(new Date().toISOString().slice(0,10)).toISOString().slice(0,10);
   document.getElementById('week-start').addEventListener('change', renderHolidayChips);
