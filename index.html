@@ -418,6 +418,22 @@ const DEFAULT_TEAM=[
   {id:'alana',name:'Alana',hourlyRate:0},
   {id:'duda',name:'Duda',hourlyRate:0},
 ];
+// Marta e Maria José nunca podem ser as únicas duas na abertura ou no fechamento — nenhuma das duas sabe mexer no caixa.
+const CONFLICT_NAME_PAIRS=[['Marta','Maria José']];
+function getConflictPairIds(){
+  return CONFLICT_NAME_PAIRS.map(([n1,n2])=>{
+    const e1=STATE.team.find(e=>e.name===n1);
+    const e2=STATE.team.find(e=>e.name===n2);
+    return (e1&&e2) ? [e1.id,e2.id] : null;
+  }).filter(Boolean);
+}
+function isConflictPair(idA,idB){
+  return getConflictPairIds().some(([a,b])=> (idA===a&&idB===b)||(idA===b&&idB===a));
+}
+function dayHasConflict(grid,dow,type){
+  const ids=STATE.team.filter(e=> grid[e.id][dow] && grid[e.id][dow].type===type).map(e=>e.id);
+  return getConflictPairIds().some(([a,b])=> ids.includes(a) && ids.includes(b));
+}
 
 function defaultState(){
   return {
@@ -745,6 +761,7 @@ function generateSchedule(){
 
     function pickFor(count,capKey){
       const chosen=[];
+      const restricted=(capKey==='ab'||capKey==='fe');
       for(let i=0;i<count;i++){
         if(working.length===0) break;
         working.sort((a,b)=>{
@@ -752,7 +769,12 @@ function generateSchedule(){
           const bv=stats[b.id][capKey]+(hist[b.id]?.[capKey]||0)*0.4;
           return av-bv;
         });
-        chosen.push(working.shift());
+        let idx=0;
+        if(restricted){
+          while(idx<working.length && chosen.some(c=>isConflictPair(c.id,working[idx].id))) idx++;
+          if(idx>=working.length) idx=0;
+        }
+        chosen.push(working.splice(idx,1)[0]);
       }
       return chosen;
     }
@@ -919,6 +941,8 @@ function renderSummaryAndAlerts(){
     const diar=(currentResult.diaristaAssignments[dow]||[]).length;
     if(fe<2) alerts.push({level:'danger',msg:`${day.label}: só ${fe} pessoa(s) no fechamento — mínimo de segurança é 2.`});
     if(ab<2) alerts.push({level:'danger',msg:`${day.label}: só ${ab} pessoa(s) na abertura — abaixo do baseline de 2.`});
+    if(dayHasConflict(currentResult.grid,dow,'abertura')) alerts.push({level:'danger',msg:`${day.label}: Marta e Maria José estão sozinhas na abertura juntas — nenhuma das duas sabe abrir o caixa.`});
+    if(dayHasConflict(currentResult.grid,dow,'fechamento')) alerts.push({level:'danger',msg:`${day.label}: Marta e Maria José estão sozinhas no fechamento juntas — nenhuma das duas sabe fechar o caixa.`});
     const total=fe+ab+int+diar;
     const need=day.comp.ab+day.comp.fe+day.comp.intFixed+day.comp.extra;
     if(total<need) alerts.push({level:'info',msg:`${day.label}: ${total} pessoa(s) escaladas, meta era ${need}.`});
