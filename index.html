@@ -191,6 +191,29 @@ table.ponto .pname{font-weight:590}
 .emptybox{text-align:center;color:var(--text-3);font-size:13.5px;padding:34px 12px}
 
 svg.ic{display:block}
+
+.print-week{margin-bottom:30px}
+.print-week h3{font-size:16px;font-weight:650;margin:0 0 10px}
+table.print-table{width:100%;border-collapse:collapse;font-size:12.5px}
+table.print-table th{text-align:left;background:var(--panel-2);color:var(--text-2);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;padding:8px 10px;border-bottom:1px solid var(--border)}
+table.print-table td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.5}
+table.print-table tr:last-child td{border-bottom:none}
+table.print-table td.pv-day{white-space:nowrap;font-weight:600}
+table.print-table td.pv-off{color:var(--text-3)}
+.pv-time{color:var(--text-2);font-weight:400}
+.pv-task{color:var(--text-2);font-weight:400;font-size:11.5px}
+
+@media print{
+  .no-print, .segmented, footer.foot, header.top p { display:none !important; }
+  body{ background:#fff; color:#000; }
+  .wrap{ max-width:none; padding:0; }
+  .section-head{ cursor:default; }
+  .print-week{ break-inside:avoid; page-break-after:always; }
+  .print-week:last-child{ page-break-after:auto; }
+  table.print-table th{ background:#f0f0f0 !important; color:#000 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  table.print-table td, table.print-table th{ border-color:#ccc !important; color:#000 !important; }
+  .pv-time,.pv-task,td.pv-off{ color:#555 !important; }
+}
 </style>
 
 <div class="wrap">
@@ -203,6 +226,7 @@ svg.ic{display:block}
     <button class="on" onclick="showTab('tab-escala',this)">Escala</button>
     <button onclick="showTab('tab-ponto',this)">Ponto digital</button>
     <button onclick="showTab('tab-relatorio',this)">Relatórios</button>
+    <button onclick="showTab('tab-imprimir',this)">Imprimir</button>
   </nav>
 
   <!-- ===================== TAB ESCALA ===================== -->
@@ -398,6 +422,22 @@ svg.ic{display:block}
     </section>
   </div>
 
+  <!-- ===================== TAB IMPRIMIR ===================== -->
+  <div class="tabpage" id="tab-imprimir">
+    <section class="section">
+      <div class="section-head" onclick="toggleCard('card-imprimir')">
+        <div><h2>Escala para a equipe</h2><div class="sub">Só horários e tarefas — sem custos ou dados internos. Todas as semanas confirmadas, prontas para imprimir ou salvar como PDF.</div></div>
+        <span class="chev"></span>
+      </div>
+      <div class="section-body">
+        <div class="btn-row no-print" style="margin-top:0">
+          <button class="btn btn-primary" onclick="window.print()">Baixar / imprimir PDF</button>
+        </div>
+        <div id="print-weeks"></div>
+      </div>
+    </section>
+  </div>
+
   <footer class="foot">Dados salvos apenas neste navegador · Açaí No Kilo — Cruz das Almas/BA</footer>
 </div>
 
@@ -481,6 +521,7 @@ function showTab(id,btn){
   btn.classList.add('on');
   if(id==='tab-ponto') renderPontoTable();
   if(id==='tab-relatorio') { populateReportEmployees(); renderReport(); }
+  if(id==='tab-imprimir') renderPrintView();
 }
 
 // ---------- CONFIG UI ----------
@@ -851,6 +892,7 @@ function reconstructFromHistory(wk){
   const cleaningAssignedTo={};
   days.forEach(day=>{
     if(!CLEAN_TASKS[day.dow]) return;
+    if(wk.cleaningAssignedTo && wk.cleaningAssignedTo[day.dow]){ cleaningAssignedTo[day.dow]=wk.cleaningAssignedTo[day.dow]; return; }
     const holder=STATE.team.find(e=>{ const c=grid[e.id][day.dow]; return c && ['abertura','intermediario'].includes(c.type); });
     if(holder) cleaningAssignedTo[day.dow]={empId:holder.id, task:CLEAN_TASKS[day.dow]};
   });
@@ -1056,7 +1098,7 @@ function confirmWeek(){
   const weekStart=iso(weekStartDate);
   const daysMeta=currentResult.days.map(d=>({date:iso(d.date),dow:d.dow,isHoliday:d.isHoliday}));
   STATE.history=STATE.history.filter(w=>w.weekStart!==weekStart);
-  STATE.history.push({weekStart, mode:currentResult.mode, days:daysMeta, perEmployee, diaristaAssignments:currentResult.diaristaAssignments});
+  STATE.history.push({weekStart, mode:currentResult.mode, days:daysMeta, perEmployee, diaristaAssignments:currentResult.diaristaAssignments, cleaningAssignedTo:currentResult.cleaningAssignedTo||{}});
   if(STATE.history.length>16) STATE.history=STATE.history.slice(-16);
 
   const typed=(document.getElementById('diarista-names').value||'').split(',').map(s=>s.trim()).filter(Boolean);
@@ -1064,6 +1106,53 @@ function confirmWeek(){
 
   saveState();
   alert('Semana confirmada. A rotação da próxima escala e os relatórios já consideram isso.');
+}
+
+// ================= VISÃO PARA A EQUIPE (IMPRIMIR / PDF) =================
+// Só o que a equipe precisa saber: horário do dia e tarefa. Sem custos, metas de rotação ou avisos legais.
+function roleLabelTime(cell){
+  if(!cell || cell.type==='folga') return null;
+  const label = TYPE_LABEL[cell.type] || cell.type;
+  return cell.time ? `${label}<br><span class="pv-time">${cell.time}</span>` : label;
+}
+function renderPrintView(){
+  const box=document.getElementById('print-weeks');
+  const weeks=[...STATE.history].sort((a,b)=> a.weekStart<b.weekStart?-1:(a.weekStart>b.weekStart?1:0));
+  if(!weeks.length){
+    box.innerHTML='<div class="emptybox">Nenhuma semana confirmada ainda. Gere e confirme uma escala na aba Escala primeiro.</div>';
+    return;
+  }
+  box.innerHTML = weeks.map(wk=>{
+    const monday=new Date(wk.weekStart+'T00:00:00');
+    const sunday=addDays(monday,6);
+    const rows = wk.days.map(d=>{
+      const dateObj=new Date(d.date+'T00:00:00');
+      const cleaning = wk.cleaningAssignedTo && wk.cleaningAssignedTo[d.dow];
+      const cells = STATE.team.map(e=>{
+        const c = wk.perEmployee[e.id] && wk.perEmployee[e.id].byDow[d.dow];
+        const txt = roleLabelTime(c);
+        if(!txt) return '<td class="pv-off">Folga</td>';
+        let extra='';
+        if(cleaning && cleaning.empId===e.id) extra += `<br><span class="pv-task">${cleaning.task}</span>`;
+        if(c && c.breakInfo && c.breakInfo.given && c.breakInfo.duration>0 && c.breakInfo.window){
+          extra += `<br><span class="pv-task">pausa ${c.breakInfo.window[0]}–${c.breakInfo.window[1]}</span>`;
+        }
+        return `<td>${txt}${extra}</td>`;
+      }).join('');
+      const diar=(wk.diaristaAssignments && wk.diaristaAssignments[d.dow]) || [];
+      const diarTxt = diar.length ? diar.map(n=> n+' <span class="pv-time">'+timesFor(d.dow, wk.mode).diarista+'</span>').join('<br>') : '<span class="pv-off">—</span>';
+      return `<tr><td class="pv-day"><b>${DOW_LABELS[d.dow]}</b><br>${fmt(dateObj)}${d.isHoliday?' · feriado':''}</td>${cells}<td>${diarTxt}</td></tr>`;
+    }).join('');
+    return `<div class="print-week">
+      <h3>Semana de ${fmt(monday)} a ${fmt(sunday)}</h3>
+      <div class="tablewrap">
+      <table class="print-table">
+        <tr><th>Dia</th>${STATE.team.map(e=>`<th>${e.name}</th>`).join('')}<th>Diaristas</th></tr>
+        ${rows}
+      </table>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ================= PONTO DIGITAL =================
