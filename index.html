@@ -344,6 +344,38 @@ table.print-table td.pv-off{color:var(--text-3)}
     </div>
   </section>
 
+  <section class="section" id="card-constraints">
+    <div class="section-head" onclick="toggleCard('card-constraints')">
+      <div><h2>Restrições da equipe</h2><div class="sub">Férias, folgas pedidas, faltas, quem não pode trabalhar com quem, disponibilidade de diaristas</div></div>
+      <span class="chev"></span>
+    </div>
+    <div class="section-body">
+      <div class="grp" style="margin-bottom:14px">
+        <div class="field">
+          <label class="flabel">Descreva em texto livre</label>
+          <textarea id="constraint-input" rows="3" style="width:100%;padding:9px 11px;border:1px solid var(--border-strong);border-radius:8px;background:var(--panel);color:var(--text);font-size:14.5px;font-family:inherit;resize:vertical" placeholder="Ex: Maria está de férias de 20 a 27/08. Joeli precisa fechar na segunda 17/08. Rebeca só pode trabalhar domingo no fechamento. Marta e Duda não podem trabalhar juntas essa semana."></textarea>
+          <p class="hint">A IA lê o texto e propõe restrições estruturadas — você revisa antes de aplicar. Funciona só em ank-escala.vercel.app (precisa da função de servidor).</p>
+        </div>
+      </div>
+      <div class="btn-row" style="margin-top:0">
+        <button class="btn btn-primary" onclick="interpretConstraints()">Interpretar com IA</button>
+      </div>
+      <div id="constraint-parse-status"></div>
+
+      <div id="constraint-review" style="display:none">
+        <label class="flabel" style="margin-top:20px">Confirme antes de aplicar</label>
+        <div class="grp" id="constraint-review-list"></div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="applyParsedConstraints()">Aplicar e gerar escala</button>
+          <button class="btn btn-plain" onclick="discardParsedConstraints()">Descartar</button>
+        </div>
+      </div>
+
+      <label class="flabel" style="margin-top:20px">Restrições ativas (todas as semanas)</label>
+      <div class="grp" id="constraint-active-list"></div>
+    </div>
+  </section>
+
   <section class="section" id="card-result" style="display:none">
     <div class="section-head" onclick="toggleCard('card-result')">
       <h2>Escala gerada <span id="mode-badge" class="badge" style="margin-left:6px"></span></h2>
@@ -490,6 +522,27 @@ function dayHasUnchaperonedDiarista(grid,diaristaAssignments,dow){
   return !feIds.some(id=>chapIds.includes(id));
 }
 
+// ---------- RESTRIÇÕES INTELIGENTES (pontuais, por período) ----------
+// STATE.constraints: [{id, type, note, createdAt, dateStart, dateEnd, empId?, empIds?, shiftType?, diaristaName?, allowedDows?}]
+// type 'absence': empId ausente (férias/folga/falta) de dateStart a dateEnd (inclusive)
+// type 'forced_shift': empId precisa estar em shiftType ('abertura'|'fechamento'|'intermediario') em cada dia do período
+// type 'no_pair': empIds (par) não podem estar juntas na abertura nem no fechamento no período
+// type 'diarista_limit': diaristaName só pode ser escalada nos allowedDows (0=seg..6=dom) dentro do período
+function activeConstraintsForWeek(monday){
+  const start=iso(monday), end=iso(addDays(monday,6));
+  return (STATE.constraints||[]).filter(c=> c.dateStart && c.dateEnd && !(c.dateEnd<start || c.dateStart>end));
+}
+function empName(id){ const e=STATE.team.find(x=>x.id===id); return e?e.name:id; }
+function constraintDescribe(c){
+  const range = c.dateStart===c.dateEnd? fmtISO(c.dateStart) : fmtISO(c.dateStart)+'–'+fmtISO(c.dateEnd);
+  if(c.type==='absence') return `${empName(c.empId)} ausente ${range}`;
+  if(c.type==='forced_shift') return `${empName(c.empId)} precisa estar em ${TYPE_LABEL[c.shiftType]||c.shiftType} — ${range}`;
+  if(c.type==='no_pair') return `${empName(c.empIds[0])} e ${empName(c.empIds[1])} não podem trabalhar juntas — ${range}`;
+  if(c.type==='diarista_limit') return `${c.diaristaName} só disponível ${(c.allowedDows||[]).map(d=>DOW_SHORT[d]).join('/')} — ${range}`;
+  return c.note||'(restrição sem descrição)';
+}
+function fmtISO(s){ const d=new Date(s+'T00:00:00'); return fmt(d); }
+
 function defaultState(){
   return {
     team: DEFAULT_TEAM.map(e=>({...e})),
@@ -500,7 +553,8 @@ function defaultState(){
     cctIntervaloReduzido:false,
     coverage: {extraByDow:{0:1,1:0,2:0,3:0,4:0}, weekendExtra:{leve:1,moderado:1,quente:2}},
     history: [],
-    ponto: {}
+    ponto: {},
+    constraints: []
   };
 }
 function loadState(){
@@ -517,7 +571,8 @@ function loadState(){
         weekendExtra:{...d.coverage.weekendExtra,...((parsed.coverage||{}).weekendExtra||{})}
       },
       team:(parsed.team||d.team).map(e=>({hourlyRate:0,...e})),
-      ponto: parsed.ponto||{}
+      ponto: parsed.ponto||{},
+      constraints: parsed.constraints||[]
     };
   }catch(e){ return defaultState(); }
 }
@@ -782,24 +837,68 @@ function generateSchedule(){
   const cleaningAssignedTo={};
   const alerts=[];
 
+  // ---- restrições ativas nesta semana ----
+  const activeConstraints = activeConstraintsForWeek(monday);
+  const constraintAbsenceDows={}; // empId -> Set(dow)
+  const forcedShiftByDow={}; // dow -> [{empId,shiftType}]
+  const tempPairIds=[]; // [ [idA,idB], ... ]
+  const diaristaLimits={}; // nameLower -> Set(dow allowed)
+  activeConstraints.forEach(c=>{
+    if(c.type==='absence' && c.empId){
+      days.forEach(day=>{ const ds=iso(day.date); if(ds>=c.dateStart && ds<=c.dateEnd){ (constraintAbsenceDows[c.empId]=constraintAbsenceDows[c.empId]||new Set()).add(day.dow); } });
+    } else if(c.type==='forced_shift' && c.empId && c.shiftType){
+      days.forEach(day=>{ const ds=iso(day.date); if(ds>=c.dateStart && ds<=c.dateEnd){ (forcedShiftByDow[day.dow]=forcedShiftByDow[day.dow]||[]).push({empId:c.empId,shiftType:c.shiftType}); } });
+    } else if(c.type==='no_pair' && c.empIds && c.empIds.length===2){
+      tempPairIds.push(c.empIds);
+    } else if(c.type==='diarista_limit' && c.diaristaName){
+      const key=c.diaristaName.trim().toLowerCase();
+      diaristaLimits[key]=diaristaLimits[key]||new Set();
+      (c.allowedDows||[]).forEach(d=>diaristaLimits[key].add(d));
+    }
+  });
+  function isTempConflictPair(idA,idB){ return tempPairIds.some(([a,b])=> (idA===a&&idB===b)||(idA===b&&idB===a)); }
+
   const diaristaNames=(document.getElementById('diarista-names').value||'').split(',').map(s=>s.trim()).filter(Boolean);
   let cursor=0;
-  function nextDiarista(){ if(!diaristaNames.length) return null; return diaristaNames[cursor++ % diaristaNames.length]; }
+  function nextDiarista(dow){
+    if(!diaristaNames.length) return null;
+    const allowedToday = diaristaNames.filter(n=>{ const lim=diaristaLimits[n.trim().toLowerCase()]; return !lim || lim.has(dow); });
+    if(!allowedToday.length) return null;
+    return allowedToday[cursor++ % allowedToday.length];
+  }
 
   for(const day of days){
     const {dow,comp}=day;
     const t=timesFor(dow,mode);
-    const forced = team.filter(e=> (weekInput.absences[e.id]||[]).includes(dow));
+    const forced = team.filter(e=> (weekInput.absences[e.id]||[]).includes(dow) || (constraintAbsenceDows[e.id] && constraintAbsenceDows[e.id].has(dow)));
     forced.forEach(e=>{ grid[e.id][dow]={type:'folga',time:null,note:'ausência'}; stats[e.id].folga++; });
-    const availableToday = team.filter(e=>!forced.includes(e));
+    let availableToday = team.filter(e=>!forced.includes(e));
+
+    // aplica turnos forçados por restrição (ex.: "Joeli precisa fechar segunda") antes de sortear folga/vagas
+    const forcedCountByType={abertura:0,fechamento:0,intermediario:0};
+    (forcedShiftByDow[dow]||[]).forEach(f=>{
+      const emp=availableToday.find(e=>e.id===f.empId);
+      if(!emp){
+        if(forced.some(e=>e.id===f.empId)) alerts.push({level:'info',msg:`${day.label}: restrição pedia ${empName(f.empId)} em ${TYPE_LABEL[f.shiftType]||f.shiftType}, mas ela está ausente nesse dia — ignorado.`});
+        return;
+      }
+      const timeMap={abertura:t.abertura,fechamento:t.fechamento,intermediario:t.intermediario||t.fechamento};
+      grid[emp.id][dow]={type:f.shiftType,time:timeMap[f.shiftType]};
+      stats[emp.id][f.shiftType==='abertura'?'ab':f.shiftType==='fechamento'?'fe':'int']++;
+      forcedCountByType[f.shiftType]=(forcedCountByType[f.shiftType]||0)+1;
+      availableToday=availableToday.filter(e=>e.id!==emp.id);
+    });
 
     let diaristaAssignedCount=0; const todays=[];
     if(comp.extra>0 && (dow===5 || dow===6 || day.isHoliday)){
-      for(let i=0;i<comp.extra;i++){ const nm=nextDiarista(); if(nm){ todays.push(nm); diaristaAssignedCount++; } }
+      for(let i=0;i<comp.extra;i++){ const nm=nextDiarista(dow); if(nm){ todays.push(nm); diaristaAssignedCount++; } }
     }
     diaristaAssignments[dow]=todays;
     const extraFallbackFixed = comp.extra - diaristaAssignedCount;
-    const requiredFixed = comp.ab + comp.fe + comp.intFixed + extraFallbackFixed;
+    const abNeeded=Math.max(0,comp.ab-forcedCountByType.abertura);
+    const feNeeded=Math.max(0,comp.fe-forcedCountByType.fechamento);
+    const intFixedNeeded=Math.max(0,comp.intFixed-forcedCountByType.intermediario);
+    const requiredFixed = abNeeded + feNeeded + intFixedNeeded + extraFallbackFixed;
 
     const folgaSlotsToday = Math.max(0, availableToday.length - requiredFixed);
     const candidates = availableToday.filter(e=> stats[e.id].folga < caps.folgaTarget);
@@ -829,7 +928,7 @@ function generateSchedule(){
         let idx=0;
         const mustBeChaperoneNow = chaperoneNeeded && i===count-1 && !chosen.some(c=>isChaperone(c.id));
         while(idx<working.length && (
-          (restricted && chosen.some(c=>isConflictPair(c.id,working[idx].id))) ||
+          (restricted && chosen.some(c=>isConflictPair(c.id,working[idx].id) || isTempConflictPair(c.id,working[idx].id))) ||
           (mustBeChaperoneNow && !isChaperone(working[idx].id))
         )) idx++;
         if(idx>=working.length) idx=0;
@@ -838,13 +937,13 @@ function generateSchedule(){
       return chosen;
     }
 
-    const feChosen=pickFor(comp.fe,'fe');
+    const feChosen=pickFor(feNeeded,'fe');
     feChosen.forEach(e=>{ grid[e.id][dow]={type:'fechamento',time:t.fechamento}; stats[e.id].fe++; });
-    if(feChosen.length < comp.fe){
-      alerts.push({level:'danger',msg:`${day.label}: fechamento ficaria com só ${feChosen.length} pessoa(s) — mínimo de segurança é 2.`});
+    if(feChosen.length+forcedCountByType.fechamento < comp.fe){
+      alerts.push({level:'danger',msg:`${day.label}: fechamento ficaria com só ${feChosen.length+forcedCountByType.fechamento} pessoa(s) — mínimo de segurança é 2.`});
     }
 
-    const abChosen=pickFor(comp.ab,'ab');
+    const abChosen=pickFor(abNeeded,'ab');
     if(t.bridgeDay && mode==='B' && abChosen.length===2){
       abChosen.sort((a,b)=> (hist[a.id]?.ponte||0) - (hist[b.id]?.ponte||0));
       const ponteEmp=abChosen[0], normalEmp=abChosen[1];
@@ -855,7 +954,7 @@ function generateSchedule(){
       abChosen.forEach(e=>{ grid[e.id][dow]={type:'abertura',time:t.abertura}; stats[e.id].ab++; });
     }
 
-    const intCount=comp.intFixed+extraFallbackFixed;
+    const intCount=intFixedNeeded+extraFallbackFixed;
     const intChosen=pickFor(intCount,'int');
     intChosen.forEach(e=>{ grid[e.id][dow]={type:'intermediario',time:t.intermediario||t.fechamento}; stats[e.id].int++; });
 
@@ -1029,6 +1128,12 @@ function renderSummaryAndAlerts(){
   if(currentResult.fromHistory){
     alerts.push({level:'ok',msg:'Semana já confirmada — mostrando o que foi salvo (não recalculado). Use "Gerar do zero" para descartar e recalcular.'});
   }
+  const weekMonday = mondayOf(document.getElementById('week-start').value);
+  const tempPairIdsForAlert = activeConstraintsForWeek(weekMonday).filter(c=>c.type==='no_pair').map(c=>c.empIds);
+  function dayHasTempConflict(grid,dow,type){
+    const ids=STATE.team.filter(e=> grid[e.id][dow] && grid[e.id][dow].type===type).map(e=>e.id);
+    return tempPairIdsForAlert.find(([a,b])=> ids.includes(a) && ids.includes(b));
+  }
   currentResult.days.forEach(day=>{
     const dow=day.dow;
     let fe=0,ab=0,int=0;
@@ -1039,6 +1144,10 @@ function renderSummaryAndAlerts(){
     if(ab<2) alerts.push({level:'danger',msg:`${day.label}: só ${ab} pessoa(s) na abertura — abaixo do baseline de 2.`});
     if(dayHasConflict(currentResult.grid,dow,'abertura')) alerts.push({level:'danger',msg:`${day.label}: Marta e Maria José estão sozinhas na abertura juntas — nenhuma das duas sabe abrir o caixa.`});
     if(dayHasConflict(currentResult.grid,dow,'fechamento')) alerts.push({level:'danger',msg:`${day.label}: Marta e Maria José estão sozinhas no fechamento juntas — nenhuma das duas sabe fechar o caixa.`});
+    ['abertura','fechamento'].forEach(tp=>{
+      const pair=dayHasTempConflict(currentResult.grid,dow,tp);
+      if(pair) alerts.push({level:'danger',msg:`${day.label}: ${empName(pair[0])} e ${empName(pair[1])} estão juntas em ${TYPE_LABEL[tp]} — restrição pede que não trabalhem juntas.`});
+    });
     if(dayHasUnchaperonedDiarista(currentResult.grid,currentResult.diaristaAssignments,dow)) alerts.push({level:'danger',msg:`${day.label}: diarista no fechamento sem a companhia de Maria, Alana, Joeli ou Duda.`});
     const total=fe+ab+int+diar;
     const need=day.comp.ab+day.comp.fe+day.comp.intFixed+day.comp.extra;
@@ -1124,6 +1233,83 @@ function confirmWeek(){
 
   saveState();
   alert('Semana confirmada. A rotação da próxima escala e os relatórios já consideram isso.');
+}
+
+// ================= RESTRIÇÕES INTELIGENTES (IA) =================
+function renderActiveConstraints(){
+  const box=document.getElementById('constraint-active-list');
+  if(!STATE.constraints||!STATE.constraints.length){ box.innerHTML='<div class="emptybox">Nenhuma restrição cadastrada.</div>'; return; }
+  const sorted=[...STATE.constraints].sort((a,b)=> a.dateStart<b.dateStart?-1:(a.dateStart>b.dateStart?1:0));
+  box.innerHTML = sorted.map(c=>`
+    <div class="row">
+      <span class="rlabel">${constraintDescribe(c)}</span>
+      <button class="iconbtn" title="Remover" onclick="removeConstraint('${c.id}')">&times;</button>
+    </div>`).join('');
+}
+function removeConstraint(id){
+  STATE.constraints = STATE.constraints.filter(c=>c.id!==id);
+  saveState(); renderActiveConstraints();
+}
+
+let pendingParsed = [];
+async function interpretConstraints(){
+  const text=document.getElementById('constraint-input').value.trim();
+  const status=document.getElementById('constraint-parse-status');
+  if(!text){ status.innerHTML='<p class="hint" style="color:var(--danger)">Escreva algo primeiro.</p>'; return; }
+  status.innerHTML='<p class="hint">Interpretando…</p>';
+  const monday=mondayOf(document.getElementById('week-start').value || iso(new Date()));
+  try{
+    const res = await fetch('/api/interpret-constraints', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        text,
+        today: iso(new Date()),
+        weekStart: iso(monday),
+        team: STATE.team.map(e=>({id:e.id,name:e.name})),
+        diaristaPool: STATE.diaristaPool
+      })
+    });
+    if(!res.ok) throw new Error('http '+res.status);
+    const data = await res.json();
+    if(!data.constraints || !data.constraints.length){
+      status.innerHTML='<p class="hint">A IA não encontrou nenhuma restrição clara nesse texto. Tente ser mais específico (nome + o que muda + data).</p>';
+      return;
+    }
+    pendingParsed = data.constraints.map(c=>({...c, id:'c'+Date.now()+Math.floor(Math.random()*1000)}));
+    renderParsedReview();
+    status.innerHTML='';
+  }catch(err){
+    status.innerHTML = `<div class="banner danger"><span class="ic">${ICON_ALERT}</span>Não consegui interpretar agora — esse recurso só funciona publicado em ank-escala.vercel.app (precisa da função de servidor com a chave da IA configurada). Você pode remover essa seção do relato e tentar de novo lá.</div>`;
+  }
+}
+function renderParsedReview(){
+  const wrap=document.getElementById('constraint-review');
+  const list=document.getElementById('constraint-review-list');
+  if(!pendingParsed.length){ wrap.style.display='none'; return; }
+  wrap.style.display='';
+  list.innerHTML = pendingParsed.map(c=>`
+    <div class="row">
+      <span class="rlabel">${constraintDescribe(c)}</span>
+      <button class="iconbtn" title="Remover desta leva" onclick="removePending('${c.id}')">&times;</button>
+    </div>`).join('');
+}
+function removePending(id){ pendingParsed=pendingParsed.filter(c=>c.id!==id); renderParsedReview(); }
+function discardParsedConstraints(){
+  pendingParsed=[];
+  renderParsedReview();
+  document.getElementById('constraint-input').value='';
+  document.getElementById('constraint-parse-status').innerHTML='';
+}
+function applyParsedConstraints(){
+  if(!pendingParsed.length) return;
+  STATE.constraints = (STATE.constraints||[]).concat(pendingParsed);
+  pendingParsed=[];
+  saveState();
+  renderActiveConstraints();
+  renderParsedReview();
+  document.getElementById('constraint-input').value='';
+  document.getElementById('constraint-parse-status').innerHTML='<div class="banner ok"><span class="ic">'+ICON_CHECK+'</span>Restrições aplicadas — gerando a escala de novo.</div>';
+  runGenerate(true);
 }
 
 // ================= VISÃO PARA A EQUIPE (IMPRIMIR / PDF) =================
@@ -1392,6 +1578,7 @@ function init(){
   renderHolidayChips();
   addAbsenceRow();
   document.getElementById('diarista-names').value = STATE.diaristaPool.join(', ');
+  renderActiveConstraints();
 }
 init();
 </script>
