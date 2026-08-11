@@ -341,6 +341,7 @@ svg.ic{display:block}
 
       <div class="btn-row">
         <button class="btn btn-secondary" onclick="copyTable()">Copiar tabela</button>
+        <button class="btn btn-plain" onclick="runGenerate(true)">Gerar do zero (ignora confirmação salva)</button>
         <button class="btn btn-primary" onclick="confirmWeek()">Confirmar semana</button>
       </div>
     </div>
@@ -826,11 +827,43 @@ function generateSchedule(){
   return {days,grid,stats,alerts,diaristaAssignments,cleaningAssignedTo,mode};
 }
 
-function runGenerate(){
+// Reconstrói o resultado exibível a partir de uma semana já confirmada no histórico,
+// em vez de recalcular do zero (o que poderia divergir do que foi de fato confirmado).
+function reconstructFromHistory(wk){
+  const days = wk.days.map(d=>({
+    dow:d.dow, label:DOW_LABELS[d.dow], date:new Date(d.date+'T00:00:00'), isHoliday:d.isHoliday,
+    heat:null, comp:dayComposition(d.dow,d.isHoliday,'moderado')
+  }));
+  const grid={};
+  STATE.team.forEach(e=>{
+    grid[e.id]={};
+    const src=wk.perEmployee[e.id];
+    days.forEach(day=>{
+      const c=src && src.byDow[day.dow];
+      grid[e.id][day.dow]= c ? {...c} : {type:'folga',time:null};
+    });
+  });
+  const stats={};
+  STATE.team.forEach(e=>{
+    const t=(wk.perEmployee[e.id]||{}).totals||{};
+    stats[e.id]={ab:t.ab||0,fe:t.fe||0,int:t.int||0,folga:t.folga||0,ponte:t.ponte||0};
+  });
+  const cleaningAssignedTo={};
+  days.forEach(day=>{
+    if(!CLEAN_TASKS[day.dow]) return;
+    const holder=STATE.team.find(e=>{ const c=grid[e.id][day.dow]; return c && ['abertura','intermediario'].includes(c.type); });
+    if(holder) cleaningAssignedTo[day.dow]={empId:holder.id, task:CLEAN_TASKS[day.dow]};
+  });
+  return {days, grid, stats, alerts:[], diaristaAssignments: wk.diaristaAssignments||{}, cleaningAssignedTo, mode: wk.mode, fromHistory:true};
+}
+
+function runGenerate(forceNew){
   if(!document.getElementById('week-start').value){ alert('Escolha a data da semana primeiro.'); return; }
   saveConfig(false);
   syncAllAbsences();
-  currentResult = generateSchedule();
+  const weekStart = iso(mondayOf(document.getElementById('week-start').value));
+  const existing = STATE.history.find(w=>w.weekStart===weekStart);
+  currentResult = (existing && !forceNew) ? reconstructFromHistory(existing) : generateSchedule();
   document.getElementById('card-result').style.display='';
   document.getElementById('card-result').classList.remove('closed');
   document.getElementById('mode-badge').textContent = 'Opção '+currentResult.mode;
@@ -934,6 +967,9 @@ function renderSummaryAndAlerts(){
   }).join('');
 
   const alerts=[];
+  if(currentResult.fromHistory){
+    alerts.push({level:'ok',msg:'Semana já confirmada — mostrando o que foi salvo (não recalculado). Use "Gerar do zero" para descartar e recalcular.'});
+  }
   currentResult.days.forEach(day=>{
     const dow=day.dow;
     let fe=0,ab=0,int=0;
@@ -963,7 +999,8 @@ function renderSummaryAndAlerts(){
   if(alerts.length===0){
     box.innerHTML=`<div class="banner ok"><span class="ic">${ICON_CHECK}</span>Escala dentro de todas as metas de cobertura e rotação.</div>`;
   }else{
-    box.innerHTML='<div class="banner-list">'+alerts.map(a=>`<div class="banner ${a.level==='info'?'info':'danger'}"><span class="ic">${a.level==='info'?ICON_INFO:ICON_ALERT}</span>${a.msg}</div>`).join('')+'</div>';
+    const iconFor=l=> l==='ok'?ICON_CHECK : l==='info'?ICON_INFO : ICON_ALERT;
+    box.innerHTML='<div class="banner-list">'+alerts.map(a=>`<div class="banner ${a.level}"><span class="ic">${iconFor(a.level)}</span>${a.msg}</div>`).join('')+'</div>';
   }
 
   let cost=0,diarDays=0;
