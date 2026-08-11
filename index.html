@@ -476,6 +476,20 @@ function dayHasConflict(grid,dow,type){
   return getConflictPairIds().some(([a,b])=> ids.includes(a) && ids.includes(b));
 }
 
+// Diarista nunca abre/fecha sozinha ou só com outra(s) diarista(s) — precisa de Maria, Alana, Joeli ou Duda junto.
+const CHAPERONE_NAMES=['Maria','Alana','Joeli','Duda'];
+function getChaperoneIds(){
+  return STATE.team.filter(e=>CHAPERONE_NAMES.includes(e.name)).map(e=>e.id);
+}
+function isChaperone(id){ return getChaperoneIds().includes(id); }
+function dayHasUnchaperonedDiarista(grid,diaristaAssignments,dow){
+  const diar=(diaristaAssignments[dow]||[]).length;
+  if(diar===0) return false;
+  const chapIds=getChaperoneIds();
+  const feIds=STATE.team.filter(e=> grid[e.id][dow] && grid[e.id][dow].type==='fechamento').map(e=>e.id);
+  return !feIds.some(id=>chapIds.includes(id));
+}
+
 function defaultState(){
   return {
     team: DEFAULT_TEAM.map(e=>({...e})),
@@ -804,6 +818,7 @@ function generateSchedule(){
     function pickFor(count,capKey){
       const chosen=[];
       const restricted=(capKey==='ab'||capKey==='fe');
+      const chaperoneNeeded=(capKey==='fe') && (diaristaAssignments[dow]||[]).length>0;
       for(let i=0;i<count;i++){
         if(working.length===0) break;
         working.sort((a,b)=>{
@@ -812,10 +827,12 @@ function generateSchedule(){
           return av-bv;
         });
         let idx=0;
-        if(restricted){
-          while(idx<working.length && chosen.some(c=>isConflictPair(c.id,working[idx].id))) idx++;
-          if(idx>=working.length) idx=0;
-        }
+        const mustBeChaperoneNow = chaperoneNeeded && i===count-1 && !chosen.some(c=>isChaperone(c.id));
+        while(idx<working.length && (
+          (restricted && chosen.some(c=>isConflictPair(c.id,working[idx].id))) ||
+          (mustBeChaperoneNow && !isChaperone(working[idx].id))
+        )) idx++;
+        if(idx>=working.length) idx=0;
         chosen.push(working.splice(idx,1)[0]);
       }
       return chosen;
@@ -1022,6 +1039,7 @@ function renderSummaryAndAlerts(){
     if(ab<2) alerts.push({level:'danger',msg:`${day.label}: só ${ab} pessoa(s) na abertura — abaixo do baseline de 2.`});
     if(dayHasConflict(currentResult.grid,dow,'abertura')) alerts.push({level:'danger',msg:`${day.label}: Marta e Maria José estão sozinhas na abertura juntas — nenhuma das duas sabe abrir o caixa.`});
     if(dayHasConflict(currentResult.grid,dow,'fechamento')) alerts.push({level:'danger',msg:`${day.label}: Marta e Maria José estão sozinhas no fechamento juntas — nenhuma das duas sabe fechar o caixa.`});
+    if(dayHasUnchaperonedDiarista(currentResult.grid,currentResult.diaristaAssignments,dow)) alerts.push({level:'danger',msg:`${day.label}: diarista no fechamento sem a companhia de Maria, Alana, Joeli ou Duda.`});
     const total=fe+ab+int+diar;
     const need=day.comp.ab+day.comp.fe+day.comp.intFixed+day.comp.extra;
     if(total<need) alerts.push({level:'info',msg:`${day.label}: ${total} pessoa(s) escaladas, meta era ${need}.`});
