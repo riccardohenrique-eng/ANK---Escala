@@ -939,7 +939,8 @@ function renderSummaryAndAlerts(){
     let fe=0,ab=0,int=0;
     STATE.team.forEach(e=>{ const c=currentResult.grid[e.id][dow]; if(c?.type==='fechamento')fe++; if(c?.type==='abertura')ab++; if(c?.type==='intermediario')int++; });
     const diar=(currentResult.diaristaAssignments[dow]||[]).length;
-    if(fe<2) alerts.push({level:'danger',msg:`${day.label}: só ${fe} pessoa(s) no fechamento — mínimo de segurança é 2.`});
+    const feComDiarista=fe+diar;
+    if(feComDiarista<2) alerts.push({level:'danger',msg:`${day.label}: só ${feComDiarista} pessoa(s) no fechamento (fixas + diaristas) — mínimo de segurança é 2.`});
     if(ab<2) alerts.push({level:'danger',msg:`${day.label}: só ${ab} pessoa(s) na abertura — abaixo do baseline de 2.`});
     if(dayHasConflict(currentResult.grid,dow,'abertura')) alerts.push({level:'danger',msg:`${day.label}: Marta e Maria José estão sozinhas na abertura juntas — nenhuma das duas sabe abrir o caixa.`});
     if(dayHasConflict(currentResult.grid,dow,'fechamento')) alerts.push({level:'danger',msg:`${day.label}: Marta e Maria José estão sozinhas no fechamento juntas — nenhuma das duas sabe fechar o caixa.`});
