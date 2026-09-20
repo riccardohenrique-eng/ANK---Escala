@@ -538,6 +538,7 @@ function fmtISO(s){ const d=new Date(s+'T00:00:00'); return fmt(d); }
 
 function defaultState(){
   return {
+    _updatedAt: 0,
     team: DEFAULT_TEAM.map(e=>({...e})),
     diaristaPool: ['Marília','Rebeca'],
     caps: {maxFechamentos:2, maxAberturas:3, folgaTarget:2},
@@ -580,7 +581,39 @@ function loadState(){
     };
   }catch(e){ return defaultState(); }
 }
-function saveState(){ localStorage.setItem(STORE_KEY, JSON.stringify(STATE)); }
+function saveState(){
+  STATE._updatedAt = Date.now();
+  localStorage.setItem(STORE_KEY, JSON.stringify(STATE));
+  syncStateToServer();
+}
+// ---------- SINCRONIZAÇÃO COM O SERVIDOR (Vercel KV) ----------
+// localStorage continua sendo a cópia local instantânea (funciona offline e em deploys
+// estáticos sem backend, como GitHub Pages/Artifact); /api/state é a fonte única de verdade
+// quando disponível, pra sincronizar entre navegadores/dispositivos. Falha silenciosa e
+// gracioso se a rota não existir ou o KV ainda não estiver conectado — mesmo padrão já usado
+// pro /api/interpret-constraints.
+function syncStateToServer(){
+  fetch('/api/state', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(STATE)
+  }).catch(()=>{});
+}
+async function syncStateFromServerOnLoad(){
+  try{
+    const res = await fetch('/api/state');
+    if(!res.ok) return;
+    const data = await res.json();
+    if(!data.state) return;
+    if((data.state._updatedAt||0) > (STATE._updatedAt||0)){
+      STATE = data.state;
+      localStorage.setItem(STORE_KEY, JSON.stringify(STATE));
+      renderTeamTable();
+      document.getElementById('diarista-names').value = STATE.diaristaPool.join(', ');
+      renderActiveConstraints();
+    }
+  }catch(e){}
+}
 let STATE = loadState();
 
 let weekInput = { holidays:[], absences:{} };
@@ -1793,6 +1826,7 @@ function init(){
   addAbsenceRow();
   document.getElementById('diarista-names').value = STATE.diaristaPool.join(', ');
   renderActiveConstraints();
+  syncStateFromServerOnLoad();
 }
 init();
 </script>
