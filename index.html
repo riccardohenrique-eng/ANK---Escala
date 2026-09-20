@@ -315,6 +315,7 @@ table.print-table td.pv-off{color:var(--text-3)}
           <label class="flabel">Semana</label>
           <input type="date" id="week-start">
           <p class="hint">Escolha qualquer dia — a ferramenta ajusta para a segunda-feira daquela semana.</p>
+          <p class="hint" id="week-range-label" style="font-weight:600;color:var(--text)"></p>
         </div>
         <div class="field">
           <label class="flabel">Feriado nesta semana</label>
@@ -485,12 +486,12 @@ const DOW_LABELS=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Doming
 const DOW_SHORT=['SEG','TER','QUA','QUI','SEX','SÁB','DOM'];
 const CLEAN_TASKS={0:'Limpar freezers da bancada',2:'Limpar freezers da cozinha',5:'Limpeza da cozinha'};
 const DEFAULT_TEAM=[
-  {id:'maria',name:'Maria',hourlyRate:0,employmentType:'mensalista',weekendOnly:true,maxWeeklyHours:21,monthlySalary:2175},
-  {id:'marta',name:'Marta',hourlyRate:0,employmentType:'horista'},
-  {id:'mjose',name:'Maria José',hourlyRate:0,employmentType:'horista'},
-  {id:'joeli',name:'Joeli',hourlyRate:0,employmentType:'horista'},
-  {id:'alana',name:'Alana',hourlyRate:0,employmentType:'horista'},
-  {id:'duda',name:'Duda',hourlyRate:0,employmentType:'horista'},
+  {id:'maria',name:'Maria',hourlyRate:0,employmentType:'mensalista',weekendOnly:true,maxWeeklyHours:21,monthlySalary:2175,podeOperarCaixa:false},
+  {id:'marta',name:'Marta',hourlyRate:0,employmentType:'horista',podeOperarCaixa:false},
+  {id:'mjose',name:'Maria José',hourlyRate:0,employmentType:'horista',podeOperarCaixa:false},
+  {id:'joeli',name:'Joeli',hourlyRate:0,employmentType:'horista',podeOperarCaixa:true},
+  {id:'alana',name:'Alana',hourlyRate:0,employmentType:'horista',podeOperarCaixa:true},
+  {id:'duda',name:'Duda',hourlyRate:0,employmentType:'horista',podeOperarCaixa:true},
 ];
 // Marta e Maria José nunca podem ser as únicas duas na abertura ou no fechamento — nenhuma das duas sabe mexer no caixa.
 const CONFLICT_NAME_PAIRS=[['Marta','Maria José']];
@@ -509,10 +510,10 @@ function dayHasConflict(grid,dow,type){
   return getConflictPairIds().some(([a,b])=> ids.includes(a) && ids.includes(b));
 }
 
-// Diarista nunca abre/fecha sozinha ou só com outra(s) diarista(s) — precisa de Maria, Alana, Joeli ou Duda junto.
-const CHAPERONE_NAMES=['Alana','Joeli','Duda']; // Maria (supervisora, mensalista) não faz fechamento — não conta mais como acompanhante ali.
+// Diarista nunca abre/fecha sozinha ou só com outra(s) diarista(s) — precisa de alguém que sabe operar o caixa junto.
+// Atributo por funcionária (podeOperarCaixa) em vez de lista fixa de nomes, pra se adaptar a mudanças de equipe.
 function getChaperoneIds(){
-  return STATE.team.filter(e=>CHAPERONE_NAMES.includes(e.name)).map(e=>e.id);
+  return STATE.team.filter(e=>e.podeOperarCaixa).map(e=>e.id);
 }
 function isChaperone(id){ return getChaperoneIds().includes(id); }
 function dayHasUnchaperonedDiarista(grid,diaristaAssignments,dow){
@@ -572,10 +573,14 @@ function loadState(){
         weekendExtra:{...d.coverage.weekendExtra,...((parsed.coverage||{}).weekendExtra||{})}
       },
       team:(parsed.team||d.team).map(e=>{
-        const withDefaults={hourlyRate:0,employmentType:'horista',weekendOnly:false,maxWeeklyHours:null,monthlySalary:0,...e};
+        const withDefaults={hourlyRate:0,employmentType:'horista',weekendOnly:false,maxWeeklyHours:null,monthlySalary:0,podeOperarCaixa:false,...e};
         if(!e.employmentType && withDefaults.name==='Maria'){
           // migração automática: a Maria (supervisora) sempre foi mensalista com teto de 21h/semana, só no turno Central de fim de semana/feriado.
           withDefaults.employmentType='mensalista'; withDefaults.weekendOnly=true; withDefaults.maxWeeklyHours=21; withDefaults.monthlySalary=withDefaults.monthlySalary||2175;
+        }
+        if(e.podeOperarCaixa===undefined){
+          // migração automática: antes disso virar atributo, quem operava o caixa era a lista fixa CHAPERONE_NAMES=['Alana','Joeli','Duda'].
+          withDefaults.podeOperarCaixa=['Alana','Joeli','Duda'].includes(withDefaults.name);
         }
         return withDefaults;
       }),
@@ -611,7 +616,7 @@ function setMode(m){
 const EMPLOYMENT_TYPES=[['horista','Horista'],['mensalista','Mensalista'],['tempo_parcial','Tempo parcial'],['intermitente','Intermitente']];
 function renderTeamTable(){
   const tbl=document.getElementById('team-table');
-  tbl.innerHTML='<tr><th>Nome</th><th>Vínculo</th><th>R$/hora ou R$/mês</th><th>Só fim de semana/feriado</th><th>Teto h/semana</th><th></th></tr>' + STATE.team.map((e,i)=>{
+  tbl.innerHTML='<tr><th>Nome</th><th>Vínculo</th><th>R$/hora ou R$/mês</th><th>Só fim de semana/feriado</th><th>Teto h/semana</th><th>Opera caixa</th><th></th></tr>' + STATE.team.map((e,i)=>{
     const isMensal = e.employmentType==='mensalista';
     const valueField = isMensal
       ? `<input type="number" step="0.01" min="0" value="${e.monthlySalary||0}" onchange="STATE.team[${i}].monthlySalary=parseFloat(this.value)||0; saveState();" placeholder="R$/mês">`
@@ -623,6 +628,7 @@ function renderTeamTable(){
       <td>${valueField}</td>
       <td style="text-align:center"><input type="checkbox" ${e.weekendOnly?'checked':''} onchange="STATE.team[${i}].weekendOnly=this.checked; saveState(); renderTeamTable();" style="width:18px;height:18px"></td>
       <td><input type="number" min="0" max="44" value="${e.maxWeeklyHours||''}" placeholder="—" onchange="STATE.team[${i}].maxWeeklyHours=parseFloat(this.value)||null; saveState();"></td>
+      <td style="text-align:center"><input type="checkbox" ${e.podeOperarCaixa?'checked':''} onchange="STATE.team[${i}].podeOperarCaixa=this.checked; saveState();" style="width:18px;height:18px" title="Sabe abrir/fechar o caixa — precisa de pelo menos 1 pessoa assim na abertura/fechamento e acompanhando diaristas"></td>
       <td><button class="iconbtn" title="Remover" onclick="removeEmployee(${i})">&times;</button></td>
     </tr>`;
   }).join('');
@@ -643,7 +649,7 @@ function renderCoverageConfig(){
 }
 function addEmployee(){
   const n=prompt('Nome da funcionária:'); if(!n) return;
-  STATE.team.push({id:'e'+Date.now(), name:n, hourlyRate:0, employmentType:'horista', weekendOnly:false, maxWeeklyHours:null});
+  STATE.team.push({id:'e'+Date.now(), name:n, hourlyRate:0, employmentType:'horista', weekendOnly:false, maxWeeklyHours:null, podeOperarCaixa:false});
   renderTeamTable();
 }
 function removeEmployee(i){
@@ -690,6 +696,8 @@ function parseRange(rangeStr){ const [a,b]=rangeStr.split('–'); return [timeTo
 function renderHolidayChips(){
   const startInput=document.getElementById('week-start').value;
   const monday = startInput? mondayOf(startInput) : mondayOf(new Date().toISOString().slice(0,10));
+  const rangeLabel=document.getElementById('week-range-label');
+  if(rangeLabel){ rangeLabel.textContent='Semana: Segunda '+fmt(monday)+' – Domingo '+fmt(addDays(monday,6)); }
   const box=document.getElementById('holiday-chips');
   box.innerHTML = DOW_LABELS.map((lbl,i)=>{
     const d=addDays(monday,i);
@@ -736,12 +744,12 @@ function timesFor(dow, mode){
   } else {
     aberturaNormal = bridgeDay ? '09:30–16:00' : (dow===6? '11:30–17:30' : '10:30–17:30');
   }
-  const fechamento='16:00–22:00';
+  const fechamento='16:00–22:30'; // loja fecha pro público às 22h, mas a equipe fica até 22h30 fechando o caixa e limpando — CLAUDE.md
   let intermediario=null;
   if(dow===0) intermediario='12:00–18:00';
   if(dow===5) intermediario='15:00–21:00';
   if(dow===6) intermediario='15:00–21:00';
-  return {abertura:aberturaNormal, aberturaPonte, fechamento, intermediario, diarista:'16:30–22:00', bridgeDay};
+  return {abertura:aberturaNormal, aberturaPonte, fechamento, intermediario, diarista:'16:30–22:30', bridgeDay};
 }
 function dayComposition(dow,isHoliday,heat){
   if(!isHoliday && dow>=0 && dow<=4){
@@ -891,8 +899,12 @@ function generateSchedule(){
     const t=timesFor(dow,mode);
     const isWeekendOrHoliday = dow>=5 || day.isHoliday;
     // Quem só trabalha fim de semana/feriado (ex.: supervisora mensalista) fica fora do rodízio de dia de semana —
-    // aparece como 'Supervisão' (sem turno fixo de loja) em vez de entrar na disputa por abertura/fechamento/folga.
-    team.filter(e=>e.weekendOnly && !isWeekendOrHoliday).forEach(e=>{ grid[e.id][dow]={type:'supervisao',time:null}; });
+    // mas ainda precisa de descanso semanal real como qualquer funcionária (confirmado pelo usuário 2026-09-20):
+    // os primeiros `caps.folgaTarget` dias úteis da semana viram folga de verdade; o resto vira 'Supervisão' (sem turno fixo de loja).
+    team.filter(e=>e.weekendOnly && !isWeekendOrHoliday).forEach(e=>{
+      if(stats[e.id].folga < caps.folgaTarget){ grid[e.id][dow]={type:'folga',time:null}; stats[e.id].folga++; }
+      else { grid[e.id][dow]={type:'supervisao',time:null}; }
+    });
     const dayTeam = team.filter(e=> !(e.weekendOnly && !isWeekendOrHoliday));
     const forced = dayTeam.filter(e=> (weekInput.absences[e.id]||[]).includes(dow) || (constraintAbsenceDows[e.id] && constraintAbsenceDows[e.id].has(dow)));
     forced.forEach(e=>{ grid[e.id][dow]={type:'folga',time:null,note:'ausência'}; stats[e.id].folga++; });
@@ -1565,7 +1577,7 @@ function sundayHolidayDobroValue(empId, dateList, hourlyEquivalent){
     weekDates.forEach(dateStr=>{
       const f=computeEmployeeDay(empId,dateStr);
       const dow=new Date(dateStr+'T00:00:00').getDay();
-      if(f.type==='folga' || f.type==='supervisao') hasFolga=true; // dia sem turno de loja conta como descanso da escala para este calculo
+      if(f.type==='folga') hasFolga=true; // agora que a Maria tem folga real (não só 'supervisao'), voltou a contar só folga de verdade como descanso
       if(f.worked && (f.isHoliday || dow===0)) specialHours.push(f.hours||0);
     });
     if(!hasFolga && specialHours.length){ value += specialHours.reduce((a,b)=>a+b,0)*hourlyEquivalent; days+=specialHours.length; }
