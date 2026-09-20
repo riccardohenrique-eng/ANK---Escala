@@ -493,21 +493,12 @@ const DEFAULT_TEAM=[
   {id:'alana',name:'Alana',hourlyRate:0,employmentType:'horista',podeOperarCaixa:true},
   {id:'duda',name:'Duda',hourlyRate:0,employmentType:'horista',podeOperarCaixa:true},
 ];
-// Marta e Maria José nunca podem ser as únicas duas na abertura ou no fechamento — nenhuma das duas sabe mexer no caixa.
-const CONFLICT_NAME_PAIRS=[['Marta','Maria José']];
-function getConflictPairIds(){
-  return CONFLICT_NAME_PAIRS.map(([n1,n2])=>{
-    const e1=STATE.team.find(e=>e.name===n1);
-    const e2=STATE.team.find(e=>e.name===n2);
-    return (e1&&e2) ? [e1.id,e2.id] : null;
-  }).filter(Boolean);
-}
-function isConflictPair(idA,idB){
-  return getConflictPairIds().some(([a,b])=> (idA===a&&idB===b)||(idA===b&&idB===a));
-}
+// Toda abertura/fechamento precisa de pelo menos 1 pessoa com podeOperarCaixa:true —
+// generalização do que antes era a dupla hardcoded Marta+Maria José (corrigido 2026-09-20).
 function dayHasConflict(grid,dow,type){
   const ids=STATE.team.filter(e=> grid[e.id][dow] && grid[e.id][dow].type===type).map(e=>e.id);
-  return getConflictPairIds().some(([a,b])=> ids.includes(a) && ids.includes(b));
+  if(!ids.length) return false;
+  return !ids.some(id=>{ const e=STATE.team.find(x=>x.id===id); return e && e.podeOperarCaixa; });
 }
 
 // Diarista nunca abre/fecha sozinha ou só com outra(s) diarista(s) — precisa de alguém que sabe operar o caixa junto.
@@ -965,11 +956,13 @@ function generateSchedule(){
         });
         let idx=0;
         const mustBeChaperoneNow = chaperoneNeeded && i===count-1 && !chosen.some(c=>isChaperone(c.id));
+        const mustOperateCaixaNow = restricted && i===count-1 && !chosen.some(c=>c.podeOperarCaixa);
         const disallowed = (w)=> (
           (restricted && w.weekendOnly) ||
           (capKey==='int' && w.weekendOnly && ((weekendOnlyMinutesUsed[w.id]||0)+introMin) > (w.maxWeeklyHours||99)*60) ||
-          (restricted && chosen.some(c=>isConflictPair(c.id,w.id) || isTempConflictPair(c.id,w.id))) ||
-          (mustBeChaperoneNow && !isChaperone(w.id))
+          (restricted && chosen.some(c=>isTempConflictPair(c.id,w.id))) ||
+          (mustBeChaperoneNow && !isChaperone(w.id)) ||
+          (mustOperateCaixaNow && !w.podeOperarCaixa)
         );
         while(idx<working.length && disallowed(working[idx])) idx++;
         if(idx>=working.length){ idx = working.findIndex(w=>!disallowed(w)); if(idx<0) idx=0; }
@@ -1236,8 +1229,11 @@ function renderSummaryAndAlerts(){
     const feComDiarista=fe+diar;
     if(feComDiarista<2) alerts.push({level:'danger',msg:`${day.label}: só ${feComDiarista} pessoa(s) no fechamento (fixas + diaristas) — mínimo de segurança é 2.`});
     if(ab<2) alerts.push({level:'danger',msg:`${day.label}: só ${ab} pessoa(s) na abertura — abaixo do baseline de 2.`});
-    if(dayHasConflict(currentResult.grid,dow,'abertura')) alerts.push({level:'danger',msg:`${day.label}: Marta e Maria José estão sozinhas na abertura juntas — nenhuma das duas sabe abrir o caixa.`});
-    if(dayHasConflict(currentResult.grid,dow,'fechamento')) alerts.push({level:'danger',msg:`${day.label}: Marta e Maria José estão sozinhas no fechamento juntas — nenhuma das duas sabe fechar o caixa.`});
+    ['abertura','fechamento'].forEach(tp=>{
+      if(!dayHasConflict(currentResult.grid,dow,tp)) return;
+      const nomes=STATE.team.filter(e=>currentResult.grid[e.id][dow]&&currentResult.grid[e.id][dow].type===tp).map(e=>e.name).join(' e ');
+      alerts.push({level:'danger',msg:`${day.label}: ${nomes} — ninguém aí sabe operar o caixa (precisa de pelo menos 1 pessoa com "opera caixa" marcado na aba Equipe).`});
+    });
     ['abertura','fechamento'].forEach(tp=>{
       const pair=dayHasTempConflict(currentResult.grid,dow,tp);
       if(pair) alerts.push({level:'danger',msg:`${day.label}: ${empName(pair[0])} e ${empName(pair[1])} estão juntas em ${TYPE_LABEL[tp]} — restrição pede que não trabalhem juntas.`});
