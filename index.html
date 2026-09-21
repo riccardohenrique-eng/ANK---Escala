@@ -198,6 +198,13 @@ table.ponto .pname{font-weight:590}
 .periodbar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
 .periodbar select,.periodbar input{width:auto;padding:8px 10px;font-size:13.5px}
 
+details.subsec{border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:14px;overflow:hidden}
+details.subsec summary{padding:12px 14px;cursor:pointer;font-size:13.5px;font-weight:600;list-style:none;background:var(--panel-2)}
+details.subsec summary::-webkit-details-marker{display:none}
+details.subsec summary::before{content:'▸ ';color:var(--text-3)}
+details.subsec[open] summary::before{content:'▾ '}
+details.subsec .subsec-body{padding:14px}
+
 .emp-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius-lg);margin-top:14px;overflow:hidden}
 .emp-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px}
 .emp-head h3{font-size:15.5px;margin:0;font-weight:650}
@@ -426,7 +433,7 @@ table.print-table td.pv-off{color:var(--text-3)}
   <div class="tabpage" id="tab-relatorio">
     <section class="section">
       <div class="section-head" onclick="toggleCard('card-relatorio')">
-        <h2>Relatório por colaboradora</h2>
+        <h2>Relatórios</h2>
         <span class="chev"></span>
       </div>
       <div class="section-body">
@@ -434,12 +441,24 @@ table.print-table td.pv-off{color:var(--text-3)}
           <select id="rep-emp" class="field-input" style="width:auto"></select>
           <select id="rep-period" class="field-input" style="width:auto" onchange="renderReport()">
             <option value="week">Semana</option>
+            <option value="quinzena">Quinzena</option>
             <option value="month">Mês (acumulado)</option>
           </select>
           <input type="date" id="rep-week" onchange="renderReport()">
           <input type="month" id="rep-month" style="display:none" onchange="renderReport()">
           <button class="btn btn-secondary" onclick="renderReport()">Atualizar</button>
         </div>
+
+        <details class="subsec">
+          <summary>Grade da escala do período</summary>
+          <div class="subsec-body" id="period-grid-box"></div>
+        </details>
+
+        <details class="subsec">
+          <summary>Resumo por colaboradora (dias, horas e turnos)</summary>
+          <div class="subsec-body" id="period-summary-box"></div>
+        </details>
+
         <div id="report-box"></div>
         <p class="note">Pré-cálculo para orientar a montagem da folha — sempre revisado pelo contador antes de emitir contracheques. Fonte dos horários: ponto digital quando registrado; senão, o horário programado da escala confirmada.</p>
       </div>
@@ -1940,7 +1959,7 @@ function populateReportEmployees(){
   const moInput=document.getElementById('rep-month');
   if(!moInput.value) moInput.value=new Date().toISOString().slice(0,7);
   document.getElementById('rep-period').onchange=function(){
-    document.getElementById('rep-week').style.display = this.value==='week' ? '' : 'none';
+    document.getElementById('rep-week').style.display = (this.value==='week'||this.value==='quinzena') ? '' : 'none';
     document.getElementById('rep-month').style.display = this.value==='month' ? '' : 'none';
     renderReport();
   };
@@ -2111,6 +2130,12 @@ function dateRangeForWeek(anyDate){
   for(let i=0;i<7;i++) list.push(iso(addDays(monday,i)));
   return list;
 }
+function dateRangeForQuinzena(anyDate){
+  const monday=mondayOf(anyDate);
+  const list=[];
+  for(let i=0;i<14;i++) list.push(iso(addDays(monday,i)));
+  return list;
+}
 function dateRangeForMonth(yyyymm){
   const [y,m]=yyyymm.split('-').map(Number);
   const last=new Date(y,m,0).getDate();
@@ -2119,11 +2144,75 @@ function dateRangeForMonth(yyyymm){
   return list;
 }
 
+function renderPeriodGrid(dateList){
+  const box=document.getElementById('period-grid-box');
+  const wkByDate={};
+  STATE.history.forEach(wk=> wk.days.forEach(d=>{ wkByDate[d.date]={wk,d}; }));
+  const daysInPeriod = dateList.filter(dt=> wkByDate[dt]);
+  if(!daysInPeriod.length){
+    box.innerHTML='<div class="emptybox">Nenhum dia confirmado nesse período ainda.</div>';
+    return;
+  }
+  const rows = daysInPeriod.map(dt=>{
+    const {wk,d}=wkByDate[dt];
+    const dateObj=new Date(d.date+'T00:00:00');
+    const cleaning = wk.cleaningAssignedTo && wk.cleaningAssignedTo[d.dow];
+    const cells = STATE.team.map(e=>{
+      const c = wk.perEmployee[e.id] && wk.perEmployee[e.id].byDow[d.dow];
+      const txt = roleLabelTime(c);
+      if(!txt) return '<td class="pv-off">Folga</td>';
+      let extra='';
+      if(cleaning && cleaning.empId===e.id) extra += `<br><span class="pv-task">${cleaning.task}</span>`;
+      return `<td>${txt}${extra}</td>`;
+    }).join('');
+    const diar=(wk.diaristaAssignments && wk.diaristaAssignments[d.dow]) || [];
+    const diarTxt = diar.length ? diar.map(n=> n+' <span class="pv-time">'+timesFor(d.dow, wk.mode).diarista+'</span>').join('<br>') : '<span class="pv-off">—</span>';
+    return `<tr><td class="pv-day"><b>${DOW_LABELS[d.dow]}</b><br>${fmt(dateObj)}${d.isHoliday?' · feriado':''}</td>${cells}<td>${diarTxt}</td></tr>`;
+  }).join('');
+  box.innerHTML = `<div class="tablewrap"><table class="print-table">
+    <tr><th>Dia</th>${STATE.team.map(e=>`<th>${e.name}</th>`).join('')}<th>Diaristas</th></tr>
+    ${rows}
+  </table></div>`;
+}
+function computePeriodTurnos(empId, dateList){
+  let ab=0, fe=0, intz=0, folga=0, sup=0, dias=0, horas=0;
+  dateList.forEach(dateStr=>{
+    const f=computeEmployeeDay(empId,dateStr);
+    if(f.worked){ dias++; horas+=f.hours; }
+    if(f.type==='abertura') ab++;
+    else if(f.type==='fechamento') fe++;
+    else if(f.type==='intermediario') intz++;
+    else if(f.type==='folga') folga++;
+    else if(f.type==='supervisao') sup++;
+  });
+  return {ab,fe,int:intz,folga,sup,dias,horas};
+}
+function renderPeriodSummary(dateList){
+  const box=document.getElementById('period-summary-box');
+  if(!STATE.history.length){
+    box.innerHTML='<div class="emptybox">Nenhuma semana confirmada ainda.</div>';
+    return;
+  }
+  const rows = STATE.team.map(e=>{
+    const s=computePeriodTurnos(e.id, dateList);
+    return `<tr><td class="cat">${e.name}</td><td class="val">${s.dias}</td><td class="val">${s.horas.toFixed(1)}h</td><td class="val">${s.ab}</td><td class="val">${s.fe}</td><td class="val">${s.int}</td><td class="val">${s.folga}</td></tr>`;
+  }).join('');
+  box.innerHTML = `<div class="tablewrap"><table class="payroll-table">
+    <tr><th>Colaboradora</th><th>Dias trab.</th><th>Horas</th><th>Aberturas</th><th>Fechamentos</th><th>Intermediários</th><th>Folgas</th></tr>
+    ${rows}
+  </table></div>`;
+}
 function renderReport(){
   const empSel=document.getElementById('rep-emp').value;
   const period=document.getElementById('rep-period').value;
-  const dateList = period==='week' ? dateRangeForWeek(document.getElementById('rep-week').value) : dateRangeForMonth(document.getElementById('rep-month').value);
+  const dateList = period==='month' ? dateRangeForMonth(document.getElementById('rep-month').value)
+    : period==='quinzena' ? dateRangeForQuinzena(document.getElementById('rep-week').value)
+    : dateRangeForWeek(document.getElementById('rep-week').value);
   const emps = empSel==='__all' ? STATE.team : STATE.team.filter(e=>e.id===empSel);
+
+  renderPeriodGrid(dateList);
+  renderPeriodSummary(dateList);
+
   const box=document.getElementById('report-box');
 
   if(!STATE.history.length){
