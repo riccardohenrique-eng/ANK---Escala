@@ -450,8 +450,16 @@ table.print-table td.pv-off{color:var(--text-3)}
         <span class="chev"></span>
       </div>
       <div class="section-body">
+        <div class="periodbar no-print" style="margin-top:0">
+          <select class="field-input" id="print-week-filter" onchange="renderPrintView()" style="width:auto">
+            <option value="all">Todas as semanas confirmadas</option>
+          </select>
+        </div>
         <div class="btn-row no-print" style="margin-top:0">
           <button class="btn btn-primary" onclick="window.print()">Baixar / imprimir PDF</button>
+          <button class="btn btn-secondary" onclick="exportPrintImage()">Baixar imagem (PNG)</button>
+          <button class="btn btn-secondary" onclick="exportPrintExcel()">Baixar Excel</button>
+          <button class="btn btn-secondary" onclick="exportPrintCSV()">Baixar CSV</button>
         </div>
         <div id="print-weeks"></div>
       </div>
@@ -1295,6 +1303,23 @@ function diaristaRow(leftLabel, ddateHtml, dow, r){
     <div class="dright"><input class="diarista-input" data-dow="${dow}" value="${list.map(n=>n+' ('+timesFor(dow,r.mode).diarista+')').join(', ')}" onchange="editDiarista(this)" placeholder="Nenhuma diarista"></div>
   </div>`;
 }
+function cleaningTaskRow(dow, r){
+  if(!CLEAN_TASKS[dow]) return '';
+  const current=r.cleaningAssignedTo[dow];
+  const options='<option value="">— ninguém —</option>'+STATE.team.map(e=>`<option value="${e.id}" ${current&&current.empId===e.id?'selected':''}>${e.name}</option>`).join('');
+  return `<div class="day-row">
+    <div class="dleft"><div class="dname">Tarefa</div></div>
+    <div class="dright">
+      <span class="tasknote" style="display:block;margin-bottom:5px">${CLEAN_TASKS[dow]}</span>
+      <select class="cell" data-dow="${dow}" onchange="editCleaningTask(this)">${options}</select>
+    </div>
+  </div>`;
+}
+function editCleaningTask(sel){
+  const dow=+sel.dataset.dow;
+  currentResult.cleaningAssignedTo[dow] = sel.value ? {empId:sel.value, task:CLEAN_TASKS[dow]} : null;
+  renderResult();
+}
 // Visão padrão: dias como eixo principal, cada funcionária por baixo — prioriza "o que
 // acontece nesse dia" sobre "a agenda dessa pessoa" (pedido explícito do usuário).
 function renderResultDayFirst(r){
@@ -1304,6 +1329,7 @@ function renderResultDayFirst(r){
     html+=`<div class="emp-card"><div class="emp-head"><h3>${day.label}${day.isHoliday?' · feriado':''}</h3><span class="badge">${fmt(day.date)}</span></div><div class="emp-body" style="padding:0">`;
     STATE.team.forEach(e=>{ html+=cellRow(e.name,'',e,dow,r); });
     html+=diaristaRow('Diaristas','',dow,r);
+    html+=cleaningTaskRow(dow,r);
     html+='</div></div>';
   });
   return html;
@@ -1417,7 +1443,7 @@ function renderSummaryAndAlerts(){
 
   const alerts=[];
   if(currentResult.fromHistory){
-    alerts.push({level:'ok',msg:'Semana já confirmada — mostrando o que foi salvo (não recalculado). Use "Gerar do zero" para descartar e recalcular.'});
+    alerts.push({level:'ok',msg:'Semana já confirmada — mostrando o que foi salvo (não recalculado). Pode editar qualquer célula à vontade; nada é gravado até clicar em "Confirmar semana" de novo. Use "Gerar do zero" se preferir descartar tudo e recalcular do início.'});
   }
   const weekMonday = mondayOf(document.getElementById('week-start').value);
   alerts.push(...diaristaRiskAlerts(weekMonday));
@@ -1625,9 +1651,27 @@ function roleLabelTime(cell){
   const label = TYPE_LABEL[cell.type] || cell.type;
   return cell.time ? `${label}<br><span class="pv-time">${cell.time}</span>` : label;
 }
+function populatePrintWeekFilter(allWeeks){
+  const sel=document.getElementById('print-week-filter');
+  if(!sel) return;
+  const current=sel.value||'all';
+  sel.innerHTML = '<option value="all">Todas as semanas confirmadas</option>' + allWeeks.map(wk=>{
+    const monday=new Date(wk.weekStart+'T00:00:00');
+    return `<option value="${wk.weekStart}">Semana ${fmt(monday)}–${fmt(addDays(monday,6))}</option>`;
+  }).join('');
+  if([...sel.options].some(o=>o.value===current)) sel.value=current;
+}
+function getSelectedPrintWeeks(){
+  const allWeeks=[...STATE.history].sort((a,b)=> a.weekStart<b.weekStart?-1:(a.weekStart>b.weekStart?1:0));
+  const sel=document.getElementById('print-week-filter');
+  const val = sel ? sel.value : 'all';
+  return val==='all' ? allWeeks : allWeeks.filter(w=>w.weekStart===val);
+}
 function renderPrintView(){
   const box=document.getElementById('print-weeks');
-  const weeks=[...STATE.history].sort((a,b)=> a.weekStart<b.weekStart?-1:(a.weekStart>b.weekStart?1:0));
+  const allWeeksForFilter=[...STATE.history].sort((a,b)=> a.weekStart<b.weekStart?-1:(a.weekStart>b.weekStart?1:0));
+  populatePrintWeekFilter(allWeeksForFilter);
+  const weeks=getSelectedPrintWeeks();
   if(!weeks.length){
     box.innerHTML='<div class="emptybox">Nenhuma semana confirmada ainda. Gere e confirme uma escala na aba Escala primeiro.</div>';
     return;
@@ -1663,6 +1707,99 @@ function renderPrintView(){
       </div>
     </div>`;
   }).join('');
+}
+
+// ---------- EXPORTAR ESCALA (imagem / Excel / CSV) ----------
+// Sempre a partir das semanas selecionadas no filtro acima (mesma fonte de dados
+// que o PDF/impressão), sempre agrupando por dia com todas as funcionárias juntas —
+// pensado pra mandar de uma vez no grupo da equipe, nunca a agenda de 1 pessoa só.
+function loadScriptOnce(src){
+  return new Promise((resolve,reject)=>{
+    const existing=document.querySelector(`script[src="${src}"]`);
+    if(existing){
+      if(existing.dataset.loaded==='1') return resolve();
+      existing.addEventListener('load',()=>resolve());
+      existing.addEventListener('error',()=>reject(new Error('Falha ao carregar '+src)));
+      return;
+    }
+    const s=document.createElement('script');
+    s.src=src;
+    s.onload=()=>{ s.dataset.loaded='1'; resolve(); };
+    s.onerror=()=>reject(new Error('Falha ao carregar '+src));
+    document.head.appendChild(s);
+  });
+}
+function downloadBlob(content, filename, type){
+  const blob = content instanceof Blob ? content : new Blob([content], {type});
+  const url = URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function printWeeksToRows(weeks){
+  return weeks.map(wk=>{
+    const monday=new Date(wk.weekStart+'T00:00:00');
+    const sunday=addDays(monday,6);
+    const header=['Dia', ...STATE.team.map(e=>e.name), 'Diaristas'];
+    const rows = wk.days.map(d=>{
+      const dateObj=new Date(d.date+'T00:00:00');
+      const cleaning = wk.cleaningAssignedTo && wk.cleaningAssignedTo[d.dow];
+      const dayCell = DOW_LABELS[d.dow]+' '+fmt(dateObj)+(d.isHoliday?' (feriado)':'');
+      const empCells = STATE.team.map(e=>{
+        const c = wk.perEmployee[e.id] && wk.perEmployee[e.id].byDow[d.dow];
+        if(!c || c.type==='folga') return 'Folga';
+        let txt = (TYPE_LABEL[c.type]||c.type) + (c.time?(' '+c.time):'');
+        if(cleaning && cleaning.empId===e.id) txt += ' — '+cleaning.task;
+        return txt;
+      });
+      const diar=(wk.diaristaAssignments && wk.diaristaAssignments[d.dow]) || [];
+      const diarCell = diar.length ? diar.map(n=>n+' ('+timesFor(d.dow,wk.mode).diarista+')').join(' / ') : '—';
+      return [dayCell, ...empCells, diarCell];
+    });
+    return {weekLabel:'Semana de '+fmt(monday)+' a '+fmt(sunday), header, rows};
+  });
+}
+function exportPrintCSV(){
+  const weeks=getSelectedPrintWeeks();
+  if(!weeks.length){ alert('Nenhuma semana confirmada pra exportar.'); return; }
+  const blocks=printWeeksToRows(weeks);
+  const lines=[];
+  blocks.forEach(b=>{
+    lines.push(b.weekLabel);
+    lines.push(b.header.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(';'));
+    b.rows.forEach(r=>lines.push(r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(';')));
+    lines.push('');
+  });
+  downloadBlob('﻿'+lines.join('\r\n'), 'escala.csv', 'text/csv;charset=utf-8');
+}
+async function exportPrintExcel(){
+  const weeks=getSelectedPrintWeeks();
+  if(!weeks.length){ alert('Nenhuma semana confirmada pra exportar.'); return; }
+  try{ await loadScriptOnce('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'); }
+  catch(e){ alert('Não consegui carregar a biblioteca de Excel — verifique sua internet e tente de novo.'); return; }
+  const blocks=printWeeksToRows(weeks);
+  const wb=XLSX.utils.book_new();
+  blocks.forEach((b,i)=>{
+    const ws=XLSX.utils.aoa_to_sheet([b.header, ...b.rows]);
+    XLSX.utils.book_append_sheet(wb, ws, ('Sem '+(i+1)+' '+b.weekLabel.replace('Semana de ','')).slice(0,31));
+  });
+  XLSX.writeFile(wb, 'escala.xlsx');
+}
+async function exportPrintImage(){
+  const box=document.getElementById('print-weeks');
+  if(!box.children.length || box.querySelector('.emptybox')){ alert('Nenhuma semana confirmada pra exportar.'); return; }
+  try{ await loadScriptOnce('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js'); }
+  catch(e){ alert('Não consegui carregar a biblioteca de imagem — verifique sua internet e tente de novo.'); return; }
+  const prevTheme=document.documentElement.dataset.theme;
+  document.documentElement.dataset.theme='light';
+  try{
+    const canvas = await html2canvas(box, {backgroundColor:'#ffffff', scale:2});
+    await new Promise(resolve=>{
+      canvas.toBlob(blob=>{ downloadBlob(blob, 'escala.png', 'image/png'); resolve(); });
+    });
+  } finally {
+    if(prevTheme) document.documentElement.dataset.theme=prevTheme; else delete document.documentElement.dataset.theme;
+  }
 }
 
 // ================= PONTO DIGITAL =================
