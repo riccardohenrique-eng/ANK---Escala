@@ -38,9 +38,21 @@
 body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif;font-size:15px;line-height:1.42;letter-spacing:-.006em}
 .wrap{max-width:980px;margin:0 auto;padding:28px 18px 70px}
 
-header.top{margin-bottom:22px}
+header.top{margin-bottom:22px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 header.top h1{font-size:28px;margin:0;font-weight:700;letter-spacing:-.02em;text-wrap:balance}
 header.top p{margin:4px 0 0;font-size:14px;color:var(--text-2)}
+.theme-toggle{appearance:none;border:1px solid var(--border-strong);background:var(--panel);color:var(--text-2);border-radius:9px;width:38px;height:38px;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-top:2px}
+.theme-toggle:hover{color:var(--text)}
+.theme-toggle svg{display:block}
+.theme-toggle .ic-moon{display:none}
+@media (prefers-color-scheme: dark){
+  .theme-toggle .ic-sun{display:none}
+  .theme-toggle .ic-moon{display:block}
+}
+:root[data-theme="dark"] .theme-toggle .ic-sun{display:none}
+:root[data-theme="dark"] .theme-toggle .ic-moon{display:block}
+:root[data-theme="light"] .theme-toggle .ic-sun{display:block}
+:root[data-theme="light"] .theme-toggle .ic-moon{display:none}
 
 .segmented{display:flex;background:var(--panel-2);border:1px solid var(--border);border-radius:10px;padding:2px;margin-bottom:22px;gap:2px}
 .segmented button{flex:1;appearance:none;border:none;background:transparent;color:var(--text-2);font:inherit;font-size:13.5px;font-weight:590;padding:8px 10px;border-radius:8px;cursor:pointer}
@@ -218,8 +230,14 @@ table.print-table td.pv-off{color:var(--text-3)}
 
 <div class="wrap">
   <header class="top">
-    <h1>Escala &amp; Ponto</h1>
-    <p>Açaí No Kilo · Cruz das Almas — cobertura, pausas reais, ponto digital e folha</p>
+    <div>
+      <h1>Escala &amp; Ponto</h1>
+      <p>Açaí No Kilo · Cruz das Almas — cobertura, pausas reais, ponto digital e folha</p>
+    </div>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Alternar modo claro/escuro" aria-label="Alternar modo claro/escuro">
+      <svg class="ic-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+      <svg class="ic-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+    </button>
   </header>
 
   <nav class="segmented">
@@ -286,7 +304,7 @@ table.print-table td.pv-off{color:var(--text-3)}
         <div class="tablewrap" style="border:none;border-radius:0"><table class="team-cfg" id="team-table"></table></div>
       </div>
       <div class="btn-row"><button class="btn btn-secondary" onclick="addEmployee()">Adicionar funcionária</button></div>
-      <p class="hint" style="margin:8px 2px 0">Marque "só fim de semana/feriado" para quem (como a supervisora) não entra no rodízio de abertura/fechamento de dia de semana e só é escalada no turno Central de sábado, domingo e feriado, respeitando o teto de horas semanais informado.</p>
+      <p class="hint" style="margin:8px 2px 0">Marque "só fim de semana/feriado" para quem não entra no rodízio de dia de semana e só é escalada no turno Central de sábado, domingo e feriado, respeitando o teto de horas semanais informado. Marque "Nunca fecha" para quem não deve ser escalada para o fechamento mesmo acompanhada de alguém que opera caixa (ex.: sem prática no caixa).</p>
 
       <label class="flabel" style="margin-top:20px">Limites e valores</label>
       <div class="grp">
@@ -481,17 +499,30 @@ const ICON_CHECK='<svg class="ic" width="12" height="12" viewBox="0 0 24 24" fil
 const ICON_ALERT='<svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>';
 const ICON_INFO='<svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>';
 
+const THEME_KEY='ank_escala_theme';
+function initTheme(){
+  const saved=localStorage.getItem(THEME_KEY);
+  if(saved==='dark'||saved==='light') document.documentElement.dataset.theme=saved;
+}
+function toggleTheme(){
+  const current=document.documentElement.dataset.theme || (window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+  const next = current==='dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme=next;
+  localStorage.setItem(THEME_KEY,next);
+}
+initTheme();
+
 const STORE_KEY='ank_escala_v1';
 const DOW_LABELS=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
 const DOW_SHORT=['SEG','TER','QUA','QUI','SEX','SÁB','DOM'];
 const CLEAN_TASKS={0:'Limpar freezers da bancada',2:'Limpar freezers da cozinha',5:'Limpeza da cozinha'};
 const DEFAULT_TEAM=[
-  {id:'maria',name:'Maria',hourlyRate:0,employmentType:'mensalista',weekendOnly:true,maxWeeklyHours:21,monthlySalary:2175,podeOperarCaixa:false},
-  {id:'marta',name:'Marta',hourlyRate:0,employmentType:'horista',podeOperarCaixa:false},
-  {id:'mjose',name:'Maria José',hourlyRate:0,employmentType:'horista',podeOperarCaixa:false},
-  {id:'joeli',name:'Joeli',hourlyRate:0,employmentType:'horista',podeOperarCaixa:true},
-  {id:'alana',name:'Alana',hourlyRate:0,employmentType:'horista',podeOperarCaixa:true},
-  {id:'duda',name:'Duda',hourlyRate:0,employmentType:'horista',podeOperarCaixa:true},
+  {id:'maria',name:'Maria',hourlyRate:0,employmentType:'mensalista',weekendOnly:false,maxWeeklyHours:21,monthlySalary:2175,podeOperarCaixa:false,neverCloses:true},
+  {id:'marta',name:'Marta',hourlyRate:0,employmentType:'horista',podeOperarCaixa:false,neverCloses:false},
+  {id:'mjose',name:'Maria José',hourlyRate:0,employmentType:'horista',podeOperarCaixa:false,neverCloses:false},
+  {id:'joeli',name:'Joeli',hourlyRate:0,employmentType:'horista',podeOperarCaixa:true,neverCloses:false},
+  {id:'alana',name:'Alana',hourlyRate:0,employmentType:'horista',podeOperarCaixa:true,neverCloses:false},
+  {id:'duda',name:'Duda',hourlyRate:0,employmentType:'horista',podeOperarCaixa:true,neverCloses:false},
 ];
 // Toda abertura/fechamento precisa de pelo menos 1 pessoa com podeOperarCaixa:true —
 // generalização do que antes era a dupla hardcoded Marta+Maria José (corrigido 2026-09-20).
@@ -565,14 +596,19 @@ function loadState(){
         weekendExtra:{...d.coverage.weekendExtra,...((parsed.coverage||{}).weekendExtra||{})}
       },
       team:(parsed.team||d.team).map(e=>{
-        const withDefaults={hourlyRate:0,employmentType:'horista',weekendOnly:false,maxWeeklyHours:null,monthlySalary:0,podeOperarCaixa:false,...e};
+        const withDefaults={hourlyRate:0,employmentType:'horista',weekendOnly:false,maxWeeklyHours:null,monthlySalary:0,podeOperarCaixa:false,neverCloses:false,...e};
         if(!e.employmentType && withDefaults.name==='Maria'){
-          // migração automática: a Maria (supervisora) sempre foi mensalista com teto de 21h/semana, só no turno Central de fim de semana/feriado.
-          withDefaults.employmentType='mensalista'; withDefaults.weekendOnly=true; withDefaults.maxWeeklyHours=21; withDefaults.monthlySalary=withDefaults.monthlySalary||2175;
+          // migração automática: a Maria (supervisora) sempre foi mensalista com teto de 21h/semana.
+          withDefaults.employmentType='mensalista'; withDefaults.maxWeeklyHours=21; withDefaults.monthlySalary=withDefaults.monthlySalary||2175;
         }
         if(e.podeOperarCaixa===undefined){
           // migração automática: antes disso virar atributo, quem operava o caixa era a lista fixa CHAPERONE_NAMES=['Alana','Joeli','Duda'].
           withDefaults.podeOperarCaixa=['Alana','Joeli','Duda'].includes(withDefaults.name);
+        }
+        if(e.neverCloses===undefined && withDefaults.name==='Maria'){
+          // migração automática 2026-09-20: Maria passou a entrar no rodízio normal (abertura/intermediário)
+          // em vez de só fim de semana, mas continua nunca fazendo fechamento (não opera caixa, decisão do usuário).
+          withDefaults.neverCloses=true; withDefaults.weekendOnly=false;
         }
         return withDefaults;
       }),
@@ -640,7 +676,7 @@ function setMode(m){
 const EMPLOYMENT_TYPES=[['horista','Horista'],['mensalista','Mensalista'],['tempo_parcial','Tempo parcial'],['intermitente','Intermitente']];
 function renderTeamTable(){
   const tbl=document.getElementById('team-table');
-  tbl.innerHTML='<tr><th>Nome</th><th>Vínculo</th><th>R$/hora ou R$/mês</th><th>Só fim de semana/feriado</th><th>Teto h/semana</th><th>Opera caixa</th><th></th></tr>' + STATE.team.map((e,i)=>{
+  tbl.innerHTML='<tr><th>Nome</th><th>Vínculo</th><th>R$/hora ou R$/mês</th><th>Só fim de semana/feriado</th><th>Teto h/semana</th><th>Opera caixa</th><th>Nunca fecha</th><th></th></tr>' + STATE.team.map((e,i)=>{
     const isMensal = e.employmentType==='mensalista';
     const valueField = isMensal
       ? `<input type="number" step="0.01" min="0" value="${e.monthlySalary||0}" onchange="STATE.team[${i}].monthlySalary=parseFloat(this.value)||0; saveState();" placeholder="R$/mês">`
@@ -653,6 +689,7 @@ function renderTeamTable(){
       <td style="text-align:center"><input type="checkbox" ${e.weekendOnly?'checked':''} onchange="STATE.team[${i}].weekendOnly=this.checked; saveState(); renderTeamTable();" style="width:18px;height:18px"></td>
       <td><input type="number" min="0" max="44" value="${e.maxWeeklyHours||''}" placeholder="—" onchange="STATE.team[${i}].maxWeeklyHours=parseFloat(this.value)||null; saveState();"></td>
       <td style="text-align:center"><input type="checkbox" ${e.podeOperarCaixa?'checked':''} onchange="STATE.team[${i}].podeOperarCaixa=this.checked; saveState();" style="width:18px;height:18px" title="Sabe abrir/fechar o caixa — precisa de pelo menos 1 pessoa assim na abertura/fechamento e acompanhando diaristas"></td>
+      <td style="text-align:center"><input type="checkbox" ${e.neverCloses?'checked':''} onchange="STATE.team[${i}].neverCloses=this.checked; saveState();" style="width:18px;height:18px" title="Nunca é escalada para o fechamento, mesmo com acompanhante que opera caixa (ex.: supervisora sem prática no caixa)"></td>
       <td><button class="iconbtn" title="Remover" onclick="removeEmployee(${i})">&times;</button></td>
     </tr>`;
   }).join('');
@@ -673,7 +710,7 @@ function renderCoverageConfig(){
 }
 function addEmployee(){
   const n=prompt('Nome da funcionária:'); if(!n) return;
-  STATE.team.push({id:'e'+Date.now(), name:n, hourlyRate:0, employmentType:'horista', weekendOnly:false, maxWeeklyHours:null, podeOperarCaixa:false});
+  STATE.team.push({id:'e'+Date.now(), name:n, hourlyRate:0, employmentType:'horista', weekendOnly:false, maxWeeklyHours:null, podeOperarCaixa:false, neverCloses:false});
   renderTeamTable();
 }
 function removeEmployee(i){
@@ -887,6 +924,11 @@ function generateSchedule(){
   const cleaningAssignedTo={};
   const alerts=[];
   const weekendOnlyMinutesUsed={};
+  // Rastreia minutos já escalados nesta semana pra QUALQUER funcionária com maxWeeklyHours definido
+  // (não só weekendOnly) — usado só como desempate suave no pickFor, pra não estourar o teto por
+  // padrão sem precisar travar a escala (o aviso de estouro no fim da função continua sendo a rede
+  // de segurança final, caso mesmo assim precise passar do teto por falta de gente).
+  const capMinutesUsed={};
 
   // ---- restrições ativas nesta semana ----
   const activeConstraints = activeConstraintsForWeek(monday);
@@ -975,6 +1017,9 @@ function generateSchedule(){
     }
 
     const introMin = t.intermediario ? (parseRange(t.intermediario)[1]-parseRange(t.intermediario)[0]) : 360;
+    const abMin = parseRange(t.abertura)[1]-parseRange(t.abertura)[0];
+    const feMin = parseRange(t.fechamento)[1]-parseRange(t.fechamento)[0];
+    function shiftMinutesFor(capKey){ return capKey==='ab'?abMin:capKey==='fe'?feMin:introMin; }
     function pickFor(count,capKey){
       const chosen=[];
       const restricted=(capKey==='ab'||capKey==='fe');
@@ -982,7 +1027,11 @@ function generateSchedule(){
       for(let i=0;i<count;i++){
         if(working.length===0) break;
         working.sort((a,b)=>{
-          const bias=(x)=> (capKey==='int' && x.weekendOnly) ? -100000 : 0;
+          const bias=(x)=>{
+            let bb=(capKey==='int' && x.weekendOnly) ? -100000 : 0;
+            if(x.maxWeeklyHours && ((capMinutesUsed[x.id]||0)+shiftMinutesFor(capKey)) > x.maxWeeklyHours*60) bb+=100000;
+            return bb;
+          };
           const av=stats[a.id][capKey]+(hist[a.id]?.[capKey]||0)*0.4+bias(a);
           const bv=stats[b.id][capKey]+(hist[b.id]?.[capKey]||0)*0.4+bias(b);
           return av-bv;
@@ -992,6 +1041,7 @@ function generateSchedule(){
         const mustOperateCaixaNow = restricted && i===count-1 && !chosen.some(c=>c.podeOperarCaixa);
         const disallowed = (w)=> (
           (restricted && w.weekendOnly) ||
+          (capKey==='fe' && w.neverCloses) ||
           (capKey==='int' && w.weekendOnly && ((weekendOnlyMinutesUsed[w.id]||0)+introMin) > (w.maxWeeklyHours||99)*60) ||
           (restricted && chosen.some(c=>isTempConflictPair(c.id,w.id))) ||
           (mustBeChaperoneNow && !isChaperone(w.id)) ||
@@ -1003,6 +1053,9 @@ function generateSchedule(){
         if(capKey==='int' && picked.weekendOnly){
           weekendOnlyMinutesUsed[picked.id]=(weekendOnlyMinutesUsed[picked.id]||0)+introMin;
           alerts.push({level:'info',msg:`${day.label}: ${picked.name} no Central — ${((weekendOnlyMinutesUsed[picked.id])/60).toFixed(1)}h acumuladas na semana (teto ${picked.maxWeeklyHours}h).`});
+        }
+        if(picked.maxWeeklyHours){
+          capMinutesUsed[picked.id]=(capMinutesUsed[picked.id]||0)+shiftMinutesFor(capKey);
         }
         chosen.push(picked);
       }
