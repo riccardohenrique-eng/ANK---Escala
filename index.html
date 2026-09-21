@@ -924,6 +924,11 @@ function generateSchedule(){
   const cleaningAssignedTo={};
   const alerts=[];
   const weekendOnlyMinutesUsed={};
+  // Rastreia minutos já escalados nesta semana pra QUALQUER funcionária com maxWeeklyHours definido
+  // (não só weekendOnly) — usado só como desempate suave no pickFor, pra não estourar o teto por
+  // padrão sem precisar travar a escala (o aviso de estouro no fim da função continua sendo a rede
+  // de segurança final, caso mesmo assim precise passar do teto por falta de gente).
+  const capMinutesUsed={};
 
   // ---- restrições ativas nesta semana ----
   const activeConstraints = activeConstraintsForWeek(monday);
@@ -1012,6 +1017,9 @@ function generateSchedule(){
     }
 
     const introMin = t.intermediario ? (parseRange(t.intermediario)[1]-parseRange(t.intermediario)[0]) : 360;
+    const abMin = parseRange(t.abertura)[1]-parseRange(t.abertura)[0];
+    const feMin = parseRange(t.fechamento)[1]-parseRange(t.fechamento)[0];
+    function shiftMinutesFor(capKey){ return capKey==='ab'?abMin:capKey==='fe'?feMin:introMin; }
     function pickFor(count,capKey){
       const chosen=[];
       const restricted=(capKey==='ab'||capKey==='fe');
@@ -1019,7 +1027,11 @@ function generateSchedule(){
       for(let i=0;i<count;i++){
         if(working.length===0) break;
         working.sort((a,b)=>{
-          const bias=(x)=> (capKey==='int' && x.weekendOnly) ? -100000 : 0;
+          const bias=(x)=>{
+            let b=(capKey==='int' && x.weekendOnly) ? -100000 : 0;
+            if(x.maxWeeklyHours && ((capMinutesUsed[x.id]||0)+shiftMinutesFor(capKey)) > x.maxWeeklyHours*60) b+=100000;
+            return b;
+          };
           const av=stats[a.id][capKey]+(hist[a.id]?.[capKey]||0)*0.4+bias(a);
           const bv=stats[b.id][capKey]+(hist[b.id]?.[capKey]||0)*0.4+bias(b);
           return av-bv;
@@ -1041,6 +1053,9 @@ function generateSchedule(){
         if(capKey==='int' && picked.weekendOnly){
           weekendOnlyMinutesUsed[picked.id]=(weekendOnlyMinutesUsed[picked.id]||0)+introMin;
           alerts.push({level:'info',msg:`${day.label}: ${picked.name} no Central — ${((weekendOnlyMinutesUsed[picked.id])/60).toFixed(1)}h acumuladas na semana (teto ${picked.maxWeeklyHours}h).`});
+        }
+        if(picked.maxWeeklyHours){
+          capMinutesUsed[picked.id]=(capMinutesUsed[picked.id]||0)+shiftMinutesFor(capKey);
         }
         chosen.push(picked);
       }
