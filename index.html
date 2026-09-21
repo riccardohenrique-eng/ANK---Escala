@@ -2,60 +2,55 @@
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#742984">
 <link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap">
 <style>
 :root{
-  --bg:#F6F1FA; --panel:#FFFFFF; --panel-2:#FAF6FC; --panel-3:#F1E7F6;
-  --border:#EAE0F1; --border-strong:#D8C5E5;
-  --text:#1D1D1F; --text-2:#6E6E73; --text-3:#AEAEB2;
-  --accent:#742984; --accent-strong:#5A1F67; --accent-wash:#F4EAF8;
-  --accent-2:#F68A28; --accent-2-strong:#D66E12; --accent-2-wash:#FFF1E0;
-  --info:#3B6FD6; --info-wash:#E9F0FF;
-  --danger:#D70015; --danger-wash:#FDEDEC;
-  --ok:#1F8A3D; --ok-wash:#EAF7EC;
+  /* Direção "Painel" — escuro é o tema principal do app (fundo real usado por quem gerencia o dia todo) */
+  --bg:#17151C; --panel:#1E1B25; --panel-2:#252030; --panel-3:#2A2433;
+  --border:#332C40; --border-strong:#453C55;
+  --text:#F2EFF6; --text-2:#948FA0; --text-3:#655D70;
+  --accent:#B27ACB; --accent-strong:#C89ADC; --accent-wash:rgba(178,122,203,.18);
+  --accent-2:#FFA94D; --accent-2-strong:#FFC182; --accent-2-wash:rgba(255,169,77,.15);
+  --info:#5FD4BE; --info-wash:rgba(95,212,190,.15);
+  --danger:#FF6961; --danger-wash:rgba(255,105,97,.14);
+  --ok:#6FDB8F; --ok-wash:rgba(111,219,143,.14);
   --radius:11px; --radius-lg:18px;
-  --shadow-card:0 3px 14px rgba(116,41,132,.08), 0 1px 3px rgba(0,0,0,.04);
-  --header-grad:linear-gradient(135deg,#7F2F91 0%,#5A1F67 100%);
+  --shadow-card:0 3px 16px rgba(0,0,0,.35), 0 1px 3px rgba(0,0,0,.3);
+  --header-grad:linear-gradient(135deg,#1E1B25 0%,#17151C 100%);
+  --font-display:'Hanken Grotesk',-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
 }
-@media (prefers-color-scheme: dark){
-  :root{
-    --bg:#000000; --panel:#1C1C1E; --panel-2:#232325; --panel-3:#2C2C2E;
-    --border:#38383A; --border-strong:#48484A;
-    --text:#F5F5F7; --text-2:#98989D; --text-3:#636366;
-    --accent:#C079DA; --accent-strong:#D79AE8; --accent-wash:#2A1E2F;
-    --accent-2:#FFA94D; --accent-2-strong:#FFC182; --accent-2-wash:#33240F;
-    --info:#7AA6FF; --info-wash:#16213A;
-    --danger:#FF6961; --danger-wash:#2E1614;
-    --ok:#3CD35F; --ok-wash:#122318;
-    --shadow-card:0 3px 14px rgba(0,0,0,.4), 0 1px 3px rgba(0,0,0,.3);
-    --header-grad:linear-gradient(135deg,#3A1642 0%,#1E0B24 100%);
-  }
-}
+/* Escuro ("Painel") é o tema padrão do app, independente da preferência do sistema —
+   decisão explícita do usuário em 2026-09-21. Claro só aparece quando escolhido
+   manualmente no botão de tema (data-theme="light" abaixo). */
 :root[data-theme="dark"]{
-  --bg:#000000; --panel:#1C1C1E; --panel-2:#232325; --panel-3:#2C2C2E;
-  --border:#38383A; --border-strong:#48484A;
-  --text:#F5F5F7; --text-2:#98989D; --text-3:#636366;
-  --accent:#C079DA; --accent-strong:#D79AE8; --accent-wash:#2A1E2F;
-  --accent-2:#FFA94D; --accent-2-strong:#FFC182; --accent-2-wash:#33240F;
-  --info:#7AA6FF; --info-wash:#16213A;
-  --danger:#FF6961; --danger-wash:#2E1614;
-  --ok:#3CD35F; --ok-wash:#122318;
-  --shadow-card:0 3px 14px rgba(0,0,0,.4), 0 1px 3px rgba(0,0,0,.3);
-  --header-grad:linear-gradient(135deg,#3A1642 0%,#1E0B24 100%);
+  --bg:#17151C; --panel:#1E1B25; --panel-2:#252030; --panel-3:#2A2433;
+  --border:#332C40; --border-strong:#453C55;
+  --text:#F2EFF6; --text-2:#948FA0; --text-3:#655D70;
+  --accent:#B27ACB; --accent-strong:#C89ADC; --accent-wash:rgba(178,122,203,.18);
+  --accent-2:#FFA94D; --accent-2-strong:#FFC182; --accent-2-wash:rgba(255,169,77,.15);
+  --info:#5FD4BE; --info-wash:rgba(95,212,190,.15);
+  --danger:#FF6961; --danger-wash:rgba(255,105,97,.14);
+  --ok:#6FDB8F; --ok-wash:rgba(111,219,143,.14);
+  --shadow-card:0 3px 16px rgba(0,0,0,.35), 0 1px 3px rgba(0,0,0,.3);
+  --header-grad:linear-gradient(135deg,#1E1B25 0%,#17151C 100%);
 }
 :root[data-theme="light"]{
-  --bg:#F6F1FA; --panel:#FFFFFF; --panel-2:#FAF6FC; --panel-3:#F1E7F6;
-  --border:#EAE0F1; --border-strong:#D8C5E5;
-  --text:#1D1D1F; --text-2:#6E6E73; --text-3:#AEAEB2;
+  --bg:#F5F2F0; --panel:#FFFFFF; --panel-2:#FAF7F5; --panel-3:#F1EBE6;
+  --border:#E9E1DA; --border-strong:#D6C9BE;
+  --text:#211B1E; --text-2:#6E6367; --text-3:#A79D9F;
   --accent:#742984; --accent-strong:#5A1F67; --accent-wash:#F4EAF8;
   --accent-2:#F68A28; --accent-2-strong:#D66E12; --accent-2-wash:#FFF1E0;
-  --info:#3B6FD6; --info-wash:#E9F0FF;
+  --info:#1F7A6C; --info-wash:#E3F5F1;
   --danger:#D70015; --danger-wash:#FDEDEC;
   --ok:#1F8A3D; --ok-wash:#EAF7EC;
   --shadow-card:0 3px 14px rgba(116,41,132,.08), 0 1px 3px rgba(0,0,0,.04);
   --header-grad:linear-gradient(135deg,#7F2F91 0%,#5A1F67 100%);
 }
 *{box-sizing:border-box;-webkit-font-smoothing:antialiased}
-body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif;font-size:15px;line-height:1.42;letter-spacing:-.006em}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-display);font-size:15px;line-height:1.42;letter-spacing:-.006em}
 .wrap{max-width:980px;margin:0 auto;padding:0 18px 90px}
 
 header.top{
@@ -70,13 +65,9 @@ header.top p{margin:5px 0 0;font-size:13.5px;color:rgba(255,255,255,.8)}
 .theme-toggle{appearance:none;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.12);color:#fff;border-radius:11px;width:38px;height:38px;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-top:2px}
 .theme-toggle:hover{background:rgba(255,255,255,.22)}
 .theme-toggle svg{display:block}
-.theme-toggle .ic-moon{display:none}
-@media (prefers-color-scheme: dark){
-  .theme-toggle .ic-sun{display:none}
-  .theme-toggle .ic-moon{display:block}
-}
-:root[data-theme="dark"] .theme-toggle .ic-sun{display:none}
-:root[data-theme="dark"] .theme-toggle .ic-moon{display:block}
+/* Escuro é o padrão do app — ícone de lua visível por padrão, sol só quando o claro está ativo */
+.theme-toggle .ic-sun{display:none}
+.theme-toggle .ic-moon{display:block}
 :root[data-theme="light"] .theme-toggle .ic-sun{display:block}
 :root[data-theme="light"] .theme-toggle .ic-moon{display:none}
 
@@ -161,10 +152,22 @@ table.team-cfg input[type=number]{width:96px;text-align:right}
 .iconbtn:hover{color:var(--danger)}
 
 .stat-row{display:flex;gap:0;overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--panel);box-shadow:var(--shadow-card)}
+
+.weekmap{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.weekmap .wcol{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:9px 5px;text-align:center;cursor:pointer}
+.weekmap .wcol.today{border-color:var(--info)}
+.weekmap .wcol.on{background:var(--panel-3);border-color:var(--accent)}
+.weekmap .wcol .wd{font-size:9.5px;color:var(--text-2);text-transform:uppercase;letter-spacing:.05em;font-family:var(--font-mono)}
+.weekmap .wcol .wn{font-size:15px;font-weight:700;margin:3px 0 7px;font-family:var(--font-mono)}
+.weekmap .wheat{display:flex;gap:2px;justify-content:center;min-height:16px;align-items:flex-end}
+.weekmap .wheat i{width:5px;height:16px;border-radius:2px;background:var(--border);display:block}
+.weekmap .wheat i.abertura{background:var(--accent-2)}
+.weekmap .wheat i.fechamento{background:var(--accent)}
+.weekmap .wheat i.intermediario{background:var(--info)}
 .stat{flex:1;min-width:110px;padding:13px 14px;border-right:1px solid var(--border)}
 .stat:last-child{border-right:none}
 .stat .snm{font-size:13px;font-weight:590;margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.stat .sm{display:flex;justify-content:space-between;font-size:11.5px;color:var(--text-2);font-variant-numeric:tabular-nums;margin-bottom:2px}
+.stat .sm{display:flex;justify-content:space-between;font-size:11.5px;color:var(--text-2);font-variant-numeric:tabular-nums;font-family:var(--font-mono);margin-bottom:2px}
 .stat .sm b{color:var(--text);font-weight:600}
 .stat .sm.over b{color:var(--danger)}
 
@@ -179,24 +182,25 @@ table.team-cfg input[type=number]{width:96px;text-align:right}
 
 .tablewrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-card)}
 
-.day-row{display:flex;gap:16px;padding:12px 16px;border-bottom:1px solid var(--border);align-items:flex-start}
+.day-row{padding:12px 16px;border-bottom:1px solid var(--border)}
 .day-row:last-child{border-bottom:none}
-.day-row .dleft{width:108px;flex-shrink:0;padding-top:3px}
+.day-row .drowtop{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.day-row .dmid{flex:1;min-width:80px}
 .day-row .dname{font-size:14px;font-weight:600;color:var(--text)}
-.day-row .ddate{font-size:11.5px;color:var(--text-2);margin-top:1px}
-.day-row .dright{flex:1;min-width:0}
-select.cell{appearance:none;border:1px solid var(--border);background:var(--panel-2);border-radius:999px;padding:6px 30px 6px 13px;font-size:13.5px;font-weight:600;font-family:inherit;cursor:pointer;color:var(--text);min-width:150px;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236E6E73' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;background-position:right 10px center}
-select.cell:hover{filter:brightness(.97)}
-select.cell.fo{color:var(--text-3);font-weight:500;background:transparent;border-color:var(--border)}
+.day-row .ddate{font-size:11.5px;color:var(--text-2);margin-top:1px;font-family:var(--font-mono)}
+.day-row .drownotes{margin-top:7px;display:flex;gap:12px;flex-wrap:wrap}
+select.cell{appearance:none;-webkit-appearance:none;border:1px solid var(--border);background:var(--panel-3);border-radius:999px;padding:6px 26px 6px 12px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-family:var(--font-mono);cursor:pointer;color:var(--text-2);flex-shrink:0;box-sizing:border-box;width:126px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23948FA0' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 8px center}
+select.cell:hover{filter:brightness(1.08)}
+select.cell.fo{color:var(--text-3);font-weight:600;background-color:transparent;border-color:var(--border)}
 select.cell[data-type="abertura"]{background-color:var(--accent-2-wash);color:var(--accent-2-strong);border-color:transparent}
 select.cell[data-type="fechamento"]{background-color:var(--accent-wash);color:var(--accent-strong);border-color:transparent}
 select.cell[data-type="intermediario"]{background-color:var(--info-wash);color:var(--info);border-color:transparent}
 select.cell[data-type="ferias"],select.cell[data-type="atestado"],select.cell[data-type="falta"]{background-color:var(--danger-wash);color:var(--danger);border-color:transparent}
-.timelabel{display:block;font-size:12px;color:var(--text-2);margin-top:2px}
-.tasknote{display:block;font-size:11.5px;color:var(--text-2);margin-top:4px}
-.brk-line{display:flex;align-items:center;gap:4px;font-size:11px;font-weight:590;margin-top:4px}
+.timelabel{font-size:12.5px;color:var(--text-2);margin:0;flex-shrink:0;font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.tasknote{display:block;font-size:11.5px;color:var(--text-2)}
+.brk-line{display:flex;align-items:center;gap:4px;font-size:11px;font-weight:590}
 .brk-line.ok{color:var(--ok)}
 .brk-line.warn{color:var(--danger)}
 input.diarista-input{width:100%;max-width:320px;border:none;border-bottom:1px solid var(--border-strong);border-radius:0;padding:5px 2px;font-size:13.5px;background:transparent;color:var(--text)}
@@ -204,7 +208,7 @@ input.diarista-input:focus{outline:none;border-bottom-color:var(--accent)}
 
 .costbar{display:flex;justify-content:space-between;align-items:baseline;background:var(--panel);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;margin-top:12px;box-shadow:var(--shadow-card)}
 .costbar span{font-size:13.5px;color:var(--text-2)}
-.costbar b{font-size:22px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
+.costbar b{font-size:22px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;font-family:var(--font-mono)}
 
 .note{font-size:12.5px;color:var(--text-2);line-height:1.5;padding:12px 14px;margin-top:12px;border-top:1px solid var(--border)}
 footer.foot{text-align:center;color:var(--text-3);font-size:12px;margin-top:30px}
@@ -215,12 +219,12 @@ footer.foot{text-align:center;color:var(--text-3);font-size:12px;margin-top:30px
 .payroll-table td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:top}
 .payroll-table tr:last-child td{border-bottom:none}
 .payroll-table td.cat{font-weight:590;white-space:nowrap}
-.payroll-table td.val{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+.payroll-table td.val{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap;font-family:var(--font-mono)}
 .payroll-table td.why{color:var(--text-2);font-size:12.5px;line-height:1.5}
 .payroll-table tr.total td{border-top:1.5px solid var(--text);font-weight:700}
 .payroll-table tr.total td.cat,.payroll-table tr.total td.val{font-size:15px}
 
-.badge{display:inline-block;font-size:11px;font-weight:700;padding:4px 11px;border-radius:999px;border:1px solid transparent;color:var(--accent-strong);background:var(--accent-wash)}
+.badge{display:inline-block;font-size:11px;font-weight:700;padding:4px 11px;border-radius:999px;border:1px solid transparent;color:var(--accent-strong);background:var(--accent-wash);font-family:var(--font-mono);letter-spacing:.02em}
 .badge.warn{color:var(--danger);background:var(--danger-wash)}
 
 .periodbar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
@@ -272,9 +276,8 @@ table.print-table td.pv-off{color:var(--text-3)}
   .absence-row .days{justify-content:flex-start}
   .periodbar{flex-direction:column;align-items:stretch}
   .periodbar select,.periodbar input{width:100%}
-  .day-row{gap:10px}
-  .day-row .dleft{width:82px}
-  select.cell{min-width:0;width:100%}
+  .day-row .drowtop{gap:8px}
+  select.cell{width:106px;font-size:9.5px}
   .costbar{flex-direction:column;align-items:flex-start;gap:4px}
   .btn-row{flex-direction:column;align-items:stretch}
   .btn-row .btn{justify-content:center}
@@ -411,6 +414,8 @@ table.print-table td.pv-off{color:var(--text-3)}
       <div id="alerts-box"></div>
 
       <div class="stat-row" id="summary-row"></div>
+
+      <div class="weekmap" id="week-heatmap" style="margin-top:14px"></div>
 
       <nav class="segmented" id="view-switch" style="margin-top:14px;margin-bottom:0">
         <button type="button" data-mode="dia" onclick="setResultViewMode('dia')">Por dia</button>
@@ -599,7 +604,8 @@ function initTheme(){
   if(saved==='dark'||saved==='light') document.documentElement.dataset.theme=saved;
 }
 function toggleTheme(){
-  const current=document.documentElement.dataset.theme || (window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+  // Escuro é o padrão do app quando não há escolha explícita salva (ver :root no <style>).
+  const current=document.documentElement.dataset.theme || 'dark';
   const next = current==='dark' ? 'light' : 'dark';
   document.documentElement.dataset.theme=next;
   localStorage.setItem(THEME_KEY,next);
@@ -1381,23 +1387,23 @@ function cellRow(leftLabel, ddateHtml, e, dow, r){
       : `<span class="brk-line warn">${ICON_ALERT} corrido — adicional devido</span>`;
   }
   const taskHere = r.cleaningAssignedTo[dow] && r.cleaningAssignedTo[dow].empId===e.id;
+  const notes = brk + (taskHere?`<span class="tasknote">Tarefa: ${r.cleaningAssignedTo[dow].task}</span>`:'');
   return `<div class="day-row">
-    <div class="dleft"><div class="dname">${leftLabel}</div>${ddateHtml}</div>
-    <div class="dright">
+    <div class="drowtop">
       <select class="cell ${cls}" data-emp="${e.id}" data-dow="${dow}" data-type="${cell.type}" onchange="editCell(this)">
         ${['abertura','intermediario','fechamento','folga','supervisao','ferias','atestado','falta'].map(t2=>`<option value="${t2}" ${t2===cell.type?'selected':''}>${TYPE_LABEL[t2]}</option>`).join('')}
       </select>
-      ${cell.time?`<span class="timelabel">${cell.time}${cell.ponte?' · turno estendido':''}</span>`:''}
-      ${brk}
-      ${taskHere?`<span class="tasknote">Tarefa: ${r.cleaningAssignedTo[dow].task}</span>`:''}
+      <div class="dmid"><div class="dname">${leftLabel}</div>${ddateHtml}</div>
+      ${cell.time?`<span class="timelabel">${cell.time}${cell.ponte?' · ext':''}</span>`:''}
     </div>
+    ${notes?`<div class="drownotes">${notes}</div>`:''}
   </div>`;
 }
 function diaristaRow(leftLabel, ddateHtml, dow, r){
   const list=r.diaristaAssignments[dow]||[];
   return `<div class="day-row">
-    <div class="dleft"><div class="dname">${leftLabel}</div>${ddateHtml}</div>
-    <div class="dright"><input class="diarista-input" data-dow="${dow}" value="${list.map(n=>n+' ('+timesFor(dow,r.mode).diarista+')').join(', ')}" onchange="editDiarista(this)" placeholder="Nenhuma diarista"></div>
+    <div class="dmid"><div class="dname">${leftLabel}</div>${ddateHtml}</div>
+    <input class="diarista-input" data-dow="${dow}" value="${list.map(n=>n+' ('+timesFor(dow,r.mode).diarista+')').join(', ')}" onchange="editDiarista(this)" placeholder="Nenhuma diarista" style="margin-top:8px">
   </div>`;
 }
 function cleaningTaskRow(dow, r){
@@ -1405,10 +1411,9 @@ function cleaningTaskRow(dow, r){
   const current=r.cleaningAssignedTo[dow];
   const options='<option value="">— ninguém —</option>'+STATE.team.map(e=>`<option value="${e.id}" ${current&&current.empId===e.id?'selected':''}>${e.name}</option>`).join('');
   return `<div class="day-row">
-    <div class="dleft"><div class="dname">Tarefa</div></div>
-    <div class="dright">
-      <span class="tasknote" style="display:block;margin-bottom:5px">${CLEAN_TASKS[dow]}</span>
-      <select class="cell" data-dow="${dow}" onchange="editCleaningTask(this)">${options}</select>
+    <div class="drowtop">
+      <div class="dmid"><div class="dname">Tarefa</div><span class="ddate" style="font-family:var(--font-display)">${CLEAN_TASKS[dow]}</span></div>
+      <select class="cell" data-dow="${dow}" onchange="editCleaningTask(this)" style="text-transform:none;font-family:var(--font-display);font-size:12.5px;font-weight:600">${options}</select>
     </div>
   </div>`;
 }
@@ -1423,7 +1428,7 @@ function renderResultDayFirst(r){
   let html='';
   r.days.forEach(day=>{
     const dow=day.dow;
-    html+=`<div class="emp-card"><div class="emp-head"><h3>${day.label}${day.isHoliday?' · feriado':''}</h3><span class="badge">${fmt(day.date)}</span></div><div class="emp-body" style="padding:0">`;
+    html+=`<div class="emp-card" id="daycard-${dow}"><div class="emp-head"><h3>${day.label}${day.isHoliday?' · feriado':''}</h3><span class="badge">${fmt(day.date)}</span></div><div class="emp-body" style="padding:0">`;
     STATE.team.forEach(e=>{ html+=cellRow(e.name,'',e,dow,r); });
     html+=diaristaRow('Diaristas','',dow,r);
     html+=cleaningTaskRow(dow,r);
@@ -1456,12 +1461,32 @@ function setResultViewMode(m){
   try{ localStorage.setItem('ank_escala_viewmode', m); }catch(e){}
   renderResult();
 }
+function renderWeekHeatmap(r){
+  const box=document.getElementById('week-heatmap');
+  if(!box) return;
+  const todayStr=iso(new Date());
+  box.innerHTML = r.days.map(day=>{
+    const dow=day.dow;
+    const bars=STATE.team.map(e=>{
+      const cell=r.grid[e.id][dow];
+      if(!cell || cell.type==='folga' || cell.type==='supervisao') return '';
+      if(!['abertura','fechamento','intermediario'].includes(cell.type)) return '';
+      return `<i class="${cell.type}" title="${e.name}: ${TYPE_LABEL[cell.type]}"></i>`;
+    }).join('');
+    return `<div class="wcol${iso(day.date)===todayStr?' today':''}" onclick="document.getElementById('daycard-${dow}')?.scrollIntoView({behavior:'smooth',block:'start'})">
+      <div class="wd">${DOW_LABELS[dow].slice(0,3)}</div>
+      <div class="wn">${day.date.getDate()}</div>
+      <div class="wheat">${bars || '<i></i>'}</div>
+    </div>`;
+  }).join('');
+}
 function renderResult(){
   const r=currentResult;
   const box=document.getElementById('escala-cards');
   box.innerHTML = resultViewMode==='funcionaria' ? renderResultByEmployee(r) : renderResultDayFirst(r);
   const vsw=document.getElementById('view-switch');
   if(vsw) vsw.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.dataset.mode===resultViewMode));
+  renderWeekHeatmap(r);
   renderSummaryAndAlerts();
 }
 
