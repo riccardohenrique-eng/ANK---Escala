@@ -1030,7 +1030,6 @@ function generateSchedule(){
           const bias=(x)=>{
             let bb=(capKey==='int' && x.weekendOnly) ? -100000 : 0;
             if(x.maxWeeklyHours && ((capMinutesUsed[x.id]||0)+shiftMinutesFor(capKey)) > x.maxWeeklyHours*60) bb+=100000;
-            if(x.id==='maria') console.log('DEBUG_BIAS',{dow,capKey,i,used:capMinutesUsed[x.id]||0,shift:shiftMinutesFor(capKey),max:x.maxWeeklyHours,bb});
             return bb;
           };
           const av=stats[a.id][capKey]+(hist[a.id]?.[capKey]||0)*0.4+bias(a);
