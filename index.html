@@ -117,17 +117,19 @@ header.top p{margin:5px 0 0;font-size:13.5px;color:rgba(255,255,255,.8)}
 .radio-row b{display:block;font-size:14.5px;font-weight:590}
 .radio-row span{display:block;font-size:12.5px;color:var(--text-2);margin-top:2px;line-height:1.4}
 
-label.flabel{display:block;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-2);margin-bottom:6px}
+label.flabel{display:block;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);margin-bottom:7px}
 input[type=text],input[type=date],input[type=month],input[type=number],input[type=time],select.field-input{
-  width:100%;padding:9px 11px;border:1px solid var(--border-strong);border-radius:8px;background:var(--panel);color:var(--text);font-size:14.5px;font-family:inherit
+  -webkit-appearance:none;appearance:none;
+  width:100%;min-height:44px;padding:9px 12px;border:1px solid var(--border-strong);border-radius:var(--radius);background:var(--panel-2);color:var(--text);font-size:14.5px;font-family:inherit;box-sizing:border-box
 }
 input:focus,select:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-.field{padding:14px 16px;border-bottom:1px solid var(--border)}
-.field:last-child{border-bottom:none}
-.hint{font-size:12px;color:var(--text-2);margin-top:6px;line-height:1.45}
+.section-body{padding:12px}
+.field{padding:14px 15px;background:var(--panel-2);border-radius:var(--radius);margin-bottom:8px}
+.field:last-child{margin-bottom:0}
+.hint{font-size:12px;color:var(--text-2);margin-top:7px;line-height:1.45}
 
-.chipset{display:flex;flex-wrap:wrap;gap:7px}
-.chip{border:1px solid var(--border-strong);background:var(--panel);border-radius:8px;padding:6px 11px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;color:var(--text)}
+.chipset{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+.chip{border:1px solid var(--border-strong);background:var(--panel);border-radius:var(--radius);padding:9px 12px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:7px;color:var(--text);min-height:40px;box-sizing:border-box}
 .chip input{margin:0;accent-color:var(--accent)}
 .chip.on{background:var(--accent-wash);border-color:var(--accent);color:var(--accent-strong)}
 
