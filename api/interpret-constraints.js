@@ -4,7 +4,7 @@
 // (free tier — trocado de Anthropic pra Gemini em 2026-09-21 por causa do custo/uso baixo).
 // Requer a env var GEMINI_API_KEY configurada no projeto Vercel (grátis em aistudio.google.com/apikey).
 
-const GEMINI_MODEL = 'gemini-2.5-flash';
+const GEMINI_MODEL = 'gemini-3.6-flash';
 
 const TOOL_SCHEMA = {
   name: 'return_constraints',
