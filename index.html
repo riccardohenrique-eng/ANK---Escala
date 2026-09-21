@@ -1,3 +1,6 @@
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#742984">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
 <style>
 :root{
   --bg:#F5F5F7; --panel:#FFFFFF; --panel-2:#FAFAFA; --panel-3:#EFEFF1;
@@ -385,6 +388,7 @@ table.print-table td.pv-off{color:var(--text-3)}
       <div class="btn-row">
         <button class="btn btn-secondary" onclick="copyTable()">Copiar tabela</button>
         <button class="btn btn-plain" onclick="runGenerate(true)">Gerar do zero (ignora confirmação salva)</button>
+        <button class="btn btn-secondary" onclick="notifyTeamNewSchedule()">Notificar equipe</button>
         <button class="btn btn-secondary" id="btn-confirm-all" style="display:none" onclick="confirmAllWeeksInPeriod()">Confirmar todas as semanas do período</button>
         <button class="btn btn-primary" onclick="confirmWeek()">Confirmar semana</button>
       </div>
@@ -537,6 +541,17 @@ table.print-table td.pv-off{color:var(--text-3)}
         <button class="btn btn-primary" onclick="saveConfig(true)">Salvar regras</button>
         <button class="btn btn-plain" onclick="resetConfig()">Restaurar padrão</button>
       </div>
+
+      <label class="flabel" style="margin-top:20px">Notificações no celular</label>
+      <div class="grp">
+        <div class="field">
+          <p class="hint" style="margin:0 0 10px">Cada funcionária ativa no próprio celular: abra este link no navegador do celular, adicione à tela de início (compartilhar → "Adicionar à Tela de Início") e clique no botão abaixo. Depois disso, sempre que uma escala nova for publicada, dá pra avisar todo mundo que ativou de uma vez (botão "Notificar equipe" junto da escala gerada).</p>
+          <div class="btn-row" style="margin-top:0">
+            <button class="btn btn-secondary" onclick="enablePushNotifications()">Ativar notificações neste aparelho</button>
+          </div>
+          <p class="hint" id="push-status" style="margin-top:8px"></p>
+        </div>
+      </div>
     </div>
   </section>
   </div>
@@ -562,6 +577,62 @@ function toggleTheme(){
   localStorage.setItem(THEME_KEY,next);
 }
 initTheme();
+
+// ---------- PWA / NOTIFICAÇÕES PUSH ----------
+// Registra o service worker sempre (não só quando o usuário ativa notificações) —
+// é um dos critérios pra o navegador considerar o app instalável na tela de início.
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('/sw.js').catch(()=>{}); }
+
+// Chave pública VAPID — segura de expor no cliente (é assim que o protocolo Web Push funciona,
+// só a chave PRIVADA correspondente, guardada como env var na Vercel, pode assinar notificações).
+const VAPID_PUBLIC_KEY='BFwDmiQyisadElnTVyJ0_2-SLFcnYOrN_i2KkpDwXU6IhfYhGRkZrgvTm_uMaUjDSVElDGQj-Md30pdJWY8pTvA';
+function urlBase64ToUint8Array(base64String){
+  const padding='='.repeat((4 - base64String.length % 4) % 4);
+  const base64=(base64String+padding).replace(/-/g,'+').replace(/_/g,'/');
+  const raw=atob(base64);
+  return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)));
+}
+async function enablePushNotifications(){
+  const statusEl=document.getElementById('push-status');
+  const setStatus=(msg)=>{ if(statusEl) statusEl.textContent=msg; };
+  if(!('serviceWorker' in navigator) || !('PushManager' in window)){
+    setStatus('Este navegador não suporta notificações push. No iPhone, primeiro adicione o app à Tela de Início (compartilhar → "Adicionar à Tela de Início") e abra por lá antes de tentar de novo.');
+    return;
+  }
+  setStatus('Ativando…');
+  try{
+    const reg = await navigator.serviceWorker.register('/sw.js');
+    await navigator.serviceWorker.ready;
+    const perm = await Notification.requestPermission();
+    if(perm!=='granted'){ setStatus('Permissão de notificação negada pelo navegador.'); return; }
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly:true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    });
+    const subJson = sub.toJSON();
+    STATE.pushSubscriptions = STATE.pushSubscriptions || [];
+    if(!STATE.pushSubscriptions.some(s=>s.endpoint===subJson.endpoint)){
+      STATE.pushSubscriptions.push(subJson);
+      saveState();
+    }
+    setStatus('Notificações ativadas neste aparelho.');
+  }catch(e){
+    setStatus('Não consegui ativar: '+e.message);
+  }
+}
+async function notifyTeamNewSchedule(){
+  if(!confirm('Enviar notificação pro celular de quem já ativou?')) return;
+  try{
+    const res = await fetch('/api/send-push', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({title:'Nova escala publicada', body:'A escala foi atualizada — confira no app.', url:'/'})
+    });
+    const data = await res.json();
+    if(!res.ok){ alert('Não consegui notificar: '+(data.error||res.status)); return; }
+    if(data.sent===0 && !data.removed){ alert('Nenhum aparelho tem notificações ativadas ainda.'); return; }
+    alert('Notificação enviada pra '+data.sent+' aparelho(s).'+(data.removed?(' '+data.removed+' inscrição(ões) expirada(s) foram removidas.'):''));
+  }catch(e){ alert('Falha ao notificar: '+e.message); }
+}
 
 const STORE_KEY='ank_escala_v1';
 const DOW_LABELS=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
@@ -630,7 +701,8 @@ function defaultState(){
     coverage: {extraByDow:{0:1,1:0,2:0,3:0,4:0}, weekendExtra:{leve:1,moderado:1,quente:2}},
     history: [],
     ponto: {},
-    constraints: []
+    constraints: [],
+    pushSubscriptions: []
   };
 }
 function loadState(){
