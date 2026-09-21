@@ -209,12 +209,6 @@ input.diarista-input:focus{outline:none;border-bottom-color:var(--accent)}
 .note{font-size:12.5px;color:var(--text-2);line-height:1.5;padding:12px 14px;margin-top:12px;border-top:1px solid var(--border)}
 footer.foot{text-align:center;color:var(--text-3);font-size:12px;margin-top:30px}
 
-table.ponto{width:100%;border-collapse:collapse;font-size:13px}
-table.ponto th{text-align:left;color:var(--text-2);font-weight:600;text-transform:uppercase;font-size:10.5px;letter-spacing:.04em;padding:9px 10px;border-bottom:1px solid var(--border);background:var(--panel-2)}
-table.ponto td{padding:8px 10px;border-bottom:1px solid var(--border)}
-table.ponto tr:last-child td{border-bottom:none}
-table.ponto input[type=time]{width:92px;padding:6px 7px;font-size:13px}
-table.ponto .pname{font-weight:590}
 
 .payroll-table{width:100%;border-collapse:collapse;font-size:13.5px}
 .payroll-table th{text-align:left;background:var(--panel-2);color:var(--text-2);font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;padding:9px 14px}
@@ -304,8 +298,8 @@ table.print-table td.pv-off{color:var(--text-3)}
 <div class="wrap">
   <header class="top">
     <div>
-      <h1>Escala &amp; Ponto</h1>
-      <p>Açaí No Kilo · Cruz das Almas — cobertura, pausas reais, ponto digital e folha</p>
+      <h1>Escala</h1>
+      <p>Açaí No Kilo · Cruz das Almas — cobertura, pausas reais e folha</p>
     </div>
     <button class="theme-toggle" onclick="toggleTheme()" title="Alternar modo claro/escuro" aria-label="Alternar modo claro/escuro">
       <svg class="ic-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
@@ -315,7 +309,6 @@ table.print-table td.pv-off{color:var(--text-3)}
 
   <nav class="segmented">
     <button class="on" onclick="showTab('tab-escala',this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>Escala</span></button>
-    <button onclick="showTab('tab-ponto',this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><span>Ponto digital</span></button>
     <button onclick="showTab('tab-relatorio',this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M12 20V4M20 20v-7"/></svg><span>Relatórios</span></button>
     <button onclick="showTab('tab-imprimir',this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-5a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1h-2"/><rect x="6" y="14" width="12" height="7"/></svg><span>Imprimir</span></button>
     <button onclick="showTab('tab-config',this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V21a2 2 0 0 1-4 0v-.09A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 0 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1.04-1.56V3a2 2 0 0 1 4 0v.09A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.56 1.04H21a2 2 0 0 1 0 4h-.09A1.7 1.7 0 0 0 19.4 15Z"/></svg><span>Config</span></button>
@@ -445,31 +438,6 @@ table.print-table td.pv-off{color:var(--text-3)}
 
   </div>
 
-  <!-- ===================== TAB PONTO ===================== -->
-  <div class="tabpage" id="tab-ponto">
-    <section class="section">
-      <div class="section-head" onclick="toggleCard('card-ponto')">
-        <div><h2>Registro de ponto do dia</h2><div class="sub">Entrada, pausa e saída reais de cada funcionária</div></div>
-        <span class="chev"></span>
-      </div>
-      <div class="section-body">
-        <div class="grp" style="margin-bottom:14px">
-          <div class="field">
-            <label class="flabel">Data</label>
-            <input type="date" id="ponto-date">
-          </div>
-        </div>
-        <div class="tablewrap">
-          <table class="ponto" id="ponto-table"></table>
-        </div>
-        <p class="note">Entrada/Saída vêm pré-preenchidas com o horário programado da escala confirmada — ajuste para o horário real batido. Deixe início/fim de pausa em branco se ela não tirou pausa (conta como turno corrido no relatório). Quando o check-in por celular existir, ele alimenta esses mesmos campos automaticamente.</p>
-        <div class="btn-row">
-          <button class="btn btn-primary" onclick="savePonto()">Salvar ponto do dia</button>
-        </div>
-      </div>
-    </section>
-  </div>
-
   <!-- ===================== TAB RELATORIO ===================== -->
   <div class="tabpage" id="tab-relatorio">
     <section class="section">
@@ -501,7 +469,7 @@ table.print-table td.pv-off{color:var(--text-3)}
         </details>
 
         <div id="report-box"></div>
-        <p class="note">Pré-cálculo para orientar a montagem da folha — sempre revisado pelo contador antes de emitir contracheques. Fonte dos horários: ponto digital quando registrado; senão, o horário programado da escala confirmada.</p>
+        <p class="note">Pré-cálculo para orientar a montagem da folha — sempre revisado pelo contador antes de emitir contracheques. Fonte dos horários: o horário programado da escala confirmada.</p>
       </div>
     </section>
   </div>
@@ -760,7 +728,6 @@ function defaultState(){
     cctIntervaloReduzido:false,
     coverage: {extraByDow:{0:1,1:0,2:0,3:0,4:0}, weekendExtra:{leve:1,moderado:1,quente:2}},
     history: [],
-    ponto: {},
     constraints: [],
     pushSubscriptions: []
   };
@@ -795,7 +762,6 @@ function loadState(){
         }
         return withDefaults;
       }),
-      ponto: parsed.ponto||{},
       constraints: parsed.constraints||[]
     };
   }catch(e){ return defaultState(); }
@@ -844,7 +810,6 @@ function showTab(id,btn){
   document.querySelectorAll('nav.segmented button').forEach(b=>b.classList.remove('on'));
   document.getElementById(id).classList.add('on');
   btn.classList.add('on');
-  if(id==='tab-ponto') renderPontoTable();
   if(id==='tab-relatorio') { populateReportEmployees(); renderReport(); }
   if(id==='tab-imprimir') renderPrintView();
 }
@@ -915,7 +880,7 @@ function saveConfig(announce){
   if(announce) alert('Regras salvas.');
 }
 function resetConfig(){
-  if(!confirm('Restaurar equipe e regras para o padrão? (histórico e ponto não são apagados)')) return;
+  if(!confirm('Restaurar equipe e regras para o padrão? (histórico não é apagado)')) return;
   const d=defaultState();
   STATE.team=d.team; STATE.caps=d.caps; STATE.rates=d.rates; STATE.diaristaPool=d.diaristaPool; STATE.escalaMode=d.escalaMode; STATE.cctIntervaloReduzido=false; STATE.coverage=d.coverage;
   saveState(); renderTeamTable();
@@ -1935,62 +1900,6 @@ async function exportPrintImage(){
   }
 }
 
-// ================= PONTO DIGITAL =================
-function findScheduledCell(dateStr){
-  const monday=mondayOf(dateStr);
-  const wk=STATE.history.find(w=>w.weekStart===iso(monday));
-  if(!wk) return null;
-  const dowEntry=wk.days.find(x=>x.date===dateStr);
-  if(!dowEntry) return null;
-  return {wk,dow:dowEntry.dow};
-}
-function renderPontoTable(){
-  const dateInput=document.getElementById('ponto-date');
-  if(!dateInput.value) dateInput.value=new Date().toISOString().slice(0,10);
-  dateInput.onchange=renderPontoTable;
-  const dateStr=dateInput.value;
-  const found=findScheduledCell(dateStr);
-  const saved=(STATE.ponto[dateStr])||{};
-  const tbl=document.getElementById('ponto-table');
-  let head='<tr><th>Funcionária</th><th>Programado</th><th>Entrada</th><th>Início pausa</th><th>Fim pausa</th><th>Saída</th></tr>';
-  let body='';
-  STATE.team.forEach(e=>{
-    let programado='—';
-    let prefIn='', prefOut='';
-    if(found){
-      const cell=found.wk.perEmployee[e.id]?.byDow?.[found.dow];
-      if(cell && cell.type!=='folga' && cell.time){
-        programado=TYPE_LABEL[cell.type]+' · '+cell.time;
-        const [s,en]=cell.time.split('–');
-        prefIn=s.trim(); prefOut=en.trim();
-      } else if(cell) programado='Folga';
-    }
-    const rec=saved[e.id]||{};
-    body+=`<tr>
-      <td class="pname">${e.name}</td>
-      <td style="color:var(--text-2);font-size:12px">${programado}</td>
-      <td><input type="time" data-emp="${e.id}" data-f="in" value="${rec.in!==undefined?rec.in:prefIn}"></td>
-      <td><input type="time" data-emp="${e.id}" data-f="breakStart" value="${rec.breakStart||''}"></td>
-      <td><input type="time" data-emp="${e.id}" data-f="breakEnd" value="${rec.breakEnd||''}"></td>
-      <td><input type="time" data-emp="${e.id}" data-f="out" value="${rec.out!==undefined?rec.out:prefOut}"></td>
-    </tr>`;
-  });
-  tbl.innerHTML=head+body;
-}
-function savePonto(){
-  const dateStr=document.getElementById('ponto-date').value;
-  if(!dateStr){ alert('Escolha a data.'); return; }
-  const day={};
-  STATE.team.forEach(e=>{
-    const get=f=>document.querySelector(`#ponto-table input[data-emp="${e.id}"][data-f="${f}"]`).value;
-    const rec={in:get('in'),out:get('out'),breakStart:get('breakStart'),breakEnd:get('breakEnd')};
-    if(rec.in || rec.out) day[e.id]=rec;
-  });
-  STATE.ponto[dateStr]=day;
-  saveState();
-  alert('Ponto do dia salvo.');
-}
-
 // ================= RELATÓRIOS / FOLHA =================
 function populateReportEmployees(){
   const sel=document.getElementById('rep-emp');
@@ -2012,35 +1921,21 @@ function dayFacts(dateStr){
   const wk=STATE.history.find(w=>w.weekStart===iso(monday));
   let dowMeta=null;
   if(wk){ dowMeta=wk.days.find(x=>x.date===dateStr); }
-  const ponto=(STATE.ponto[dateStr]||{});
-  return {wk,dowMeta,ponto};
+  return {wk,dowMeta};
 }
 
 function computeEmployeeDay(empId,dateStr){
-  const {wk,dowMeta,ponto}=dayFacts(dateStr);
+  const {wk,dowMeta}=dayFacts(dateStr);
   const cell = (wk && dowMeta) ? wk.perEmployee[empId]?.byDow?.[dowMeta.dow] : null;
-  const p = ponto[empId];
   const isHoliday = dowMeta ? dowMeta.isHoliday : false;
-  let scheduledHours=0, requiredBreakMin=0;
+  let scheduledHours=0;
   if(cell && cell.type!=='folga' && cell.time){
     scheduledHours = hoursFromRange(cell.time);
-    requiredBreakMin = cell.breakInfo ? cell.breakInfo.duration : 0;
   }
-  let actualHours=null, breakTakenMin=0, hasPonto=false;
-  if(p && p.in && p.out){
-    hasPonto=true;
-    actualHours = (timeToMin(p.out)-timeToMin(p.in))/60;
-    if(p.breakStart && p.breakEnd){
-      breakTakenMin = Math.max(0,(timeToMin(p.breakEnd)-timeToMin(p.breakStart)));
-      actualHours -= breakTakenMin/60;
-    }
-  }
-  const worked = hasPonto ? (actualHours>0) : (cell && cell.type!=='folga');
-  let hours = hasPonto ? Math.max(0,actualHours) : scheduledHours;
-  const missingBreakMin = hasPonto
-    ? Math.max(0, requiredBreakMin - breakTakenMin)
-    : (cell && cell.breakInfo && !cell.breakInfo.given ? cell.breakInfo.duration : 0);
-  return { worked, hours, missingBreakMin, isHoliday, hasPonto, type: cell?cell.type:null };
+  const worked = cell && cell.type!=='folga';
+  const hours = scheduledHours;
+  const missingBreakMin = (cell && cell.breakInfo && !cell.breakInfo.given) ? cell.breakInfo.duration : 0;
+  return { worked, hours, missingBreakMin, isHoliday, type: cell?cell.type:null };
 }
 
 function moneyBR(v){ return 'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
@@ -2307,7 +2202,7 @@ function renderReport(){
           <tr><th>Categoria</th><th>Por quê</th><th>Valor</th></tr>
           <tr><td class="cat">Horas normais</td><td class="why">${p.normalHours.toFixed(1)}h efetivamente trabalhadas × ${moneyBR(rate)}/h.</td><td class="val">${moneyBR(p.valorNormal)}</td></tr>
           <tr><td class="cat">Horas extras (+50%)</td><td class="why">Toda hora além de 8h/dia ou 44h/semana tem acréscimo mínimo de 50% (Art. 7º, XVI, CF).</td><td class="val">${moneyBR(p.valorExtra)}</td></tr>
-          <tr><td class="cat">Intervalo suprimido (+50%)</td><td class="why">${p.missingBreakMin} min de pausa devida e não registrada no ponto, pagos como indenização de 50% sobre a hora normal (Art. 71 §4º CLT).</td><td class="val">${moneyBR(p.valorIntervalo)}</td></tr>
+          <tr><td class="cat">Intervalo suprimido (+50%)</td><td class="why">${p.missingBreakMin} min de pausa devida e não concedida conforme a escala confirmada, pagos como indenização de 50% sobre a hora normal (Art. 71 §4º CLT).</td><td class="val">${moneyBR(p.valorIntervalo)}</td></tr>
           <tr><td class="cat">DSR</td><td class="why">Descanso semanal remunerado: (remuneração normal da semana ÷ dias trabalhados) × 1 dia (Lei 605/49). Folgas além da 1ª não geram pagamento adicional.</td><td class="val">${moneyBR(p.dsr)}</td></tr>
           <tr><td class="cat">Dobro domingo/feriado</td><td class="why">${p.dobroDays} dia(s) trabalhado(s) em domingo/feriado sem folga compensatória na mesma semana (Súmula 146, TST).</td><td class="val">${moneyBR(p.dobroValue)}</td></tr>
           <tr><td class="cat">Férias + 1/3 (provisão)</td><td class="why">Provisão mensal: 1/12 da remuneração + 1/3 constitucional.</td><td class="val">${moneyBR(p.feriasProvisao)}</td></tr>
