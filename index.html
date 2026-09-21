@@ -1781,7 +1781,8 @@ async function exportPrintExcel(){
   const wb=XLSX.utils.book_new();
   blocks.forEach((b,i)=>{
     const ws=XLSX.utils.aoa_to_sheet([b.header, ...b.rows]);
-    XLSX.utils.book_append_sheet(wb, ws, ('Sem '+(i+1)+' '+b.weekLabel.replace('Semana de ','')).slice(0,31));
+    const sheetName=('Sem '+(i+1)+' '+b.weekLabel.replace('Semana de ','')).replace(/[:\\/?*\[\]]/g,'-').slice(0,31);
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
   });
   XLSX.writeFile(wb, 'escala.xlsx');
 }
