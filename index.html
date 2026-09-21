@@ -1,3 +1,4 @@
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#742984">
 <link rel="apple-touch-icon" href="/icons/icon-192.png">
@@ -261,12 +262,14 @@ table.print-table td.pv-off{color:var(--text-3)}
   header.top{margin:0 -14px 20px;padding:20px 16px 26px;border-radius:0 0 22px 22px}
   header.top h1{font-size:21px}
   header.top p{font-size:12.5px}
-  .segmented{
+  .wrap > nav.segmented{
     position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));z-index:40;
     margin-bottom:0;padding:6px 4px;border-radius:22px;
   }
-  .segmented button{flex:1;flex-direction:column;gap:3px;padding:7px 2px 6px;font-size:10px;white-space:nowrap}
-  .segmented button span{line-height:1}
+  .wrap > nav.segmented button{flex:1;flex-direction:column;gap:3px;padding:7px 2px 6px;font-size:10px;white-space:nowrap}
+  .wrap > nav.segmented button span{line-height:1}
+  #view-switch{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  #view-switch button{flex:none;padding:8px 14px;font-size:12.5px;white-space:nowrap}
   .row{flex-wrap:wrap}
   .row .rctrl{max-width:none}
   .absence-row{grid-template-columns:1fr;gap:8px}
