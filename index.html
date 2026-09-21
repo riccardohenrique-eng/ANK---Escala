@@ -150,7 +150,7 @@ table.team-cfg input[type=number]{width:96px;text-align:right}
 
 .day-row{display:flex;gap:16px;padding:12px 16px;border-bottom:1px solid var(--border);align-items:flex-start}
 .day-row:last-child{border-bottom:none}
-.day-row .dleft{width:96px;flex-shrink:0;padding-top:3px}
+.day-row .dleft{width:108px;flex-shrink:0;padding-top:3px}
 .day-row .dname{font-size:14px;font-weight:600;color:var(--text)}
 .day-row .ddate{font-size:11.5px;color:var(--text-2);margin-top:1px}
 .day-row .dright{flex:1;min-width:0}
@@ -215,6 +215,28 @@ table.print-table td.pv-off{color:var(--text-3)}
 .pv-time{color:var(--text-2);font-weight:400}
 .pv-task{color:var(--text-2);font-weight:400;font-size:11.5px}
 
+@media (max-width: 640px){
+  .wrap{padding:20px 14px 60px}
+  header.top h1{font-size:23px}
+  header.top p{font-size:13px}
+  .segmented{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .segmented button{flex:none;padding:8px 12px;font-size:12.5px;white-space:nowrap}
+  .row{flex-wrap:wrap}
+  .row .rctrl{max-width:none}
+  .absence-row{grid-template-columns:1fr;gap:8px}
+  .absence-row .days{justify-content:flex-start}
+  .periodbar{flex-direction:column;align-items:stretch}
+  .periodbar select,.periodbar input{width:100%}
+  .day-row{gap:10px}
+  .day-row .dleft{width:82px}
+  select.cell{min-width:0;width:100%}
+  .costbar{flex-direction:column;align-items:flex-start;gap:4px}
+  .btn-row{flex-direction:column;align-items:stretch}
+  .btn-row .btn{justify-content:center}
+  table.team-cfg input[type=number]{width:70px}
+  .stat{min-width:96px}
+}
+
 @media print{
   .no-print, .segmented, footer.foot, header.top p { display:none !important; }
   body{ background:#fff; color:#000; }
@@ -245,82 +267,11 @@ table.print-table td.pv-off{color:var(--text-3)}
     <button onclick="showTab('tab-ponto',this)">Ponto digital</button>
     <button onclick="showTab('tab-relatorio',this)">Relatórios</button>
     <button onclick="showTab('tab-imprimir',this)">Imprimir</button>
+    <button onclick="showTab('tab-config',this)">Config</button>
   </nav>
 
   <!-- ===================== TAB ESCALA ===================== -->
   <div class="tabpage on" id="tab-escala">
-
-  <section class="section closed" id="card-config">
-    <div class="section-head" onclick="toggleCard('card-config')">
-      <h2>Equipe e regras fixas</h2>
-      <span class="chev"></span>
-    </div>
-    <div class="section-body">
-
-      <label class="flabel">Modelo de jornada</label>
-      <div class="grp" style="margin-bottom:16px">
-        <div class="radio-row" id="mode-A" onclick="setMode('A')">
-          <span class="rdot"></span>
-          <div>
-            <b>Opção A — pausa quando possível</b>
-            <span>Mantém os horários atuais (turnos de 6h a 7h) e as 2 folgas/semana. Pausa real sempre que 3 ou mais pessoas estiverem na loja; quando não dá, fica corrido com o adicional de 50%.</span>
-          </div>
-        </div>
-        <div class="radio-row" id="mode-B" onclick="setMode('B')">
-          <span class="rdot"></span>
-          <div>
-            <b>Opção B — turnos de 6h</b>
-            <span>Turnos mais curtos; a pausa exigida cai para 15 min na maioria dos dias. Em seg/qua/sáb, uma das aberturas ainda faz uma extensão de 6h30 corrida para cobrir 15h30–16h.</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="grp" style="margin-bottom:16px">
-        <div class="row">
-          <div><span class="rlabel">Convenção coletiva reduz a pausa &gt;6h para 30 min</span><div class="rhint">Deixe desligado até confirmar com o sindicato do comércio de Cruz das Almas/BA.</div></div>
-          <div class="rctrl" style="max-width:44px"><input type="checkbox" id="cfg-cct" onchange="saveConfig(false)" style="width:20px;height:20px"></div>
-        </div>
-      </div>
-
-      <label class="flabel">Necessidade de pessoal por dia</label>
-      <div class="grp" style="margin-bottom:6px">
-        <div class="row"><span class="rlabel">Segunda — pessoas extras além do básico</span><div class="rctrl"><input type="number" min="0" max="3" id="cov-0"></div></div>
-        <div class="row"><span class="rlabel">Terça — pessoas extras além do básico</span><div class="rctrl"><input type="number" min="0" max="3" id="cov-1"></div></div>
-        <div class="row"><span class="rlabel">Quarta — pessoas extras além do básico</span><div class="rctrl"><input type="number" min="0" max="3" id="cov-2"></div></div>
-        <div class="row"><span class="rlabel">Quinta — pessoas extras além do básico</span><div class="rctrl"><input type="number" min="0" max="3" id="cov-3"></div></div>
-        <div class="row"><span class="rlabel">Sexta — pessoas extras além do básico</span><div class="rctrl"><input type="number" min="0" max="3" id="cov-4"></div></div>
-      </div>
-      <p class="hint" style="margin:0 2px 16px">O básico (2 na abertura + 2 no fechamento) é sempre exigido por segurança — isso não muda. Zere um dia para não precisar de ninguém além disso; por padrão só a segunda tem 1 pessoa extra.</p>
-
-      <label class="flabel">Reforço de fim de semana / feriado, por previsão de movimento</label>
-      <div class="grp" style="margin-bottom:16px">
-        <div class="row"><span class="rlabel">Ameno</span><div class="rctrl"><input type="number" min="0" max="3" id="cov-leve"></div></div>
-        <div class="row"><span class="rlabel">Moderado</span><div class="rctrl"><input type="number" min="0" max="3" id="cov-moderado"></div></div>
-        <div class="row"><span class="rlabel">Calor forte</span><div class="rctrl"><input type="number" min="0" max="3" id="cov-quente"></div></div>
-      </div>
-
-      <label class="flabel">Funcionárias fixas</label>
-      <div class="grp">
-        <div class="tablewrap" style="border:none;border-radius:0"><table class="team-cfg" id="team-table"></table></div>
-      </div>
-      <div class="btn-row"><button class="btn btn-secondary" onclick="addEmployee()">Adicionar funcionária</button></div>
-      <p class="hint" style="margin:8px 2px 0">Marque "só fim de semana/feriado" para quem não entra no rodízio de dia de semana e só é escalada no turno Central de sábado, domingo e feriado, respeitando o teto de horas semanais informado. Marque "Nunca fecha" para quem não deve ser escalada para o fechamento mesmo acompanhada de alguém que opera caixa (ex.: sem prática no caixa).</p>
-
-      <label class="flabel" style="margin-top:20px">Limites e valores</label>
-      <div class="grp">
-        <div class="row"><span class="rlabel">Máx. fechamentos / semana</span><div class="rctrl"><input type="number" id="cfg-maxFe" min="0" max="7"></div></div>
-        <div class="row"><span class="rlabel">Máx. aberturas / semana</span><div class="rctrl"><input type="number" id="cfg-maxAb" min="0" max="7"></div></div>
-        <div class="row"><span class="rlabel">Folgas alvo / semana</span><div class="rctrl"><input type="number" id="cfg-folgaAlvo" min="0" max="6"></div></div>
-        <div class="row"><span class="rlabel">Diária diarista — dia de semana</span><div class="rctrl"><input type="number" id="cfg-rateWeekday"></div></div>
-        <div class="row"><span class="rlabel">Diária diarista — fim de semana/feriado</span><div class="rctrl"><input type="number" id="cfg-rateWeekend"></div></div>
-      </div>
-
-      <div class="btn-row">
-        <button class="btn btn-primary" onclick="saveConfig(true)">Salvar regras</button>
-        <button class="btn btn-plain" onclick="resetConfig()">Restaurar padrão</button>
-      </div>
-    </div>
-  </section>
 
   <section class="section" id="card-week">
     <div class="section-head" onclick="toggleCard('card-week')">
@@ -334,6 +285,15 @@ table.print-table td.pv-off{color:var(--text-3)}
           <input type="date" id="week-start">
           <p class="hint">Escolha qualquer dia — a ferramenta ajusta para a segunda-feira daquela semana.</p>
           <p class="hint" id="week-range-label" style="font-weight:600;color:var(--text)"></p>
+        </div>
+        <div class="field">
+          <label class="flabel">Gerar</label>
+          <select class="field-input" id="gen-period">
+            <option value="semana">1 semana</option>
+            <option value="quinzena">2 semanas (quinzena)</option>
+            <option value="mes">4 semanas (~mês)</option>
+          </select>
+          <p class="hint">As semanas seguintes começam sempre na segunda seguinte à primeira. Feriado e previsão de movimento marcados abaixo valem só pra 1ª semana — ajuste as demais célula a célula depois de gerar.</p>
         </div>
         <div class="field">
           <label class="flabel">Feriado nesta semana</label>
@@ -402,9 +362,16 @@ table.print-table td.pv-off{color:var(--text-3)}
       <span class="chev"></span>
     </div>
     <div class="section-body">
+      <div class="btn-row no-print" id="week-switcher" style="display:none;margin-top:0"></div>
+
       <div id="alerts-box"></div>
 
       <div class="stat-row" id="summary-row"></div>
+
+      <nav class="segmented" id="view-switch" style="margin-top:14px;margin-bottom:0">
+        <button type="button" data-mode="dia" onclick="setResultViewMode('dia')">Por dia</button>
+        <button type="button" data-mode="funcionaria" onclick="setResultViewMode('funcionaria')">Por funcionária</button>
+      </nav>
 
       <div id="escala-cards" style="display:flex;flex-direction:column;gap:14px;margin-top:14px"></div>
 
@@ -418,6 +385,7 @@ table.print-table td.pv-off{color:var(--text-3)}
       <div class="btn-row">
         <button class="btn btn-secondary" onclick="copyTable()">Copiar tabela</button>
         <button class="btn btn-plain" onclick="runGenerate(true)">Gerar do zero (ignora confirmação salva)</button>
+        <button class="btn btn-secondary" id="btn-confirm-all" style="display:none" onclick="confirmAllWeeksInPeriod()">Confirmar todas as semanas do período</button>
         <button class="btn btn-primary" onclick="confirmWeek()">Confirmar semana</button>
       </div>
     </div>
@@ -488,6 +456,81 @@ table.print-table td.pv-off{color:var(--text-3)}
         <div id="print-weeks"></div>
       </div>
     </section>
+  </div>
+
+  <!-- ===================== TAB CONFIG ===================== -->
+  <div class="tabpage" id="tab-config">
+  <section class="section" id="card-config">
+    <div class="section-head" onclick="toggleCard('card-config')">
+      <h2>Equipe e regras fixas</h2>
+      <span class="chev"></span>
+    </div>
+    <div class="section-body">
+
+      <label class="flabel">Modelo de jornada</label>
+      <div class="grp" style="margin-bottom:16px">
+        <div class="radio-row" id="mode-A" onclick="setMode('A')">
+          <span class="rdot"></span>
+          <div>
+            <b>Opção A — pausa quando possível</b>
+            <span>Mantém os horários atuais (turnos de 6h a 7h) e as 2 folgas/semana. Pausa real sempre que 3 ou mais pessoas estiverem na loja; quando não dá, fica corrido com o adicional de 50%.</span>
+          </div>
+        </div>
+        <div class="radio-row" id="mode-B" onclick="setMode('B')">
+          <span class="rdot"></span>
+          <div>
+            <b>Opção B — turnos de 6h</b>
+            <span>Turnos mais curtos; a pausa exigida cai para 15 min na maioria dos dias. Em seg/qua/sáb, uma das aberturas ainda faz uma extensão de 6h30 corrida para cobrir 15h30–16h.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grp" style="margin-bottom:16px">
+        <div class="row">
+          <div><span class="rlabel">Convenção coletiva reduz a pausa &gt;6h para 30 min</span><div class="rhint">Deixe desligado até confirmar com o sindicato do comércio de Cruz das Almas/BA.</div></div>
+          <div class="rctrl" style="max-width:44px"><input type="checkbox" id="cfg-cct" onchange="saveConfig(false)" style="width:20px;height:20px"></div>
+        </div>
+      </div>
+
+      <label class="flabel">Necessidade de pessoal por dia</label>
+      <div class="grp" style="margin-bottom:6px">
+        <div class="row"><span class="rlabel">Segunda — pessoas extras além do básico</span><div class="rctrl"><input type="number" min="0" max="3" id="cov-0"></div></div>
+        <div class="row"><span class="rlabel">Terça — pessoas extras além do básico</span><div class="rctrl"><input type="number" min="0" max="3" id="cov-1"></div></div>
+        <div class="row"><span class="rlabel">Quarta — pessoas extras além do básico</span><div class="rctrl"><input type="number" min="0" max="3" id="cov-2"></div></div>
+        <div class="row"><span class="rlabel">Quinta — pessoas extras além do básico</span><div class="rctrl"><input type="number" min="0" max="3" id="cov-3"></div></div>
+        <div class="row"><span class="rlabel">Sexta — pessoas extras além do básico</span><div class="rctrl"><input type="number" min="0" max="3" id="cov-4"></div></div>
+      </div>
+      <p class="hint" style="margin:0 2px 16px">O básico (2 na abertura + 2 no fechamento) é sempre exigido por segurança — isso não muda. Zere um dia para não precisar de ninguém além disso; por padrão só a segunda tem 1 pessoa extra.</p>
+
+      <label class="flabel">Reforço de fim de semana / feriado, por previsão de movimento</label>
+      <div class="grp" style="margin-bottom:16px">
+        <div class="row"><span class="rlabel">Ameno</span><div class="rctrl"><input type="number" min="0" max="3" id="cov-leve"></div></div>
+        <div class="row"><span class="rlabel">Moderado</span><div class="rctrl"><input type="number" min="0" max="3" id="cov-moderado"></div></div>
+        <div class="row"><span class="rlabel">Calor forte</span><div class="rctrl"><input type="number" min="0" max="3" id="cov-quente"></div></div>
+      </div>
+
+      <label class="flabel">Funcionárias fixas</label>
+      <div class="grp">
+        <div class="tablewrap" style="border:none;border-radius:0"><table class="team-cfg" id="team-table"></table></div>
+      </div>
+      <div class="btn-row"><button class="btn btn-secondary" onclick="addEmployee()">Adicionar funcionária</button></div>
+      <p class="hint" style="margin:8px 2px 0">Marque "só fim de semana/feriado" para quem não entra no rodízio de dia de semana e só é escalada no turno Central de sábado, domingo e feriado, respeitando o teto de horas semanais informado. Marque "Nunca fecha" para quem não deve ser escalada para o fechamento mesmo acompanhada de alguém que opera caixa (ex.: sem prática no caixa).</p>
+
+      <label class="flabel" style="margin-top:20px">Limites e valores</label>
+      <div class="grp">
+        <div class="row"><span class="rlabel">Máx. fechamentos / semana</span><div class="rctrl"><input type="number" id="cfg-maxFe" min="0" max="7"></div></div>
+        <div class="row"><span class="rlabel">Máx. aberturas / semana</span><div class="rctrl"><input type="number" id="cfg-maxAb" min="0" max="7"></div></div>
+        <div class="row"><span class="rlabel">Folgas alvo / semana</span><div class="rctrl"><input type="number" id="cfg-folgaAlvo" min="0" max="6"></div></div>
+        <div class="row"><span class="rlabel">Diária diarista — dia de semana</span><div class="rctrl"><input type="number" id="cfg-rateWeekday"></div></div>
+        <div class="row"><span class="rlabel">Diária diarista — fim de semana/feriado</span><div class="rctrl"><input type="number" id="cfg-rateWeekend"></div></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="saveConfig(true)">Salvar regras</button>
+        <button class="btn btn-plain" onclick="resetConfig()">Restaurar padrão</button>
+      </div>
+    </div>
+  </section>
   </div>
 
   <footer class="foot">Dados salvos apenas neste navegador · Açaí No Kilo — Cruz das Almas/BA</footer>
@@ -902,15 +945,16 @@ function getRollingHistory(history,weeksBack){
   return agg;
 }
 
-function generateSchedule(){
+function generateSchedule(mondayOverride, holidaysOverride){
   const team=STATE.team;
   const caps=STATE.caps;
   const mode=STATE.escalaMode;
-  const monday = mondayOf(document.getElementById('week-start').value);
+  const monday = mondayOverride || mondayOf(document.getElementById('week-start').value);
+  const holidaysForWeek = holidaysOverride || weekInput.holidays;
   const days=[];
   for(let dow=0; dow<7; dow++){
     const date=addDays(monday,dow);
-    const isHoliday=weekInput.holidays.includes(dow);
+    const isHoliday=holidaysForWeek.includes(dow);
     const heat = (dow===5) ? document.getElementById('heat-sat').value
                : (dow===6) ? document.getElementById('heat-sun').value
                : (isHoliday ? document.getElementById('heat-sat').value : null);
@@ -1160,67 +1204,141 @@ function reconstructFromHistory(wk){
   return {days, grid, stats, alerts:[], diaristaAssignments: wk.diaristaAssignments||{}, cleaningAssignedTo, mode: wk.mode, fromHistory:true};
 }
 
+// Período sempre ancorado na segunda-feira da semana escolhida (mantém a semana CLT Seg-Dom
+// intacta pros cálculos de dobro/DSR) — "quinzena"/"mês" só encadeiam mais semanas inteiras
+// a partir dali, nunca começam no meio de uma semana.
+function weekStartsForPeriod(monday, period){
+  const n = period==='quinzena' ? 2 : period==='mes' ? 4 : 1;
+  const arr=[];
+  for(let i=0;i<n;i++) arr.push(addDays(monday, i*7));
+  return arr;
+}
+let currentResultWeeks=[currentResult];
+let currentWeekIdx=0;
 function runGenerate(forceNew){
   if(!document.getElementById('week-start').value){ alert('Escolha a data da semana primeiro.'); return; }
   saveConfig(false);
   syncAllAbsences();
-  const weekStart = iso(mondayOf(document.getElementById('week-start').value));
-  const existing = STATE.history.find(w=>w.weekStart===weekStart);
-  currentResult = (existing && !forceNew) ? reconstructFromHistory(existing) : generateSchedule();
+  const periodEl=document.getElementById('gen-period');
+  const period = periodEl ? periodEl.value : 'semana';
+  const firstMonday = mondayOf(document.getElementById('week-start').value);
+  const mondays = weekStartsForPeriod(firstMonday, period);
+  currentResultWeeks = mondays.map((monday,idx)=>{
+    const weekStart = iso(monday);
+    const existing = STATE.history.find(w=>w.weekStart===weekStart);
+    // feriados marcados na aba só valem pra 1ª semana do período — semanas seguintes
+    // ficam sem feriado por padrão, ajustável célula a célula depois de gerado.
+    const holidaysForThisWeek = idx===0 ? weekInput.holidays : [];
+    const result = (existing && !forceNew) ? reconstructFromHistory(existing) : generateSchedule(monday, holidaysForThisWeek);
+    result.weekStart = weekStart;
+    return result;
+  });
+  currentWeekIdx=0;
+  currentResult = currentResultWeeks[0];
   document.getElementById('card-result').style.display='';
   document.getElementById('card-result').classList.remove('closed');
   document.getElementById('mode-badge').textContent = 'Opção '+currentResult.mode;
+  const confirmAllBtn=document.getElementById('btn-confirm-all');
+  if(confirmAllBtn) confirmAllBtn.style.display = currentResultWeeks.length>1 ? '' : 'none';
+  renderWeekSwitcher();
   renderResult();
   document.getElementById('card-result').scrollIntoView({behavior:'smooth'});
+}
+function renderWeekSwitcher(){
+  const box=document.getElementById('week-switcher');
+  if(!box) return;
+  if(!currentResultWeeks || currentResultWeeks.length<2){ box.innerHTML=''; box.style.display='none'; return; }
+  box.style.display='flex';
+  box.innerHTML = currentResultWeeks.map((r,idx)=>{
+    const monday=new Date(r.weekStart+'T00:00:00');
+    const label='Sem '+(idx+1)+' · '+fmt(monday)+'–'+fmt(addDays(monday,6));
+    return `<button type="button" class="btn ${idx===currentWeekIdx?'btn-primary':'btn-secondary'}" style="font-size:12.5px;padding:7px 11px" onclick="selectWeek(${idx})">${label}</button>`;
+  }).join('');
+}
+function selectWeek(idx){
+  currentWeekIdx=idx;
+  currentResult=currentResultWeeks[idx];
+  document.getElementById('mode-badge').textContent = 'Opção '+currentResult.mode;
+  renderWeekSwitcher();
+  renderResult();
 }
 
 // ---------- RENDER RESULT ----------
 const TYPE_LABEL={abertura:'Abertura',intermediario:'Intermediário',fechamento:'Fechamento',folga:'Folga',ferias:'Férias',atestado:'Atestado',falta:'Falta',supervisao:'Supervisão (sem turno fixo)'};
 function cellClass(type){ return (type==='folga'||type==='supervisao') ? 'fo' : ''; }
-function renderResult(){
-  const r=currentResult;
-  const box=document.getElementById('escala-cards');
+function cellRow(leftLabel, ddateHtml, e, dow, r){
+  const cell=r.grid[e.id][dow]||{type:'folga',time:null};
+  const cls=cellClass(cell.type);
+  let brk='';
+  if(cell.breakInfo && cell.breakInfo.duration>0){
+    brk = cell.breakInfo.given
+      ? `<span class="brk-line ok">${ICON_CHECK} pausa ${cell.breakInfo.duration}min</span>`
+      : `<span class="brk-line warn">${ICON_ALERT} corrido — adicional devido</span>`;
+  }
+  const taskHere = r.cleaningAssignedTo[dow] && r.cleaningAssignedTo[dow].empId===e.id;
+  return `<div class="day-row">
+    <div class="dleft"><div class="dname">${leftLabel}</div>${ddateHtml}</div>
+    <div class="dright">
+      <select class="cell ${cls}" data-emp="${e.id}" data-dow="${dow}" onchange="editCell(this)">
+        ${['abertura','intermediario','fechamento','folga','supervisao','ferias','atestado','falta'].map(t2=>`<option value="${t2}" ${t2===cell.type?'selected':''}>${TYPE_LABEL[t2]}</option>`).join('')}
+      </select>
+      ${cell.time?`<span class="timelabel">${cell.time}${cell.ponte?' · turno estendido':''}</span>`:''}
+      ${brk}
+      ${taskHere?`<span class="tasknote">Tarefa: ${r.cleaningAssignedTo[dow].task}</span>`:''}
+    </div>
+  </div>`;
+}
+function diaristaRow(leftLabel, ddateHtml, dow, r){
+  const list=r.diaristaAssignments[dow]||[];
+  return `<div class="day-row">
+    <div class="dleft"><div class="dname">${leftLabel}</div>${ddateHtml}</div>
+    <div class="dright"><input class="diarista-input" data-dow="${dow}" value="${list.map(n=>n+' ('+timesFor(dow,r.mode).diarista+')').join(', ')}" onchange="editDiarista(this)" placeholder="Nenhuma diarista"></div>
+  </div>`;
+}
+// Visão padrão: dias como eixo principal, cada funcionária por baixo — prioriza "o que
+// acontece nesse dia" sobre "a agenda dessa pessoa" (pedido explícito do usuário).
+function renderResultDayFirst(r){
+  let html='';
+  r.days.forEach(day=>{
+    const dow=day.dow;
+    html+=`<div class="emp-card"><div class="emp-head"><h3>${day.label}${day.isHoliday?' · feriado':''}</h3><span class="badge">${fmt(day.date)}</span></div><div class="emp-body" style="padding:0">`;
+    STATE.team.forEach(e=>{ html+=cellRow(e.name,'',e,dow,r); });
+    html+=diaristaRow('Diaristas','',dow,r);
+    html+='</div></div>';
+  });
+  return html;
+}
+// Visão alternativa: agenda semanal de cada funcionária (comportamento original do app).
+function renderResultByEmployee(r){
   let html='';
   STATE.team.forEach(e=>{
     html+=`<div class="emp-card"><div class="emp-head"><h3>${e.name}</h3></div><div class="emp-body" style="padding:0">`;
     r.days.forEach(day=>{
-      const dow=day.dow;
-      const cell=r.grid[e.id][dow]||{type:'folga',time:null};
-      const cls=cellClass(cell.type);
-      let brk='';
-      if(cell.breakInfo && cell.breakInfo.duration>0){
-        brk = cell.breakInfo.given
-          ? `<span class="brk-line ok">${ICON_CHECK} pausa ${cell.breakInfo.duration}min</span>`
-          : `<span class="brk-line warn">${ICON_ALERT} corrido — adicional devido</span>`;
-      }
-      const taskHere = r.cleaningAssignedTo[dow] && r.cleaningAssignedTo[dow].empId===e.id;
-      html+=`<div class="day-row">
-        <div class="dleft"><div class="dname">${day.label}${day.isHoliday?' ·':''}</div><div class="ddate">${fmt(day.date)}</div></div>
-        <div class="dright">
-          <select class="cell ${cls}" data-emp="${e.id}" data-dow="${dow}" onchange="editCell(this)">
-            ${['abertura','intermediario','fechamento','folga','supervisao','ferias','atestado','falta'].map(t2=>`<option value="${t2}" ${t2===cell.type?'selected':''}>${TYPE_LABEL[t2]}</option>`).join('')}
-          </select>
-          ${cell.time?`<span class="timelabel">${cell.time}${cell.ponte?' · turno estendido':''}</span>`:''}
-          ${brk}
-          ${taskHere?`<span class="tasknote">Tarefa: ${r.cleaningAssignedTo[dow].task}</span>`:''}
-        </div>
-      </div>`;
+      const ddateHtml=`<div class="ddate">${fmt(day.date)}</div>`;
+      html+=cellRow(day.label+(day.isHoliday?' ·':''), ddateHtml, e, day.dow, r);
     });
     html+='</div></div>';
   });
-
   html+='<div class="emp-card"><div class="emp-head"><h3>Diaristas</h3></div><div class="emp-body" style="padding:0">';
   r.days.forEach(day=>{
-    const dow=day.dow;
-    const list=r.diaristaAssignments[dow]||[];
-    html+=`<div class="day-row">
-      <div class="dleft"><div class="dname">${day.label}</div><div class="ddate">${fmt(day.date)}</div></div>
-      <div class="dright"><input class="diarista-input" data-dow="${dow}" value="${list.map(n=>n+' ('+timesFor(dow,r.mode).diarista+')').join(', ')}" onchange="editDiarista(this)" placeholder="Nenhuma diarista"></div>
-    </div>`;
+    const ddateHtml=`<div class="ddate">${fmt(day.date)}</div>`;
+    html+=diaristaRow(day.label, ddateHtml, day.dow, r);
   });
   html+='</div></div>';
-
-  box.innerHTML=html;
+  return html;
+}
+let resultViewMode=(function(){ try{ return localStorage.getItem('ank_escala_viewmode')||'dia'; }catch(e){ return 'dia'; } })();
+function setResultViewMode(m){
+  resultViewMode=m;
+  try{ localStorage.setItem('ank_escala_viewmode', m); }catch(e){}
+  renderResult();
+}
+function renderResult(){
+  const r=currentResult;
+  const box=document.getElementById('escala-cards');
+  box.innerHTML = resultViewMode==='funcionaria' ? renderResultByEmployee(r) : renderResultDayFirst(r);
+  const vsw=document.getElementById('view-switch');
+  if(vsw) vsw.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.dataset.mode===resultViewMode));
   renderSummaryAndAlerts();
 }
 
@@ -1240,11 +1358,11 @@ function editDiarista(input){
   renderResult();
 }
 
-function summarizeFromGrid(){
+function summarizeFromGridFor(result){
   const stats={}; STATE.team.forEach(e=>stats[e.id]={ab:0,fe:0,int:0,folga:0});
-  currentResult.days.forEach(day=>{
+  result.days.forEach(day=>{
     STATE.team.forEach(e=>{
-      const cell=currentResult.grid[e.id][day.dow];
+      const cell=result.grid[e.id][day.dow];
       if(!cell) return;
       if(cell.type==='abertura') stats[e.id].ab++;
       else if(cell.type==='intermediario') stats[e.id].int++;
@@ -1254,6 +1372,7 @@ function summarizeFromGrid(){
   });
   return stats;
 }
+function summarizeFromGrid(){ return summarizeFromGridFor(currentResult); }
 // Diarista usada em muitas semanas seguidas se aproxima de trabalho habitual — risco real de
 // vínculo empregatício (Art. 3º CLT: pessoalidade + não eventualidade + subordinação + onerosidade).
 // Isso NÃO é o mesmo limite de "até 2 dias/semana" usado para diarista doméstica — aqui o que importa
@@ -1383,32 +1502,43 @@ function copyTable(){
   });
 }
 
-function confirmWeek(){
-  if(!currentResult) return;
-  const stats=summarizeFromGrid();
+function confirmWeekResult(result){
+  const stats=summarizeFromGridFor(result);
   const perEmployee={};
   STATE.team.forEach(e=>{
     const byDow={};
     let ponteCount=0;
-    currentResult.days.forEach(day=>{
-      const c=currentResult.grid[e.id][day.dow];
+    result.days.forEach(day=>{
+      const c=result.grid[e.id][day.dow];
       byDow[day.dow]=c ? {type:c.type,time:c.time||null,ponte:!!c.ponte,breakInfo:c.breakInfo||null} : {type:'folga',time:null};
       if(c && c.ponte) ponteCount++;
     });
     perEmployee[e.id]={ byDow, totals:{ab:stats[e.id].ab,fe:stats[e.id].fe,int:stats[e.id].int,folga:stats[e.id].folga,ponte:ponteCount} };
   });
-  const weekStartDate=mondayOf(document.getElementById('week-start').value);
-  const weekStart=iso(weekStartDate);
-  const daysMeta=currentResult.days.map(d=>({date:iso(d.date),dow:d.dow,isHoliday:d.isHoliday}));
+  const weekStart = result.weekStart || iso(mondayOf(document.getElementById('week-start').value));
+  const daysMeta=result.days.map(d=>({date:iso(d.date),dow:d.dow,isHoliday:d.isHoliday}));
   STATE.history=STATE.history.filter(w=>w.weekStart!==weekStart);
-  STATE.history.push({weekStart, mode:currentResult.mode, days:daysMeta, perEmployee, diaristaAssignments:currentResult.diaristaAssignments, cleaningAssignedTo:currentResult.cleaningAssignedTo||{}});
+  STATE.history.push({weekStart, mode:result.mode, days:daysMeta, perEmployee, diaristaAssignments:result.diaristaAssignments, cleaningAssignedTo:result.cleaningAssignedTo||{}});
   if(STATE.history.length>16) STATE.history=STATE.history.slice(-16);
-
+}
+function syncDiaristaPoolFromInput(){
   const typed=(document.getElementById('diarista-names').value||'').split(',').map(s=>s.trim()).filter(Boolean);
   typed.forEach(n=>{ if(n && !STATE.diaristaPool.includes(n)) STATE.diaristaPool.push(n); });
-
+}
+function confirmWeek(){
+  if(!currentResult) return;
+  confirmWeekResult(currentResult);
+  syncDiaristaPoolFromInput();
   saveState();
   alert('Semana confirmada. A rotação da próxima escala e os relatórios já consideram isso.');
+}
+function confirmAllWeeksInPeriod(){
+  if(!currentResultWeeks || currentResultWeeks.length<2){ confirmWeek(); return; }
+  if(!confirm(`Confirmar as ${currentResultWeeks.length} semanas deste período? Isso grava todas no histórico de uma vez.`)) return;
+  currentResultWeeks.forEach(r=>confirmWeekResult(r));
+  syncDiaristaPoolFromInput();
+  saveState();
+  alert(`${currentResultWeeks.length} semanas confirmadas. A rotação da próxima escala e os relatórios já consideram isso.`);
 }
 
 // ================= RESTRIÇÕES INTELIGENTES (IA) =================
