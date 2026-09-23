@@ -189,6 +189,9 @@ table.team-cfg input[type=number]{width:96px;text-align:right}
 .day-row .dname{font-size:14px;font-weight:600;color:var(--text)}
 .day-row .ddate{font-size:11.5px;color:var(--text-2);margin-top:1px;font-family:var(--font-mono)}
 .day-row .drownotes{margin-top:7px;display:flex;gap:12px;flex-wrap:wrap}
+.lockbtn{flex-shrink:0;width:26px;height:26px;border-radius:999px;border:1px solid var(--border);background:var(--panel-3);color:var(--text-3);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;box-sizing:border-box}
+.lockbtn:hover{filter:brightness(1.12)}
+.lockbtn.on{background:var(--accent-wash);color:var(--accent-strong);border-color:transparent}
 select.cell{appearance:none;-webkit-appearance:none;border:1px solid var(--border);background:var(--panel-3);border-radius:999px;padding:6px 26px 6px 12px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-family:var(--font-mono);cursor:pointer;color:var(--text-2);flex-shrink:0;box-sizing:border-box;width:126px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23948FA0' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   background-repeat:no-repeat;background-position:right 8px center}
@@ -1060,7 +1063,7 @@ function getRollingHistory(history,weeksBack){
   return agg;
 }
 
-function generateSchedule(mondayOverride, holidaysOverride){
+function generateSchedule(mondayOverride, holidaysOverride, lockedGrid){
   const team=STATE.team;
   const caps=STATE.caps;
   const mode=STATE.escalaMode;
@@ -1088,6 +1091,20 @@ function generateSchedule(mondayOverride, holidaysOverride){
   // padrão sem precisar travar a escala (o aviso de estouro no fim da função continua sendo a rede
   // de segurança final, caso mesmo assim precise passar do teto por falta de gente).
   const capMinutesUsed={};
+
+  // ---- células travadas (preservadas de uma geração anterior desta mesma semana) ----
+  // lockedGrid: {empId: {dow: cellObject}} — o usuário decide o que travar clicando no
+  // cadeado; ao regenerar, essas células são copiadas de volta tal como estavam e a pessoa
+  // sai do pool que o algoritmo distribui, em vez de recalcular a semana inteira do zero.
+  const lockedByDow={}; // dow -> [{empId, cell}]
+  if(lockedGrid){
+    Object.keys(lockedGrid).forEach(empId=>{
+      Object.keys(lockedGrid[empId]).forEach(dowStr=>{
+        const dow=+dowStr;
+        (lockedByDow[dow]=lockedByDow[dow]||[]).push({empId, cell:lockedGrid[empId][dow]});
+      });
+    });
+  }
 
   // ---- restrições ativas nesta semana ----
   const activeConstraints = activeConstraintsForWeek(monday);
@@ -1124,20 +1141,36 @@ function generateSchedule(mondayOverride, holidaysOverride){
     const {dow,comp}=day;
     const t=timesFor(dow,mode);
     const isWeekendOrHoliday = dow>=5 || day.isHoliday;
+
+    // Células travadas pelo usuário: copiadas tal como estavam, ANTES de qualquer outra
+    // distribuição — quem está travado sai do pool inteiro (rodízio, folga automática,
+    // restrições) pro resto do dia, exatamente como uma restrição 'forced_shift' já fazia.
+    const lockedToday = (lockedByDow[dow]||[]).filter(l=>team.some(e=>e.id===l.empId));
+    const lockedIds = new Set(lockedToday.map(l=>l.empId));
+    lockedToday.forEach(l=>{
+      grid[l.empId][dow] = {...l.cell};
+      const ty=l.cell.type;
+      if(ty==='abertura') stats[l.empId].ab++;
+      else if(ty==='intermediario') stats[l.empId].int++;
+      else if(ty==='fechamento') stats[l.empId].fe++;
+      else if(ty==='folga') stats[l.empId].folga++;
+    });
+
     // Quem só trabalha fim de semana/feriado (ex.: supervisora mensalista) fica fora do rodízio de dia de semana —
     // mas ainda precisa de descanso semanal real como qualquer funcionária (confirmado pelo usuário 2026-09-20):
     // os primeiros `caps.folgaTarget` dias úteis da semana viram folga de verdade; o resto vira 'Supervisão' (sem turno fixo de loja).
-    team.filter(e=>e.weekendOnly && !isWeekendOrHoliday).forEach(e=>{
+    team.filter(e=>e.weekendOnly && !isWeekendOrHoliday && !lockedIds.has(e.id)).forEach(e=>{
       if(stats[e.id].folga < caps.folgaTarget){ grid[e.id][dow]={type:'folga',time:null}; stats[e.id].folga++; }
       else { grid[e.id][dow]={type:'supervisao',time:null}; }
     });
-    const dayTeam = team.filter(e=> !(e.weekendOnly && !isWeekendOrHoliday));
+    const dayTeam = team.filter(e=> !(e.weekendOnly && !isWeekendOrHoliday) && !lockedIds.has(e.id));
     const forced = dayTeam.filter(e=> (weekInput.absences[e.id]||[]).includes(dow) || (constraintAbsenceDows[e.id] && constraintAbsenceDows[e.id].has(dow)));
     forced.forEach(e=>{ grid[e.id][dow]={type:'folga',time:null,note:'ausência'}; stats[e.id].folga++; });
     let availableToday = dayTeam.filter(e=>!forced.includes(e));
 
     // aplica turnos forçados por restrição (ex.: "Joeli precisa fechar segunda") antes de sortear folga/vagas
     const forcedCountByType={abertura:0,fechamento:0,intermediario:0};
+    lockedToday.forEach(l=>{ if(forcedCountByType[l.cell.type]!==undefined) forcedCountByType[l.cell.type]++; });
     (forcedShiftByDow[dow]||[]).forEach(f=>{
       const emp=availableToday.find(e=>e.id===f.empId);
       if(!emp){
@@ -1184,12 +1217,13 @@ function generateSchedule(mondayOverride, holidaysOverride){
       const chosen=[];
       const restricted=(capKey==='ab'||capKey==='fe');
       const chaperoneNeeded=(capKey==='fe') && (diaristaAssignments[dow]||[]).length>0;
-      // Alguém já alocado neste turno via restrição 'forced_shift' (fora do pool que
-      // pickFor sorteia) pode já cobrir a exigência de operar caixa/acompanhar diarista —
+      // Alguém já alocado neste turno via restrição 'forced_shift' OU célula travada (fora do
+      // pool que pickFor sorteia) pode já cobrir a exigência de operar caixa/acompanhar diarista —
       // sem checar isso, o algoritmo exige um segundo operador de caixa desnecessariamente.
       const shiftTypeForCapKey = capKey==='ab'?'abertura':capKey==='fe'?'fechamento':'intermediario';
       const forcedAlreadyOperatesCaixa = (forcedShiftByDow[dow]||[])
         .filter(f=>f.shiftType===shiftTypeForCapKey)
+        .concat(lockedToday.filter(l=>l.cell.type===shiftTypeForCapKey).map(l=>({empId:l.empId})))
         .some(f=>{ const e=team.find(x=>x.id===f.empId); return e && e.podeOperarCaixa; });
       for(let i=0;i<count;i++){
         if(working.length===0) break;
@@ -1346,13 +1380,27 @@ function runGenerate(forceNew){
   const period = periodEl ? periodEl.value : 'semana';
   const firstMonday = mondayOf(document.getElementById('week-start').value);
   const mondays = weekStartsForPeriod(firstMonday, period);
+  // Preserva células travadas de uma geração anterior desta mesma semana (por weekStart) —
+  // clicar "Gerar escala" de novo não deve descartar o que o usuário já marcou como certo.
+  const priorLockedByWeek={};
+  (currentResultWeeks||[]).forEach(r=>{
+    if(!r || !r.weekStart) return;
+    const locked={};
+    STATE.team.forEach(e=>{
+      for(let dow=0; dow<7; dow++){
+        const cell=r.grid[e.id] && r.grid[e.id][dow];
+        if(cell && cell.locked){ locked[e.id]=locked[e.id]||{}; locked[e.id][dow]=cell; }
+      }
+    });
+    if(Object.keys(locked).length) priorLockedByWeek[r.weekStart]=locked;
+  });
   currentResultWeeks = mondays.map((monday,idx)=>{
     const weekStart = iso(monday);
     const existing = STATE.history.find(w=>w.weekStart===weekStart);
     // feriados marcados na aba só valem pra 1ª semana do período — semanas seguintes
     // ficam sem feriado por padrão, ajustável célula a célula depois de gerado.
     const holidaysForThisWeek = idx===0 ? weekInput.holidays : [];
-    const result = (existing && !forceNew) ? reconstructFromHistory(existing) : generateSchedule(monday, holidaysForThisWeek);
+    const result = (existing && !forceNew) ? reconstructFromHistory(existing) : generateSchedule(monday, holidaysForThisWeek, priorLockedByWeek[weekStart]);
     result.weekStart = weekStart;
     return result;
   });
@@ -1402,6 +1450,7 @@ function cellRow(leftLabel, ddateHtml, e, dow, r){
   const notes = brk + (taskHere?`<span class="tasknote">Tarefa: ${r.cleaningAssignedTo[dow].task}</span>`:'');
   return `<div class="day-row">
     <div class="drowtop">
+      <button type="button" class="lockbtn ${cell.locked?'on':''}" title="${cell.locked?'Travada — a próxima geração preserva esta célula. Clique para destravar.':'Travar esta célula (a próxima geração não vai mexer nela)'}" onclick="toggleCellLock('${e.id}',${dow})">${cell.locked?'🔒':'🔓'}</button>
       <select class="cell ${cls}" data-emp="${e.id}" data-dow="${dow}" data-type="${cell.type}" onchange="editCell(this)">
         ${['abertura','intermediario','fechamento','folga','supervisao','ferias','atestado','falta'].map(t2=>`<option value="${t2}" ${t2===cell.type?'selected':''}>${TYPE_LABEL[t2]}</option>`).join('')}
       </select>
@@ -1410,6 +1459,12 @@ function cellRow(leftLabel, ddateHtml, e, dow, r){
     </div>
     ${notes?`<div class="drownotes">${notes}</div>`:''}
   </div>`;
+}
+function toggleCellLock(empId, dow){
+  const cell = currentResult.grid[empId] && currentResult.grid[empId][dow];
+  if(!cell) return;
+  cell.locked = !cell.locked;
+  renderResult();
 }
 function diaristaRow(leftLabel, ddateHtml, dow, r){
   const list=r.diaristaAssignments[dow]||[];
@@ -1506,7 +1561,8 @@ function editCell(sel){
   const empId=sel.dataset.emp, dow=+sel.dataset.dow, type=sel.value;
   const t=timesFor(dow,currentResult.mode);
   const timeMap={abertura:t.abertura,intermediario:t.intermediario||t.fechamento,fechamento:t.fechamento,folga:null,supervisao:null,ferias:null,atestado:null,falta:null};
-  currentResult.grid[empId][dow]={type,time:timeMap[type]};
+  const wasLocked = currentResult.grid[empId][dow] && currentResult.grid[empId][dow].locked;
+  currentResult.grid[empId][dow]={type,time:timeMap[type], ...(wasLocked?{locked:true}:{})};
   recomputeAllBreaks(currentResult.grid, currentResult.diaristaAssignments, currentResult.days, currentResult.mode, STATE.cctIntervaloReduzido);
   renderResult();
 }
