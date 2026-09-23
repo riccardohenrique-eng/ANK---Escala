@@ -1076,7 +1076,7 @@ function generateSchedule(mondayOverride, holidaysOverride, lockedGrid){
     const lockedToday = (lockedByDow[dow]||[]).filter(l=>team.some(e=>e.id===l.empId));
     const lockedIds = new Set(lockedToday.map(l=>l.empId));
     lockedToday.forEach(l=>{
-      grid[l.empId][dow] = {...l.cell};
+      grid[l.empId][dow] = {...l.cell, reason:'Você travou esta célula manualmente — não muda até destravar.'};
       const ty=l.cell.type;
       if(ty==='abertura') stats[l.empId].ab++;
       else if(ty==='intermediario') stats[l.empId].int++;
@@ -1088,12 +1088,12 @@ function generateSchedule(mondayOverride, holidaysOverride, lockedGrid){
     // mas ainda precisa de descanso semanal real como qualquer funcionária (confirmado pelo usuário 2026-09-20):
     // os primeiros `caps.folgaTarget` dias úteis da semana viram folga de verdade; o resto vira 'Supervisão' (sem turno fixo de loja).
     team.filter(e=>e.weekendOnly && !isWeekendOrHoliday && !lockedIds.has(e.id)).forEach(e=>{
-      if(stats[e.id].folga < caps.folgaTarget){ grid[e.id][dow]={type:'folga',time:null}; stats[e.id].folga++; }
-      else { grid[e.id][dow]={type:'supervisao',time:null}; }
+      if(stats[e.id].folga < caps.folgaTarget){ grid[e.id][dow]={type:'folga',time:null,reason:'Só trabalha fim de semana/feriado — folga de descanso real do meio da semana.'}; stats[e.id].folga++; }
+      else { grid[e.id][dow]={type:'supervisao',time:null,reason:'Só trabalha fim de semana/feriado e já bateu a meta de folgas da semana — fica sem turno fixo de loja.'}; }
     });
     const dayTeam = team.filter(e=> !(e.weekendOnly && !isWeekendOrHoliday) && !lockedIds.has(e.id));
     const forced = dayTeam.filter(e=> (weekInput.absences[e.id]||[]).includes(dow) || (constraintAbsenceDows[e.id] && constraintAbsenceDows[e.id].has(dow)));
-    forced.forEach(e=>{ grid[e.id][dow]={type:'folga',time:null,note:'ausência'}; stats[e.id].folga++; });
+    forced.forEach(e=>{ grid[e.id][dow]={type:'folga',time:null,note:'ausência',reason:'Ausência registrada (férias/folga pedida/falta) nesse dia.'}; stats[e.id].folga++; });
     let availableToday = dayTeam.filter(e=>!forced.includes(e));
 
     // aplica turnos forçados por restrição (ex.: "Joeli precisa fechar segunda") antes de sortear folga/vagas
@@ -1106,7 +1106,7 @@ function generateSchedule(mondayOverride, holidaysOverride, lockedGrid){
         return;
       }
       const timeMap={abertura:t.abertura,fechamento:t.fechamento,intermediario:t.intermediario||t.fechamento};
-      grid[emp.id][dow]={type:f.shiftType,time:timeMap[f.shiftType]};
+      grid[emp.id][dow]={type:f.shiftType,time:timeMap[f.shiftType],reason:`Restrição cadastrada pede que ela esteja em ${TYPE_LABEL[f.shiftType]||f.shiftType} nesse dia.`};
       stats[emp.id][f.shiftType==='abertura'?'ab':f.shiftType==='fechamento'?'fe':'int']++;
       forcedCountByType[f.shiftType]=(forcedCountByType[f.shiftType]||0)+1;
       availableToday=availableToday.filter(e=>e.id!==emp.id);
@@ -1130,7 +1130,7 @@ function generateSchedule(mondayOverride, holidaysOverride, lockedGrid){
       score:(caps.folgaTarget-stats[e.id].folga)*10 + (dow===6 && (hist[e.id]?.sundayStreak||0)>=2 ? 6 : 0)
     })).sort((a,b)=>b.score-a.score);
     const chosenForFolga=scored.slice(0,folgaSlotsToday).map(s=>s.e);
-    chosenForFolga.forEach(e=>{ grid[e.id][dow]={type:'folga',time:null}; stats[e.id].folga++; });
+    chosenForFolga.forEach(e=>{ grid[e.id][dow]={type:'folga',time:null,reason:`Está com ${stats[e.id].folga} folga(s) essa semana até agora (meta é ${caps.folgaTarget}) — prioridade no rodízio de descanso.`}; stats[e.id].folga++; });
 
     let working = availableToday.filter(e=>!chosenForFolga.includes(e));
     if(working.length < requiredFixed){
@@ -1141,6 +1141,7 @@ function generateSchedule(mondayOverride, holidaysOverride, lockedGrid){
     const abMin = parseRange(t.abertura)[1]-parseRange(t.abertura)[0];
     const feMin = parseRange(t.fechamento)[1]-parseRange(t.fechamento)[0];
     function shiftMinutesFor(capKey){ return capKey==='ab'?abMin:capKey==='fe'?feMin:introMin; }
+    const pickReasons={}; // empId -> motivo da escolha desse dia, preenchido pelo pickFor
     function pickFor(count,capKey){
       const chosen=[];
       const restricted=(capKey==='ab'||capKey==='fe');
@@ -1179,6 +1180,15 @@ function generateSchedule(mondayOverride, holidaysOverride, lockedGrid){
         while(idx<working.length && disallowed(working[idx])) idx++;
         if(idx>=working.length){ idx = working.findIndex(w=>!disallowed(w)); if(idx<0) idx=0; }
         const picked=working.splice(idx,1)[0];
+        // Motivo da escolha — usado pra explicar "por que essa pessoa" sem precisar de IA/chat:
+        // ou foi a única que ainda satisfazia a exigência de segurança (caixa/acompanhante),
+        // ou é quem está mais atrás no rodízio desse turno (contando a semana + histórico recente).
+        if((mustBeChaperoneNow && isChaperone(picked.id)) || (mustOperateCaixaNow && picked.podeOperarCaixa)){
+          pickReasons[picked.id] = `Precisava de alguém que opera caixa${chaperoneNeeded?' (tem diarista no fechamento)':''} nesse turno, e ela é quem atendia isso entre as disponíveis.`;
+        } else {
+          const label = capKey==='ab'?'aberturas':capKey==='fe'?'fechamentos':'turnos no Central';
+          pickReasons[picked.id] = `Tinha ${stats[picked.id][capKey]} ${label} essa semana até aqui — é quem estava mais atrás no rodízio entre quem estava disponível.`;
+        }
         if(capKey==='int' && picked.weekendOnly){
           weekendOnlyMinutesUsed[picked.id]=(weekendOnlyMinutesUsed[picked.id]||0)+introMin;
           alerts.push({level:'info',msg:`${day.label}: ${picked.name} no Central — ${((weekendOnlyMinutesUsed[picked.id])/60).toFixed(1)}h acumuladas na semana (teto ${picked.maxWeeklyHours}h).`});
@@ -1192,7 +1202,7 @@ function generateSchedule(mondayOverride, holidaysOverride, lockedGrid){
     }
 
     const feChosen=pickFor(feNeeded,'fe');
-    feChosen.forEach(e=>{ grid[e.id][dow]={type:'fechamento',time:t.fechamento}; stats[e.id].fe++; });
+    feChosen.forEach(e=>{ grid[e.id][dow]={type:'fechamento',time:t.fechamento,reason:pickReasons[e.id]}; stats[e.id].fe++; });
     if(feChosen.length+forcedCountByType.fechamento < comp.fe){
       alerts.push({level:'danger',msg:`${day.label}: fechamento ficaria com só ${feChosen.length+forcedCountByType.fechamento} pessoa(s) — mínimo de segurança é 2.`});
     }
@@ -1201,20 +1211,20 @@ function generateSchedule(mondayOverride, holidaysOverride, lockedGrid){
     if(t.bridgeDay && mode==='B' && abChosen.length===2){
       abChosen.sort((a,b)=> (hist[a.id]?.ponte||0) - (hist[b.id]?.ponte||0));
       const ponteEmp=abChosen[0], normalEmp=abChosen[1];
-      grid[ponteEmp.id][dow]={type:'abertura',time:t.aberturaPonte,ponte:true};
-      grid[normalEmp.id][dow]={type:'abertura',time:t.abertura};
+      grid[ponteEmp.id][dow]={type:'abertura',time:t.aberturaPonte,ponte:true,reason:pickReasons[ponteEmp.id]};
+      grid[normalEmp.id][dow]={type:'abertura',time:t.abertura,reason:pickReasons[normalEmp.id]};
       stats[ponteEmp.id].ab++; stats[ponteEmp.id].ponte++; stats[normalEmp.id].ab++;
     } else {
-      abChosen.forEach(e=>{ grid[e.id][dow]={type:'abertura',time:t.abertura}; stats[e.id].ab++; });
+      abChosen.forEach(e=>{ grid[e.id][dow]={type:'abertura',time:t.abertura,reason:pickReasons[e.id]}; stats[e.id].ab++; });
     }
 
     const intCount=intFixedNeeded+extraFallbackFixed;
     const intChosen=pickFor(intCount,'int');
-    intChosen.forEach(e=>{ grid[e.id][dow]={type:'intermediario',time:t.intermediario||t.fechamento}; stats[e.id].int++; });
+    intChosen.forEach(e=>{ grid[e.id][dow]={type:'intermediario',time:t.intermediario||t.fechamento,reason:pickReasons[e.id]}; stats[e.id].int++; });
 
     working.forEach(e=>{
-      if(e.weekendOnly){ grid[e.id][dow]={type:'folga',time:null}; stats[e.id].folga++; return; }
-      grid[e.id][dow]={type:'intermediario',time:t.intermediario||'reforço',bonus:true}; stats[e.id].int++;
+      if(e.weekendOnly){ grid[e.id][dow]={type:'folga',time:null,reason:'Sobrou depois de cobrir os turnos fixos do dia — folga extra.'}; stats[e.id].folga++; return; }
+      grid[e.id][dow]={type:'intermediario',time:t.intermediario||'reforço',bonus:true,reason:'Sobrou depois de cobrir os turnos fixos do dia — reforço extra no Central.'}; stats[e.id].int++;
     });
 
     if(CLEAN_TASKS[dow]){
@@ -1375,7 +1385,8 @@ function cellRow(leftLabel, ddateHtml, e, dow, r){
       : `<span class="brk-line warn">${ICON_ALERT} corrido — adicional devido</span>`;
   }
   const taskHere = r.cleaningAssignedTo[dow] && r.cleaningAssignedTo[dow].empId===e.id;
-  const notes = brk + (taskHere?`<span class="tasknote">Tarefa: ${r.cleaningAssignedTo[dow].task}</span>`:'');
+  const reasonNote = cell.reason ? `<span class="hint" style="display:block;margin-top:4px">${cell.reason}</span>` : '';
+  const notes = brk + (taskHere?`<span class="tasknote">Tarefa: ${r.cleaningAssignedTo[dow].task}</span>`:'') + reasonNote;
   return `<div class="day-row">
     <div class="drowtop">
       <button type="button" class="lockbtn ${cell.locked?'on':''}" title="${cell.locked?'Travada — a próxima geração preserva esta célula. Clique para destravar.':'Travar esta célula (a próxima geração não vai mexer nela)'}" onclick="toggleCellLock('${e.id}',${dow})">${cell.locked?'🔒':'🔓'}</button>
@@ -1463,7 +1474,7 @@ function editCell(sel){
   const t=timesFor(dow,currentResult.mode);
   const timeMap={abertura:t.abertura,intermediario:t.intermediario||t.fechamento,fechamento:t.fechamento,folga:null,supervisao:null,ferias:null,atestado:null,falta:null};
   const wasLocked = currentResult.grid[empId][dow] && currentResult.grid[empId][dow].locked;
-  currentResult.grid[empId][dow]={type,time:timeMap[type], ...(wasLocked?{locked:true}:{})};
+  currentResult.grid[empId][dow]={type,time:timeMap[type], reason:'Editado manualmente por você.', ...(wasLocked?{locked:true}:{})};
   recomputeAllBreaks(currentResult.grid, currentResult.diaristaAssignments, currentResult.days, currentResult.mode, STATE.cctIntervaloReduzido);
   renderResult();
 }
