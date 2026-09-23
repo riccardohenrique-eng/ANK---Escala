@@ -420,6 +420,15 @@ table.print-table td.pv-off{color:var(--text-3)}
 
       <div id="escala-cards" style="display:flex;flex-direction:column;gap:14px;margin-top:14px"></div>
 
+      <div class="grp" style="margin-top:14px">
+        <label class="flabel">Editar por comando</label>
+        <div class="btn-row" style="margin-top:8px">
+          <input type="text" id="chat-command-input" class="field-input" placeholder='Ex.: &quot;troca a Duda com a Alana na sexta&quot;' style="flex:1" onkeydown="if(event.key==='Enter'){ event.preventDefault(); sendChatCommand(); }">
+          <button class="btn btn-primary" id="chat-send-btn" onclick="sendChatCommand()">Enviar</button>
+        </div>
+        <div id="chat-preview-box"></div>
+      </div>
+
       <div class="costbar">
         <span id="diarista-days-label">0 diária(s) de diarista nesta semana</span>
         <b id="cost-total">R$ 0</b>
@@ -1404,6 +1413,80 @@ function toggleCellLock(empId, dow){
   if(!cell) return;
   cell.locked = !cell.locked;
   renderResult();
+}
+// ---------- EDITAR POR COMANDO (chat) ----------
+// Nunca aplica direto: /api/edit-schedule só PROPÕE mudanças a partir do texto do
+// usuário; o client sempre mostra a diferença (célula por célula) antes de aplicar.
+// O que for aplicado vira uma edição travada, igual a uma edição manual pelo dropdown —
+// mesmo motor de segurança (dayHasConflict etc.) roda por cima, não é bypassado.
+let pendingChatEdits=null;
+async function sendChatCommand(){
+  const input=document.getElementById('chat-command-input');
+  const command=(input.value||'').trim();
+  if(!command) return;
+  const box=document.getElementById('chat-preview-box');
+  const btn=document.getElementById('chat-send-btn');
+  btn.disabled=true; btn.textContent='Pensando…';
+  box.innerHTML='';
+  try{
+    const gridSnapshot={};
+    STATE.team.forEach(e=>{
+      gridSnapshot[e.id]={};
+      for(let dow=0; dow<7; dow++){
+        gridSnapshot[e.id][dow]=(currentResult.grid[e.id] && currentResult.grid[e.id][dow] && currentResult.grid[e.id][dow].type) || 'folga';
+      }
+    });
+    const res=await fetch('/api/edit-schedule',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({command, team: STATE.team.map(e=>({id:e.id,name:e.name})), grid: gridSnapshot, weekStart: currentResult.weekStart})
+    });
+    const data=await res.json();
+    if(!res.ok){ box.innerHTML=`<p class="hint" style="color:var(--danger)">Não consegui entender: ${data.error||res.status}</p>`; return; }
+    if(data.unclear || !data.edits || !data.edits.length){
+      box.innerHTML=`<p class="hint">${data.summary || 'Não entendi o comando — tenta ser mais específico (nome da pessoa + dia).'}</p>`;
+      return;
+    }
+    pendingChatEdits={command, edits:data.edits};
+    renderChatPreview(data.edits, data.summary, command);
+  }catch(e){
+    box.innerHTML=`<p class="hint" style="color:var(--danger)">Falha ao consultar: ${e.message}</p>`;
+  }finally{
+    btn.disabled=false; btn.textContent='Enviar';
+  }
+}
+function renderChatPreview(edits, summary, command){
+  const box=document.getElementById('chat-preview-box');
+  const lines=edits.map(ed=>{
+    const emp=STATE.team.find(x=>x.id===ed.empId);
+    const before=(currentResult.grid[ed.empId] && currentResult.grid[ed.empId][ed.dow] && currentResult.grid[ed.empId][ed.dow].type) || 'folga';
+    return `<li>${emp?emp.name:ed.empId}: ${TYPE_LABEL[before]||before} → <b>${TYPE_LABEL[ed.type]||ed.type}</b> (${DOW_LABELS[ed.dow]})</li>`;
+  }).join('');
+  box.innerHTML=`<div class="chatpreview">
+    ${summary?`<p class="hint" style="margin:10px 0 6px">${summary}</p>`:''}
+    <ul style="margin:0 0 10px;padding-left:18px;font-size:13px">${lines}</ul>
+    <div class="btn-row" style="margin-top:0">
+      <button class="btn btn-primary" onclick="applyChatEdits()">Aplicar</button>
+      <button class="btn btn-plain" onclick="cancelChatEdits()">Cancelar</button>
+    </div>
+  </div>`;
+}
+function applyChatEdits(){
+  if(!pendingChatEdits) return;
+  const {command, edits}=pendingChatEdits;
+  edits.forEach(ed=>{
+    const t=timesFor(ed.dow, currentResult.mode);
+    const timeMap={abertura:t.abertura,intermediario:t.intermediario||t.fechamento,fechamento:t.fechamento,folga:null,supervisao:null,ferias:null,atestado:null,falta:null};
+    currentResult.grid[ed.empId][ed.dow]={type:ed.type, time:timeMap[ed.type], reason:`Editado por comando: "${command}"`, locked:true};
+  });
+  recomputeAllBreaks(currentResult.grid, currentResult.diaristaAssignments, currentResult.days, currentResult.mode, STATE.cctIntervaloReduzido);
+  pendingChatEdits=null;
+  document.getElementById('chat-preview-box').innerHTML='';
+  document.getElementById('chat-command-input').value='';
+  renderResult();
+}
+function cancelChatEdits(){
+  pendingChatEdits=null;
+  document.getElementById('chat-preview-box').innerHTML='';
 }
 function diaristaRow(leftLabel, ddateHtml, dow, r){
   const list=r.diaristaAssignments[dow]||[];
