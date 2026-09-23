@@ -21,8 +21,8 @@ const TOOL_SCHEMA = {
               type: 'STRING',
               enum: ['absence', 'forced_shift', 'no_pair', 'diarista_limit'],
               description:
-                "'absence': funcionária fixa ausente (férias/folga pedida/falta) por um período. " +
-                "'forced_shift': funcionária fixa precisa estar num turno específico (abertura/fechamento/intermediario) em cada dia do período. " +
+                "'absence': funcionária fixa ausente (férias/folga pedida/falta) por um período — todo dia do período, ou só em certos dias da semana se allowedDows for usado (ex: 'de folga toda sexta até o fim do mês'). " +
+                "'forced_shift': funcionária fixa precisa estar num turno específico (abertura/fechamento/intermediario) em cada dia do período, ou só em certos dias da semana se allowedDows for usado (ex: 'sempre em abertura às segundas até dezembro'). " +
                 "'no_pair': duas funcionárias fixas não podem trabalhar juntas (mesma abertura ou mesmo fechamento) no período. " +
                 "'diarista_limit': uma diarista só pode ser escalada em certos dias da semana dentro do período."
             },
@@ -38,7 +38,7 @@ const TOOL_SCHEMA = {
             diaristaName: { type: 'STRING', description: "usar para 'diarista_limit' — nome da diarista tal como mencionado" },
             allowedDows: {
               type: 'ARRAY', items: { type: 'INTEGER' },
-              description: "usar para 'diarista_limit' — dias em que ELA PODE trabalhar. 0=segunda,1=terça,2=quarta,3=quinta,4=sexta,5=sábado,6=domingo"
+              description: "OPCIONAL. Para 'diarista_limit': dias em que ELA PODE trabalhar. Para 'absence'/'forced_shift': dias da semana em que a restrição se aplica dentro do período (se omitido, aplica todo dia do período). 0=segunda,1=terça,2=quarta,3=quinta,4=sexta,5=sábado,6=domingo"
             },
             dateStart: { type: 'STRING', description: 'YYYY-MM-DD, primeiro dia em que a restrição vale (inclusive)' },
             dateEnd: { type: 'STRING', description: 'YYYY-MM-DD, último dia em que a restrição vale (inclusive). Se for um único dia, igual a dateStart.' },
@@ -103,6 +103,7 @@ Regras para interpretar datas:
 - Se disser "essa semana" sem mais detalhes, use a semana inteira (segunda a domingo) a partir do weekStart informado.
 - Nunca invente ano — use o ano da data de hoje, a menos que o texto diga outro.
 - Ausência/falta/férias/folga pedida → sempre type 'absence' (não diferenciamos o motivo na estrutura, mas pode citar o motivo em note).
+- Se o pedido for recorrente por dia da semana dentro de um período (ex: "de folga toda sexta até o fim do mês", "sempre em abertura às segundas até dezembro"), use dateStart/dateEnd cobrindo o período inteiro E preencha allowedDows só com o(s) dia(s) da semana mencionado(s) — não gere um item separado por ocorrência.
 
 Se o texto tiver várias condições diferentes, gere um item por condição. Se alguma frase for ambígua demais para virar uma restrição confiável, ignore-a (não invente id ou nome que não bate com a lista acima).`;
 

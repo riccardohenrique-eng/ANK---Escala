@@ -704,8 +704,11 @@ function dayHasUnchaperonedDiarista(grid,diaristaAssignments,dow){
 
 // ---------- RESTRIÇÕES INTELIGENTES (pontuais, por período) ----------
 // STATE.constraints: [{id, type, note, createdAt, dateStart, dateEnd, empId?, empIds?, shiftType?, diaristaName?, allowedDows?}]
-// type 'absence': empId ausente (férias/folga/falta) de dateStart a dateEnd (inclusive)
-// type 'forced_shift': empId precisa estar em shiftType ('abertura'|'fechamento'|'intermediario') em cada dia do período
+// type 'absence': empId ausente (férias/folga/falta) de dateStart a dateEnd (inclusive).
+//   allowedDows opcional (0=seg..6=dom): se presente, só vale nesses dias da semana dentro
+//   do período (ex.: "de folga toda sexta até o fim do mês" em vez do período inteiro).
+// type 'forced_shift': empId precisa estar em shiftType ('abertura'|'fechamento'|'intermediario') em cada dia do período.
+//   allowedDows opcional, mesmo comportamento do 'absence' acima.
 // type 'no_pair': empIds (par) não podem estar juntas na abertura nem no fechamento no período
 // type 'diarista_limit': diaristaName só pode ser escalada nos allowedDows (0=seg..6=dom) dentro do período
 function activeConstraintsForWeek(monday){
@@ -715,8 +718,9 @@ function activeConstraintsForWeek(monday){
 function empName(id){ const e=STATE.team.find(x=>x.id===id); return e?e.name:id; }
 function constraintDescribe(c){
   const range = c.dateStart===c.dateEnd? fmtISO(c.dateStart) : fmtISO(c.dateStart)+'–'+fmtISO(c.dateEnd);
-  if(c.type==='absence') return `${empName(c.empId)} ausente ${range}`;
-  if(c.type==='forced_shift') return `${empName(c.empId)} precisa estar em ${TYPE_LABEL[c.shiftType]||c.shiftType} — ${range}`;
+  const dowSuffix = (c.allowedDows&&c.allowedDows.length) ? ` (só ${c.allowedDows.map(d=>DOW_SHORT[d]).join('/')})` : '';
+  if(c.type==='absence') return `${empName(c.empId)} ausente ${range}${dowSuffix}`;
+  if(c.type==='forced_shift') return `${empName(c.empId)} precisa estar em ${TYPE_LABEL[c.shiftType]||c.shiftType} — ${range}${dowSuffix}`;
   if(c.type==='no_pair') return `${empName(c.empIds[0])} e ${empName(c.empIds[1])} não podem trabalhar juntas — ${range}`;
   if(c.type==='diarista_limit') return `${c.diaristaName} só disponível ${(c.allowedDows||[]).map(d=>DOW_SHORT[d]).join('/')} — ${range}`;
   return c.note||'(restrição sem descrição)';
@@ -1092,10 +1096,11 @@ function generateSchedule(mondayOverride, holidaysOverride){
   const tempPairIds=[]; // [ [idA,idB], ... ]
   const diaristaLimits={}; // nameLower -> Set(dow allowed)
   activeConstraints.forEach(c=>{
+    const matchesDow = (day)=> !c.allowedDows || !c.allowedDows.length || c.allowedDows.includes(day.dow);
     if(c.type==='absence' && c.empId){
-      days.forEach(day=>{ const ds=iso(day.date); if(ds>=c.dateStart && ds<=c.dateEnd){ (constraintAbsenceDows[c.empId]=constraintAbsenceDows[c.empId]||new Set()).add(day.dow); } });
+      days.forEach(day=>{ const ds=iso(day.date); if(ds>=c.dateStart && ds<=c.dateEnd && matchesDow(day)){ (constraintAbsenceDows[c.empId]=constraintAbsenceDows[c.empId]||new Set()).add(day.dow); } });
     } else if(c.type==='forced_shift' && c.empId && c.shiftType){
-      days.forEach(day=>{ const ds=iso(day.date); if(ds>=c.dateStart && ds<=c.dateEnd){ (forcedShiftByDow[day.dow]=forcedShiftByDow[day.dow]||[]).push({empId:c.empId,shiftType:c.shiftType}); } });
+      days.forEach(day=>{ const ds=iso(day.date); if(ds>=c.dateStart && ds<=c.dateEnd && matchesDow(day)){ (forcedShiftByDow[day.dow]=forcedShiftByDow[day.dow]||[]).push({empId:c.empId,shiftType:c.shiftType}); } });
     } else if(c.type==='no_pair' && c.empIds && c.empIds.length===2){
       tempPairIds.push(c.empIds);
     } else if(c.type==='diarista_limit' && c.diaristaName){
@@ -1179,6 +1184,13 @@ function generateSchedule(mondayOverride, holidaysOverride){
       const chosen=[];
       const restricted=(capKey==='ab'||capKey==='fe');
       const chaperoneNeeded=(capKey==='fe') && (diaristaAssignments[dow]||[]).length>0;
+      // Alguém já alocado neste turno via restrição 'forced_shift' (fora do pool que
+      // pickFor sorteia) pode já cobrir a exigência de operar caixa/acompanhar diarista —
+      // sem checar isso, o algoritmo exige um segundo operador de caixa desnecessariamente.
+      const shiftTypeForCapKey = capKey==='ab'?'abertura':capKey==='fe'?'fechamento':'intermediario';
+      const forcedAlreadyOperatesCaixa = (forcedShiftByDow[dow]||[])
+        .filter(f=>f.shiftType===shiftTypeForCapKey)
+        .some(f=>{ const e=team.find(x=>x.id===f.empId); return e && e.podeOperarCaixa; });
       for(let i=0;i<count;i++){
         if(working.length===0) break;
         working.sort((a,b)=>{
@@ -1192,8 +1204,8 @@ function generateSchedule(mondayOverride, holidaysOverride){
           return av-bv;
         });
         let idx=0;
-        const mustBeChaperoneNow = chaperoneNeeded && i===count-1 && !chosen.some(c=>isChaperone(c.id));
-        const mustOperateCaixaNow = restricted && i===count-1 && !chosen.some(c=>c.podeOperarCaixa);
+        const mustBeChaperoneNow = chaperoneNeeded && i===count-1 && !forcedAlreadyOperatesCaixa && !chosen.some(c=>isChaperone(c.id));
+        const mustOperateCaixaNow = restricted && i===count-1 && !forcedAlreadyOperatesCaixa && !chosen.some(c=>c.podeOperarCaixa);
         const disallowed = (w)=> (
           (restricted && w.weekendOnly) ||
           (capKey==='fe' && w.neverCloses) ||
@@ -1591,7 +1603,10 @@ function renderSummaryAndAlerts(){
       const pair=dayHasTempConflict(currentResult.grid,dow,tp);
       if(pair) alerts.push({level:'danger',msg:`${day.label}: ${empName(pair[0])} e ${empName(pair[1])} estão juntas em ${TYPE_LABEL[tp]} — restrição pede que não trabalhem juntas.`});
     });
-    if(dayHasUnchaperonedDiarista(currentResult.grid,currentResult.diaristaAssignments,dow)) alerts.push({level:'danger',msg:`${day.label}: diarista no fechamento sem a companhia de Maria, Alana, Joeli ou Duda.`});
+    if(dayHasUnchaperonedDiarista(currentResult.grid,currentResult.diaristaAssignments,dow)){
+      const chapNames = STATE.team.filter(e=>e.podeOperarCaixa).map(e=>e.name).join(', ');
+      alerts.push({level:'danger',msg:`${day.label}: diarista no fechamento sem a companhia de alguém que opera caixa (${chapNames||'ninguém na equipe está marcado como "opera caixa"'}).`});
+    }
     const total=fe+ab+int+diar;
     const need=day.comp.ab+day.comp.fe+day.comp.intFixed+day.comp.extra;
     if(total<need) alerts.push({level:'info',msg:`${day.label}: ${total} pessoa(s) escaladas, meta era ${need}.`});
@@ -2035,16 +2050,21 @@ function computePayrollForRange(empId, dateList, hourlyRate){
     });
     const byWeek={};
     dateList.forEach(dateStr=>{ const mo=iso(mondayOf(dateStr)); (byWeek[mo]=byWeek[mo]||[]).push(dateStr); });
+    let dsr=0;
     Object.values(byWeek).forEach(weekDates=>{
-      let weekHours=0;
-      weekDates.forEach(dateStr=>{ const f=computeEmployeeDay(empId,dateStr); if(f.worked) weekHours+=f.hours; });
-      normalHours += Math.min(weekHours,weeklyCap);
-      extraHours += Math.max(0,weekHours-weeklyCap);
+      let weekHours=0, weekWorkedDays=0;
+      weekDates.forEach(dateStr=>{ const f=computeEmployeeDay(empId,dateStr); if(f.worked){ weekHours+=f.hours; weekWorkedDays++; } });
+      const weekNormal=Math.min(weekHours,weeklyCap);
+      const weekExtra=Math.max(0,weekHours-weeklyCap);
+      normalHours += weekNormal;
+      extraHours += weekExtra;
+      // DSR calculado por semana (não sobre o período inteiro) — senão quinzena/mês
+      // sub-paga o descanso semanal remunerado (só contaria 1 DSR pro período todo).
+      dsr += weekWorkedDays>0 ? ((weekNormal*hourlyRate)/weekWorkedDays) : 0;
     });
     const valorNormal=normalHours*hourlyRate;
     const valorExtra=extraHours*hourlyRate*1.5;
     const valorIntervalo=(missingBreakMin/60)*hourlyRate*1.5;
-    const dsr = diasTrabalhados>0 ? (valorNormal/diasTrabalhados) : 0;
     const baseEncargos=valorNormal+valorExtra+dsr;
     const fgts=baseEncargos*FGTS_RATE, feriasProvisao=baseEncargos*FERIAS_FACTOR, decimoProvisao=baseEncargos*DECIMO_FACTOR;
     const dobro=sundayHolidayDobroValue(empId,dateList,hourlyRate);
@@ -2053,28 +2073,46 @@ function computePayrollForRange(empId, dateList, hourlyRate){
       valorNormal,valorExtra,valorIntervalo,dsr,fgts,feriasProvisao,decimoProvisao,dobroValue:dobro.value,dobroDays:dobro.days,total,weeklyCap};
   }
 
-  let normalHours=0, extraHours=0, missingBreakMin=0, diasTrabalhados=0, holidaysWorked=0;
+  let missingBreakMin=0, diasTrabalhados=0, holidaysWorked=0;
   const rows=[];
+  const factsByDate={};
   dateList.forEach(dateStr=>{
     const f=computeEmployeeDay(empId,dateStr);
+    factsByDate[dateStr]=f;
     if(f.worked){
       diasTrabalhados++;
-      const normal=Math.min(f.hours,8);
-      const extra=Math.max(0,f.hours-8);
-      normalHours+=normal; extraHours+=extra;
       missingBreakMin+=f.missingBreakMin;
       if(f.isHoliday) holidaysWorked++;
     }
     rows.push({dateStr,...f});
   });
-  if(normalHours+extraHours>44){
-    const over=(normalHours+extraHours)-44;
-    extraHours+=over; normalHours-=over;
-  }
+  // Teto de 44h/semana (Art. 7º XVI CF) e DSR calculados por semana, não sobre o
+  // período inteiro — senão quinzena/mês reclassifica hora normal como extra assim
+  // que o total do período passa de 44h, e paga só 1 DSR pro período todo em vez de
+  // ~1 por semana (mesma correção aplicada ao ramo tempo_parcial).
+  let normalHours=0, extraHours=0, dsr=0;
+  const byWeek={};
+  dateList.forEach(dateStr=>{ const mo=iso(mondayOf(dateStr)); (byWeek[mo]=byWeek[mo]||[]).push(dateStr); });
+  Object.values(byWeek).forEach(weekDates=>{
+    let weekNormal=0, weekExtra=0, weekWorkedDays=0;
+    weekDates.forEach(dateStr=>{
+      const f=factsByDate[dateStr];
+      if(f.worked){
+        weekWorkedDays++;
+        weekNormal+=Math.min(f.hours,8);
+        weekExtra+=Math.max(0,f.hours-8);
+      }
+    });
+    if(weekNormal+weekExtra>44){
+      const over=(weekNormal+weekExtra)-44;
+      weekExtra+=over; weekNormal-=over;
+    }
+    normalHours+=weekNormal; extraHours+=weekExtra;
+    dsr += weekWorkedDays>0 ? ((weekNormal*hourlyRate)/weekWorkedDays) : 0;
+  });
   const valorNormal = normalHours*hourlyRate;
   const valorExtra = extraHours*hourlyRate*1.5;
   const valorIntervalo = (missingBreakMin/60)*hourlyRate*1.5;
-  const dsr = diasTrabalhados>0 ? (valorNormal/diasTrabalhados)*1 : 0;
   const baseEncargos = valorNormal+valorExtra+dsr;
   const fgts = baseEncargos*FGTS_RATE;
   const feriasProvisao = baseEncargos*FERIAS_FACTOR;
