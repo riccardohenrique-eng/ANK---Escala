@@ -1,8 +1,0 @@
-{
-  "name": "ank-escala-api",
-  "private": true,
-  "description": "Unica dependencia npm do projeto (web-push, so pra /api/send-push.js) — o resto do app e as outras funcoes serverless continuam sem dependencias, so fetch nativo.",
-  "dependencies": {
-    "web-push": "^3.6.7"
-  }
-}
