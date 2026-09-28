@@ -456,6 +456,82 @@ table.pdft td.dia{background:#FCE3CC}
   .pdf-block{break-inside:avoid}
 }
 
+/* ===== Rodada de contraste (2026-09-28) — valores medidos: texto ≥4,5:1, controles ≥3:1 ===== */
+:root,:root[data-theme="dark"]{
+  --text-3:#8F879E; --border:#4A4159; --border-strong:#6E6384;
+  --btn-bg:#8C3FA3; --btn-fg:#FFFFFF; --btn-edge:#A865BF;
+  --draft-edge:#B8763A; --draft-fg:#FFB870; --draft-bg:rgba(255,169,77,.16);
+  --ab-fg:#FFB870; --ab-bg:#3A2A1E; --fe-fg:#D6B0E8; --fe-bg:#35283F;
+  --int-fg:#7FE0CD; --int-bg:#1E3431; --off-fg:#B3ADBF; --off-bg:#2A2433;
+  --danger:#FF7A73;
+}
+:root[data-theme="light"]{
+  --text-2:#5E5458; --text-3:#72686C; --border:#CFC3B9; --border-strong:#9C8E83;
+  --accent:#742984; --btn-bg:#742984; --btn-fg:#FFFFFF; --btn-edge:#742984;
+  --draft-edge:#C06A1A; --draft-fg:#A85300; --draft-bg:#FFF1E0;
+  --ab-fg:#9A4A00; --ab-bg:#FFE9D1; --fe-fg:#5A1F67; --fe-bg:#F1E1F6;
+  --int-fg:#11685B; --int-bg:#DDF3EE; --off-fg:#5E5458; --off-bg:#EEE8E3;
+  --info:#136B5E; --ok:#1F7A38; --warn:#8A5F00;
+}
+.btn-primary,.btn-primary:hover{background:var(--btn-bg);color:var(--btn-fg);border:1px solid var(--btn-edge)}
+.segmented button.on{background:var(--btn-bg);color:var(--btn-fg)}
+input[type=text],input[type=date],input[type=month],input[type=number],select.field-input,textarea.field-input{border-color:var(--border-strong)}
+select.shift{min-height:34px;background:var(--off-bg);color:var(--off-fg)}
+select.shift[data-t="abertura"]{background:var(--ab-bg);color:var(--ab-fg)}
+select.shift[data-t="fechamento"]{background:var(--fe-bg);color:var(--fe-fg)}
+select.shift[data-t="intermediario"]{background:var(--int-bg);color:var(--int-fg)}
+select.shift[data-t="ferias"]{background:transparent;color:var(--text-2);border:1px dashed var(--border-strong)}
+.dcard.draft{border:1.5px dashed var(--draft-edge)}
+.dcard.changed{border:1.5px solid var(--draft-edge)}
+.dpill.draft{background:var(--draft-bg);color:var(--draft-fg)}
+.dpill.changed{background:var(--draft-edge);color:#fff}
+.dpill.hol.off{color:var(--text-2);border-color:var(--border-strong)}
+.ddiar .add{color:var(--text-2);border-color:var(--border-strong)}
+.dundo{color:var(--draft-fg);padding:6px 0}
+.sq.w{background:var(--fe-bg);color:var(--fe-fg)}
+.sq.draft{outline-color:var(--draft-edge)}
+.tg{border-color:var(--border-strong)}
+
+/* grade da semana (visão de relance acima dos cards) */
+.wgrid-wrap{overflow-x:auto;margin:0 0 10px;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--panel)}
+table.wgrid{border-collapse:collapse;width:100%;min-width:340px;font-size:12px}
+table.wgrid th{font-size:10.5px;font-weight:700;color:var(--text-2);padding:7px 2px 5px;text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid var(--border)}
+table.wgrid th small{display:block;font-family:var(--font-mono);font-weight:600;letter-spacing:0;color:var(--text-3);text-transform:none}
+table.wgrid th.dr{color:var(--draft-fg)} table.wgrid th.dr small{color:var(--draft-fg)}
+table.wgrid td{padding:3px 2px;text-align:center}
+table.wgrid td.nm{text-align:left;padding-left:10px;font-weight:600;white-space:nowrap;color:var(--text);max-width:92px;overflow:hidden;text-overflow:ellipsis}
+.wc2{display:inline-grid;place-items:center;width:100%;max-width:44px;height:28px;border-radius:7px;font-family:var(--font-mono);font-weight:700;font-size:11.5px;border:0;cursor:pointer;background:var(--off-bg);color:var(--off-fg)}
+.wc2.ab{background:var(--ab-bg);color:var(--ab-fg)} .wc2.fe{background:var(--fe-bg);color:var(--fe-fg)} .wc2.in{background:var(--int-bg);color:var(--int-fg)}
+.wc2.fer{background:transparent;color:var(--text-3)}
+.wc2.bad{outline:2px solid var(--danger);outline-offset:-2px}
+.wc2.dr{box-shadow:inset 0 -2px 0 var(--draft-edge)}
+.wlegend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11.5px;color:var(--text-2);padding:6px 10px 8px;border-top:1px solid var(--border)}
+.dcard.flash{animation:flash 1.2s ease}
+@keyframes flash{0%{box-shadow:0 0 0 3px var(--btn-edge)}100%{box-shadow:var(--shadow-card)}}
+.toast .tact{margin-left:12px;background:transparent;border:1.5px solid currentColor;color:inherit;border-radius:999px;padding:4px 12px;font:inherit;font-weight:700;cursor:pointer}
+@media (prefers-reduced-motion:reduce){.dcard.flash{animation:none}}
+@media (pointer:coarse){
+  select.shift{min-height:44px;width:132px}
+  .tg{height:40px}
+  .lvl button{padding:10px 12px}
+  .ddiar select{min-height:40px}
+  .ddiar .add,.dpill.hol{min-height:36px}
+  .wc2{height:34px}
+}
+@media (max-width:640px){
+  .kpis{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:10px}
+  .kpi{padding:8px 9px}
+  .kpi .k{font-size:9.5px;letter-spacing:.04em}
+  .kpi .v{font-size:13.5px;line-height:1.25}
+  .kpi .s{display:none}
+  #tab-escala .section-head{padding:11px 14px}
+  #tab-escala .section-head .sub{display:none}
+}
+table.wgrid{table-layout:fixed}
+table.wgrid th:first-child,table.wgrid td.nm{width:96px}
+.kpi.draft .v{color:var(--draft-fg)}
+@media (max-width:640px){ table.wgrid th:first-child,table.wgrid td.nm{width:78px;padding-left:8px} .wlegend{font-size:11px} }
+
 </style>
 </head>
 <body>
@@ -800,18 +876,20 @@ function confirmedCount(s){
   if(s.days) return Object.values(s.days).filter(d=>d&&d.conf).length;
   return (s.history||[]).reduce((n,w)=>n+((w.days||[]).length),0);
 }
-function saveState(){
+function saveState(opts){
   STATE._updatedAt=Date.now();
   try{ localStorage.setItem(STORE_KEY, JSON.stringify(STATE)); }catch(e){}
-  syncStateToServer();
+  if(!(opts&&opts.keepUndo)) dropUndo();
+  syncStateToServer(opts&&opts.delay);
 }
 // ---------- SINCRONIZAÇÃO (Upstash via /api/state) ----------
 // Regra de ouro: um aparelho nunca substitui dados que têm MAIS dias confirmados que os dele.
 // Isso vale nos dois sentidos — o servidor recusa (409) e o app no carregamento não sobrescreve.
-let syncTimer=null;
-function syncStateToServer(){
-  clearTimeout(syncTimer);
+let syncTimer=null, syncPending=false;
+function syncStateToServer(delay){
+  clearTimeout(syncTimer); syncPending=true;
   syncTimer=setTimeout(async ()=>{
+    syncPending=false;
     try{
       const res=await fetch('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(STATE)});
       if(res.status===409){
@@ -819,8 +897,13 @@ function syncStateToServer(){
         if(data && data.state){ adoptServerState(data.state); toast('Este aparelho estava desatualizado. Carreguei a versão do servidor, que tem mais dias confirmados.'); }
       }
     }catch(e){}
-  },400);
+  },delay||400);
 }
+// Se a página fechar com gravação pendente (ex.: dentro da janela de "Desfazer"), envia na hora.
+window.addEventListener('pagehide',()=>{
+  if(!syncPending||!navigator.sendBeacon) return;
+  try{ navigator.sendBeacon('/api/state', new Blob([JSON.stringify(STATE)],{type:'text/plain'})); syncPending=false; }catch(e){}
+});
 function adoptServerState(raw){
   STATE=normalizeState(raw);
   try{ localStorage.setItem(STORE_KEY, JSON.stringify(STATE)); }catch(e){}
@@ -1088,6 +1171,8 @@ function confirmSeq(){
   const seq=[]; let x=p[0]; while(STATE.days[x]){ seq.push(x); x=dAdd(x,1); }
   return seq;
 }
+let undoToastEl=null;
+function dropUndo(){ if(undoToastEl){ undoToastEl.remove(); undoToastEl=null; } }
 function uiConfirm(force){
   const upto=document.getElementById('upto').value; if(!upto) return;
   const ks=confirmSeq().filter(k=>k<=upto&&STATE.days[k].draft);
@@ -1096,6 +1181,7 @@ function uiConfirm(force){
   if(blocks.length&&!force){ document.getElementById('override-list').innerHTML=blocks.map(m=>`<li>${esc(m)}</li>`).join(''); ov.hidden=false; mt.focus(); return; }
   const motivo=mt.value.trim();
   if(blocks.length&&!motivo){ mt.focus(); toast('Escreva o motivo para confirmar com bloqueio.'); return; }
+  const snapshot=ks.map(k=>[k,JSON.parse(JSON.stringify(STATE.days[k]))]);
   ks.forEach(k=>{
     const d=STATE.days[k], dr=d.draft, hasBlock=checkDay(k).flags.some(f=>f.l==='block');
     const brk=computeBreaks(dr,k), sh={};
@@ -1104,13 +1190,23 @@ function uiConfirm(force){
     d.draft=null;
   });
   ov.hidden=true; mt.value='';
-  saveState(); renderAll(); periodDefaults();
-  toast(`Confirmado até ${br(upto)}. Isso agora é base para as próximas escalas.`);
+  // grava no servidor só depois de 10s, para o "Desfazer" não esbarrar na proteção de dias confirmados
+  saveState({delay:10000,keepUndo:true}); renderAll(); periodDefaults();
+  dropUndo();
+  undoToastEl=toast(`Confirmado até ${br(upto)}.`,{label:'Desfazer',ms:10000,fn:()=>{
+    snapshot.forEach(([k,v])=>{ STATE.days[k]=v; });
+    undoToastEl=null; saveState(); renderAll(); periodDefaults(); toast('Confirmação desfeita. Os dias voltaram a ser rascunho.');
+  }});
 }
 
 // ================= TELAS =================
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-function toast(m){ const t=document.createElement('div'); t.className='toast'; t.setAttribute('role','status'); t.textContent=m; document.body.appendChild(t); setTimeout(()=>t.remove(),3200); }
+function toast(m,action){
+  const t=document.createElement('div'); t.className='toast'; t.setAttribute('role','status'); t.textContent=m;
+  if(action){ const b=document.createElement('button'); b.className='tact'; b.textContent=action.label; b.onclick=()=>{ t.remove(); action.fn(); }; t.appendChild(b); }
+  document.body.appendChild(t); setTimeout(()=>{ t.remove(); if(undoToastEl===t) undoToastEl=null; },action?action.ms:3200);
+  return t;
+}
 function periodDefaults(){
   const lc=lastConfirmed(), p=pendingDays();
   const s=p.length?p[0]:(lc?dAdd(lc,1):todayISO());
@@ -1147,6 +1243,7 @@ function renderTimeline(checks){
     det.open=(m in openWeeks)?openWeeks[m]:(!allConf||m>=lastConfMon||m===dMon(today));
     det.addEventListener('toggle',()=>{ openWeeks[m]=det.open; });
     det.innerHTML=`<summary><span class="wchev">›</span><span class="wt">Semana ${br(m)} – ${br(dAdd(m,6))}</span><span class="wc">${allConf?'confirmada':'tem rascunho'}${nb?` · <span style="color:var(--danger)">${nb} bloqueio${nb>1?'s':''}</span>`:''}</span></summary>`;
+    det.insertAdjacentHTML('beforeend',weekGrid(m,checks));
     const grid=document.createElement('div'); grid.className='daygrid';
     list.forEach(k=>grid.insertAdjacentHTML('beforeend',dayCard(k,checks[k],k===today)));
     det.appendChild(grid); box.appendChild(det);
@@ -1179,13 +1276,28 @@ function dayCard(k,chk,isToday){
     +(d.conf&&d.conf.motivo&&!d.draft?`<div class="dflag info">Confirmado com exceção: “${esc(d.conf.motivo)}”</div>`:'')
     +(!chk.flags.length&&!(v.why||[]).length?'<div class="dflag ok">Tudo dentro das regras</div>':'')
     +(d.draft?`<button class="dundo" onclick="undoDay('${k}')">${d.conf?'Desfazer alterações deste dia':'Remover este dia do rascunho'}</button>`:'');
-  return `<article class="dcard${state==='draft'?' draft':''}${state==='changed'?' changed':''}${blocks?' has-block':''}${isToday?' today':''}">
+  return `<article id="card-${k}" class="dcard${state==='draft'?' draft':''}${state==='changed'?' changed':''}${blocks?' has-block':''}${isToday?' today':''}">
     <div class="dhead"><span class="dn">${DOW_LABELS[w]}<small>${br(k)}</small></span><span class="dr">${hol}${pill}</span></div>
     ${CLEAN_TASKS[w]?`<div class="dtask">${CLEAN_TASKS[w]}</div>`:''}
     <ul class="dppl">${rows}</ul>
     <div class="ddiar">${diar}<button class="add" onclick="addDiar('${k}')">+ diarista</button></div>
     <div class="dflags">${flags}</div></article>`;
 }
+// Grade de relance: pessoas × dias da semana. Tocar numa célula leva ao card do dia.
+function weekGrid(m,checks){
+  const days=[0,1,2,3,4,5,6].map(i=>dAdd(m,i));
+  const L={abertura:['A','ab'],intermediario:['I','in'],fechamento:['F','fe'],folga:['·',''],ferias:['fér','fer']};
+  const head='<tr><th></th>'+days.map(k=>{ const d=STATE.days[k]; return `<th class="${d&&d.draft?'dr':''}">${DOW_MIN[dDow(k)]}<small>${br(k).slice(0,2)}</small></th>`; }).join('')+'</tr>';
+  const rows=STATE.team.map(e=>'<tr><td class="nm">'+esc(e.name)+'</td>'+days.map(k=>{
+    const v=view(k); if(!v) return '<td></td>';
+    const t=v.sh[e.id]?v.sh[e.id].type:'folga', [txt,c]=L[t]||['?',''];
+    const bad=checks[k]&&checks[k].bad[e.id], dr=STATE.days[k].draft;
+    return `<td><button class="wc2 ${c}${bad?' bad':''}${dr?' dr':''}" onclick="goDay('${k}')" aria-label="${esc(e.name)}, ${DOW_MIN[dDow(k)]} ${br(k)}: ${TYPE_LABEL[t]||t}">${txt}</button></td>`;
+  }).join('')+'</tr>').join('');
+  const diar='<tr><td class="nm" style="color:var(--text-2);font-weight:500">Diaristas</td>'+days.map(k=>{ const v=view(k); const n=v?(v.diar||[]).length:0; return `<td style="color:var(--text-2);font-family:var(--font-mono)">${v?(n||'–'):''}</td>`; }).join('')+'</tr>';
+  return `<div class="wgrid-wrap"><table class="wgrid">${head}${rows}${diar}</table><div class="wlegend"><span>A abertura</span><span>I intermediário</span><span>F fechamento</span><span>· folga</span><span>contorno vermelho = regra quebrada</span><span>traço laranja = rascunho</span></div></div>`;
+}
+function goDay(k){ const el=document.getElementById('card-'+k); if(!el) return; el.scrollIntoView({behavior:'smooth',block:'center'}); el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
 function renderBar(){
   const p=pendingDays(), sel=document.getElementById('upto'), sum=document.getElementById('bar-sum'), bar=document.getElementById('confirmbar');
   bar.style.display=p.length?'':'none';
@@ -1782,6 +1894,7 @@ function renderReport(){
 function init(){
   document.querySelectorAll('.chev').forEach(el=> el.innerHTML=ICON_CHEVRON );
   periodDefaults();
+  if(pendingDays().length) document.getElementById('card-build').classList.add('closed');
   renderAll();
   syncStateFromServerOnLoad();
 }
