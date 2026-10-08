@@ -421,7 +421,10 @@ table.pdft td.dia{background:#FCE3CC}
         <label class="cell"><span class="grow">De</span><input type="date" id="print-from" onchange="renderPrintView()"></label>
         <label class="cell"><span class="grow">Até</span><input type="date" id="print-to" onchange="renderPrintView()"></label>
       </div>
-      <button class="btn fill block no-print" style="margin-top:12px" onclick="window.print()">Gerar PDF</button>
+      <div class="btn-row no-print">
+        <button class="btn fill block" id="share-btn" onclick="shareEscala()">Enviar no WhatsApp</button>
+        <button class="btn block" onclick="window.print()">Gerar PDF</button>
+      </div>
       <div id="print-weeks"></div>
     </section>
 
@@ -1141,6 +1144,50 @@ function renderPrintView(){
   }).join('');
   box.innerHTML=`<div class="pdf pdf-block"><h3>ESCALA - Açaí NoKilo - Cruz das Almas (Período: ${brY(days[0])} - ${brY(days[days.length-1])})</h3>
     <table class="pdft"><tr><th></th><th></th>${STATE.team.map(e=>`<th>${esc(e.name)}</th>`).join('')}<th>Diaristas</th></tr>${rows}</table></div>`;
+  prepareShare(days[0],days[days.length-1]);
+}
+
+// ---------- ENVIAR NO WHATSAPP (2026-10-08) ----------
+// Gera uma imagem da tabela da aba Equipe e abre o compartilhar do celular (WhatsApp → grupo).
+// O iPhone só deixa compartilhar logo após o toque, então a imagem é preparada antes, ao abrir a aba.
+let shareFile=null, shareKey='', shareJob=null;
+function loadH2C(){
+  if(window.html2canvas) return Promise.resolve();
+  return new Promise((ok,err)=>{ const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'; s.onload=ok; s.onerror=()=>err(new Error('sem internet para gerar a imagem')); document.head.appendChild(s); });
+}
+async function buildShareFile(from,to){
+  await loadH2C();
+  const src=document.querySelector('#print-weeks .pdf-block'); if(!src) throw new Error('nada para enviar');
+  const holder=document.createElement('div');
+  holder.style.cssText='position:fixed;left:-10000px;top:0;width:1100px;background:#fff';
+  const clone=src.cloneNode(true); clone.style.overflow='visible'; clone.style.margin='0'; clone.style.borderRadius='0';
+  holder.appendChild(clone); document.body.appendChild(holder);
+  try{
+    const canvas=await html2canvas(clone,{scale:2,backgroundColor:'#ffffff',logging:false});
+    const blob=await new Promise(r=>canvas.toBlob(r,'image/png'));
+    return new File([blob],`escala-ank-${br(from).replace('/','-')}-a-${br(to).replace('/','-')}.png`,{type:'image/png'});
+  } finally { holder.remove(); }
+}
+function prepareShare(from,to){
+  const key=from+'|'+to+'|'+JSON.stringify(dRange(from,to).map(k=>STATE.days[k]&&STATE.days[k].conf&&STATE.days[k].conf.at));
+  if(key===shareKey&&(shareFile||shareJob)) return;
+  shareKey=key; shareFile=null;
+  const job=shareJob=buildShareFile(from,to).then(f=>{ if(shareJob===job){ shareFile=f; shareJob=null; } return f; }).catch(e=>{ if(shareJob===job) shareJob=null; throw e; });
+  job.catch(()=>{});
+}
+async function shareEscala(){
+  try{
+    const file=shareFile||await (shareJob||Promise.reject(new Error('nada para enviar')));
+    const text=`Escala Açaí NoKilo — ${file.name.replace(/^escala-ank-|\.png$/g,'').replace(/-a-/,' a ').replace(/-/g,'/')}`;
+    if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],text}); return; }
+    const a=document.createElement('a'); a.href=URL.createObjectURL(file); a.download=file.name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+    toast('Imagem baixada. É só anexar no grupo do WhatsApp.');
+  }catch(e){
+    if(e&&e.name==='AbortError') return;                       // a pessoa fechou a janela de compartilhar
+    if(e&&e.name==='NotAllowedError'){ toast('Imagem pronta. Toque de novo em "Enviar no WhatsApp".'); return; }
+    toast('Não deu para gerar a imagem: '+((e&&e.message)||'erro'));
+  }
 }
 
 
