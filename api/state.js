@@ -13,6 +13,8 @@
 // responde 503 e o app do lado do cliente continua funcionando só com
 // localStorage (degrada graciosamente, mesmo padrão do interpret-constraints).
 
+const checkAccess = require('./_auth');
+
 const KV_KEY = 'ank_escala_v1';
 const BAK_KEY = 'ank_escala_v1_bak';
 
@@ -24,6 +26,7 @@ function confirmedCount(s) {
 }
 
 module.exports = async (req, res) => {
+  if (!checkAccess(req, res)) return;
   const base = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
   if (!base || !token) {

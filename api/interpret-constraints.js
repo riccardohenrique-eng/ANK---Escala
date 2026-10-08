@@ -4,6 +4,8 @@
 // (free tier — trocado de Anthropic pra Gemini em 2026-09-21 por causa do custo/uso baixo).
 // Requer a env var GEMINI_API_KEY configurada no projeto Vercel (grátis em aistudio.google.com/apikey).
 
+const checkAccess = require('./_auth');
+
 const GEMINI_MODEL = 'gemini-3.6-flash';
 
 const TOOL_SCHEMA = {
@@ -53,6 +55,7 @@ const TOOL_SCHEMA = {
 };
 
 module.exports = async (req, res) => {
+  if (!checkAccess(req, res)) return;
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'method not allowed' });
     return;

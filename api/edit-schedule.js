@@ -6,6 +6,8 @@
 // aqui é "proposta visível", não bloqueio nem aplicação silenciosa).
 // Mesma família do api/interpret-constraints.js (Google Gemini, free tier).
 
+const checkAccess = require('./_auth');
+
 const GEMINI_MODEL = 'gemini-3.6-flash';
 const VALID_TYPES = ['abertura', 'intermediario', 'fechamento', 'folga', 'supervisao', 'ferias', 'atestado', 'falta'];
 
@@ -36,6 +38,7 @@ const TOOL_SCHEMA = {
 };
 
 module.exports = async (req, res) => {
+  if (!checkAccess(req, res)) return;
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'method not allowed' });
     return;

@@ -106,7 +106,7 @@ button.cell:active,a.cell:active{background:var(--cell-3);transition:none}
 .iconbtn:active{background:var(--cell-3)}
 
 /* ---------- campos ---------- */
-input[type=text],input[type=date],input[type=month],input[type=number],select,textarea{-webkit-appearance:none;appearance:none;background:var(--cell-2);border:0;border-radius:10px;padding:11px 14px;min-height:44px;font-size:17px;color:var(--label);width:100%}
+input[type=text],input[type=password],input[type=date],input[type=month],input[type=number],select,textarea{-webkit-appearance:none;appearance:none;background:var(--cell-2);border:0;border-radius:10px;padding:11px 14px;min-height:44px;font-size:17px;color:var(--label);width:100%}
 textarea{min-height:96px;resize:vertical;line-height:1.4}
 select{background-image:linear-gradient(45deg,transparent 50%,var(--label-2) 50%),linear-gradient(135deg,var(--label-2) 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px;background-repeat:no-repeat;padding-right:34px}
 .fieldset{display:grid;gap:10px}
@@ -539,6 +539,16 @@ table.pdft td.dia{background:#FCE3CC}
   </div>
 </div>
 
+<div class="sheet" id="sh-key" role="dialog" aria-modal="true" aria-labelledby="sh-key-t" hidden>
+  <div class="grab"></div>
+  <div class="sh"><h2 id="sh-key-t">Chave de acesso</h2><button class="close" onclick="closeSheet()">Agora não</button></div>
+  <div class="sb">
+    <div class="group-f" style="margin:0 4px 10px">Este aparelho precisa da chave para ver e salvar a escala. Ela fica guardada só neste aparelho.</div>
+    <input type="password" id="key-input" autocomplete="current-password" aria-label="Chave de acesso" placeholder="Chave" onkeydown="if(event.key==='Enter') saveAccessKey()">
+    <div class="btn-row"><button class="btn fill" onclick="saveAccessKey()">Salvar</button></div>
+  </div>
+</div>
+
 <div class="sheet" id="sh-person" role="dialog" aria-modal="true" aria-labelledby="sh-person-t" hidden>
   <div class="grab"></div>
   <div class="sh"><h2 id="sh-person-t"></h2><button class="close" onclick="closeSheet()">OK</button></div>
@@ -705,6 +715,28 @@ function saveState(opts){
   if(!(opts&&opts.keepUndo)) dropUndo();
   syncStateToServer(opts&&opts.delay);
 }
+// ---------- CHAVE DE ACESSO (2026-10-07) ----------
+// As APIs exigem a chave (env var ANK_ACCESS_KEY na Vercel). Fica só neste aparelho.
+const KEY_STORE='ank_escala_key';
+function accessKey(){ try{ return localStorage.getItem(KEY_STORE)||''; }catch(e){ return ''; } }
+function apiFetch(url,opts){
+  opts=opts||{};
+  const headers=Object.assign({},opts.headers||{}), k=accessKey();
+  if(k) headers['X-ANK-Key']=k;
+  return fetch(url,Object.assign({},opts,{headers})).then(res=>{ if(res.status===401) askAccessKey(); return res; });
+}
+function askAccessKey(){
+  if(openSheetEl&&openSheetEl.id==='sh-key') return;
+  document.getElementById('key-input').value='';
+  openSheet('sh-key');
+}
+function saveAccessKey(){
+  const v=document.getElementById('key-input').value.trim();
+  if(!v) return;
+  try{ localStorage.setItem(KEY_STORE,v); }catch(e){}
+  closeSheet();
+  syncStateFromServerOnLoad();
+}
 // ---------- SINCRONIZAÇÃO (Upstash via /api/state) ----------
 // Regra de ouro: um aparelho nunca substitui dados que têm MAIS dias confirmados que os dele.
 // Isso vale nos dois sentidos — o servidor recusa (409) e o app no carregamento não sobrescreve.
@@ -714,7 +746,7 @@ function syncStateToServer(delay){
   syncTimer=setTimeout(async ()=>{
     syncPending=false;
     try{
-      const res=await fetch('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(STATE)});
+      const res=await apiFetch('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(STATE)});
       if(res.status===409){
         const data=await res.json();
         if(data && data.state){ adoptServerState(data.state); toast('Este aparelho estava desatualizado. Carreguei a versão do servidor, que tem mais dias confirmados.'); }
@@ -724,8 +756,16 @@ function syncStateToServer(delay){
 }
 // Se a página fechar com gravação pendente (ex.: dentro da janela de "Desfazer"), envia na hora.
 window.addEventListener('pagehide',()=>{
-  if(!syncPending||!navigator.sendBeacon) return;
-  try{ navigator.sendBeacon('/api/state', new Blob([JSON.stringify(STATE)],{type:'text/plain'})); syncPending=false; }catch(e){}
+  if(!syncPending) return;
+  const body=JSON.stringify(STATE), k=accessKey();
+  try{
+    if(body.length<60000){
+      fetch('/api/state',{method:'POST',keepalive:true,headers:Object.assign({'Content-Type':'application/json'},k?{'X-ANK-Key':k}:{}),body});
+    }else if(navigator.sendBeacon){
+      navigator.sendBeacon('/api/state'+(k?'?k='+encodeURIComponent(k):''), new Blob([body],{type:'text/plain'}));
+    }
+    syncPending=false;
+  }catch(e){}
 });
 function adoptServerState(raw){
   STATE=normalizeState(raw);
@@ -734,7 +774,7 @@ function adoptServerState(raw){
 }
 async function syncStateFromServerOnLoad(){
   try{
-    const res=await fetch('/api/state');
+    const res=await apiFetch('/api/state');
     if(!res.ok) return;
     const data=await res.json();
     if(!data.state){ if(confirmedCount(STATE)) syncStateToServer(); return; }
@@ -1034,7 +1074,7 @@ async function sendChatCommand(){
   btn.disabled=true; btn.textContent='Pensando…'; box.innerHTML='';
   try{
     const grid={}; STATE.team.forEach(e=>{ grid[e.id]={}; for(let d=0;d<7;d++){ grid[e.id][d]=typeOn(win.byDow[d],e.id)||'folga'; } });
-    const res=await fetch('/api/edit-schedule',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({command,team:STATE.team.map(e=>({id:e.id,name:e.name})),grid,weekStart:win.start})});
+    const res=await apiFetch('/api/edit-schedule',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({command,team:STATE.team.map(e=>({id:e.id,name:e.name})),grid,weekStart:win.start})});
     const data=await res.json();
     if(!res.ok){ box.innerHTML=`<p class="hint" style="color:var(--danger)">Não consegui entender: ${esc(data.error||res.status)}</p>`; return; }
     if(data.unclear||!data.edits||!data.edits.length){ box.innerHTML=`<p class="hint">${esc(data.summary||'Não entendi — diga o nome da pessoa e o dia.')}</p>`; return; }
@@ -1487,7 +1527,7 @@ async function interpretConstraints(){
   status.innerHTML='<p class="hint">Interpretando…</p>';
   const monday=mondayOf(document.getElementById('gen-from').value || iso(new Date()));
   try{
-    const res = await fetch('/api/interpret-constraints', {
+    const res = await apiFetch('/api/interpret-constraints', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         text,
