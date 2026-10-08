@@ -633,7 +633,7 @@ const DEFAULT_TEAM=[
   {id:'mjose',name:'Maria José',hourlyRate:0,employmentType:'horista',podeOperarCaixa:false,cond:{abertura:allDays(1),intermediario:allDays(1),fechamento:[1,1,1,1,1,0,0]}},
   {id:'joeli',name:'Joeli',hourlyRate:0,employmentType:'horista',podeOperarCaixa:true,cond:defaultCond()},
   {id:'alana',name:'Alana',hourlyRate:0,employmentType:'horista',podeOperarCaixa:true,cond:defaultCond()},
-  {id:'duda',name:'Duda',hourlyRate:0,employmentType:'horista',podeOperarCaixa:true,cond:defaultCond()},
+  {id:'duda',name:'Duda',hourlyRate:0,employmentType:'horista',podeOperarCaixa:true,cond:{abertura:[1,1,0,0,0,1,1],intermediario:[1,1,0,0,0,1,1],fechamento:allDays(1)}}, // qua–sex só fecha (Ricardo, 07/10/2026)
 ];
 // Quantas pessoas por dia (0=seg). ab/int/fe = fixas; dAb/dFe = diaristas manhã/noite. Igual à escala real de set/out 2026.
 const DEFAULT_COMP={0:{ab:2,int:0,fe:2,dAb:0,dFe:0},1:{ab:2,int:0,fe:2,dAb:0,dFe:0},2:{ab:2,int:0,fe:2,dAb:0,dFe:0},3:{ab:2,int:0,fe:2,dAb:0,dFe:0},4:{ab:2,int:0,fe:2,dAb:0,dFe:0},5:{ab:2,int:1,fe:1,dAb:0,dFe:1},6:{ab:1,int:1,fe:1,dAb:1,dFe:1}};
