@@ -917,8 +917,28 @@ function generateRange(from,to){
     STATE.team.forEach(e=>{ if(absentOn(e.id,k)) sh[e.id]={type:'ferias',time:null}; });
     Object.entries(manual).forEach(([id,c])=>{ if(id in sh) sh[id]=c; });
     STATE.team.forEach(e=>{ const f=forcedOn(e.id,k); if(f&&sh[e.id]===null) sh[e.id]={type:f,time:shiftTime(w,f)}; });
+    // Folgas da semana (2026-10-07): cada fixa fica com caps.folgaTarget folgas por semana seg–dom
+    // (proporcional aos dias conhecidos sem férias). Se só sobram os dias das folgas que faltam, hoje é folga.
+    const known=(id,x)=>!absentOn(id,x)&&(x>=k||hs(id,x)!==null);
+    const offWeek=id=>{ let n=0; for(let x=dMon(k);x<k;x=dAdd(x,1)) if(hs(id,x)==='folga') n++; return n; };
+    const folgaGoal=id=>{ let n=0; for(let i=0;i<7;i++) if(known(id,dAdd(dMon(k),i))) n++; return Math.round(STATE.caps.folgaTarget*n/7); };
+    const daysLeft=id=>{ let n=0; for(let x=k;x<=dAdd(dMon(k),6);x=dAdd(x,1)) if(!absentOn(id,x)) n++; return n; };
+    const folgaDue=id=>folgaGoal(id)-offWeek(id);
+    const forcedOff=[];
+    STATE.team.forEach(e=>{ if(sh[e.id]===null&&folgaDue(e.id)>0&&folgaDue(e.id)>=daysLeft(e.id)){ sh[e.id]={type:'folga',time:null}; forcedOff.push(e.id); } });
     const need={abertura:comp.ab,intermediario:comp.int,fechamento:comp.fe};
     Object.values(sh).forEach(c=>{ if(c&&works(c.type)) need[c.type]=Math.max(0,need[c.type]-1); });
+    // Semana curta (férias etc.): se as fixas não cobrem as vagas até domingo mantendo as folgas,
+    // antecipa diarista na abertura de um dia útil (como o Ricardo faz na escala real) em vez de faltar no fim de semana.
+    let preDiar=0;
+    if(w<5&&need.abertura>=1){
+      const sun=dAdd(dMon(k),6); let demand=0;
+      for(let x=k;x<=sun;x=dAdd(x,1)){ const c=x===k?{ab:need.abertura,int:need.intermediario,fe:need.fechamento}:compFor(x,false); demand+=c.ab+c.int+c.fe; }
+      // capacidade = dias que cada fixa ainda pode trabalhar até domingo, descontando as folgas que faltam
+      // (inclui quem está de férias hoje e volta na semana; quem já foi escalada hoje não conta o dia de hoje)
+      let cap=0; STATE.team.forEach(e=>{ const today=sh[e.id]&&works(sh[e.id].type)?1:0; cap+=Math.max(0,daysLeft(e.id)-today-Math.max(0,folgaDue(e.id))); });
+      if(demand>cap){ need.abertura--; preDiar=1; why.push(`Diarista na abertura: semana com menos fixas disponíveis (faltariam ${demand-cap} turno${demand-cap>1?'s':''} até domingo mantendo 2 folgas de cada)`); }
+    }
     const hasCaixa=t=>STATE.team.some(e=>sh[e.id]&&sh[e.id].type===t&&canCaixa(e.id));
     const pairClash=(id,t)=>noPairsOn(k).some(p=>p&&p.includes(id)&&STATE.team.some(o=>o.id!==id&&p.includes(o.id)&&sh[o.id]&&sh[o.id].type===t));
     const pick=(t,needCaixa,strict)=>{
@@ -930,19 +950,28 @@ function generateRange(from,to){
         return true;
       });
       const cap=t==='fechamento'?STATE.caps.maxFechamentos:t==='abertura'?STATE.caps.maxAberturas:99;
-      const sc=e=>{ const tw=typeWeek(e.id,t); return weekCount(e.id)*10+tw*6+(tw>=cap?25:0)+lastN(e.id,t,3)*3+run(e.id)*2+((e.maxWeeklyHours&&weekMin(e.id)/60>=e.maxWeeklyHours)?8:0)+((STATE.team.indexOf(e)+dD(k).getUTCDate())%7)*0.1; };
+      // poupa quem opera o caixa: se o turno já tem alguém do caixa, a 2ª vaga vai de preferência para quem não opera
+      const spare=e=>(t!=='intermediario'&&!needCaixa&&hasCaixa(t)&&canCaixa(e.id))?12:0;
+      const sc=e=>{ const tw=typeWeek(e.id,t), due=folgaDue(e.id), left=daysLeft(e.id); return weekCount(e.id)*10+(due<=0?-40:due/left*20)+spare(e)+tw*6+(tw>=cap?25:0)+lastN(e.id,t,3)*3+run(e.id)*2+((e.maxWeeklyHours&&weekMin(e.id)/60>=e.maxWeeklyHours)?8:0)+((STATE.team.indexOf(e)+dD(k).getUTCDate())%7)*0.1; };
       c.sort((a,b)=>sc(a)-sc(b));
       return strict==='count'?c.length:(c[0]||null);
     };
     // preenche primeiro a vaga com menos candidatas (ex.: fechamento de domingo com caixa), para não gastar
     // numa vaga fácil a única pessoa que resolveria a difícil
     const slots=[]; ['abertura','fechamento','intermediario'].forEach(t=>{ for(let i=0;i<need[t];i++) slots.push(t); });
+    const extraDiar={ab:preDiar,fe:0};
     while(slots.length){
       let best=0,bestN=Infinity;
       slots.forEach((t,i)=>{ const nc=t!=='intermediario'&&!hasCaixa(t); const n=pick(t,nc,'count'); if(n<bestN){ bestN=n; best=i; } });
       const t=slots.splice(best,1)[0], needC=t!=='intermediario'&&!hasCaixa(t);
       let e=pick(t,needC,true);
-      if(!e){ e=pick(t,needC,false); if(e) why.push(`${e.name} escalada fora do rodízio: não sobrou ninguém livre ${needC?'que opere o caixa ':''}para ${TYPE_LABEL[t].toLowerCase()}`); }
+      // sem fixa livre (dentro das regras) e o caixa já está coberto: diarista no lugar, sem cortar folga
+      if(!e&&!needC&&t!=='intermediario'){ extraDiar[t==='abertura'?'ab':'fe']++; why.push(`Diarista na ${TYPE_LABEL[t].toLowerCase()}: nenhuma fixa livre sem perder folga ou furar regra`); continue; }
+      // intermediário não tem horário de diarista e não é cobertura mínima: fica vago em vez de furar regra
+      if(!e&&t==='intermediario'){ why.push('Sem intermediário: nenhuma fixa livre sem perder folga ou furar regra (domingo, 6 dias, 11h) — chame alguém ou ajuste'); continue; }
+      // falta alguém do caixa: chama quem opera o caixa e estava com folga obrigatória hoje
+      if(!e&&needC){ const o=forcedOff.map(empById).find(x=>x&&canCaixa(x.id)&&allowed(x.id,t,w)); if(o){ e=o; forcedOff.splice(forcedOff.indexOf(o.id),1); why.push(`${o.name} perdeu uma folga da semana: era a única do caixa disponível para ${TYPE_LABEL[t].toLowerCase()}`); } }
+      if(!e){ e=pick(t,needC,false); if(e){ const r=[run(e.id)>=6&&'7º dia seguido',!interOK(e.id,t)&&'menos de 11h de descanso',w===6&&sunBlocked(e.id)&&'domingo seguido',pairClash(e.id,t)&&'dupla que não pode ficar junta'].filter(Boolean).join(', '); why.push(`${e.name} escalada mesmo com ${r||'regra do rodízio'}: não sobrou ninguém livre ${needC?'que opere o caixa ':''}para ${TYPE_LABEL[t].toLowerCase()}`); } }
       if(!e&&needC){ e=pick(t,false,true)||pick(t,false,false); if(e) why.push(`Ninguém do caixa disponível para ${TYPE_LABEL[t].toLowerCase()} — ajuste manualmente`); }
       if(e) sh[e.id]={type:t,time:shiftTime(w,t)};
       else why.push(`Faltou gente para ${TYPE_LABEL[t].toLowerCase()}`);
@@ -951,7 +980,7 @@ function generateRange(from,to){
     // diaristas: prefere quem trabalhou menos nos últimos 14 dias (espalha e reduz risco de vínculo)
     const used=n=>{ let c=0; for(let i=1;i<=14;i++){ const x=view(dAdd(k,-i)); if(x&&(x.diar||[]).some(d=>d.name===n)) c++; } return c; };
     const diar=[];
-    [['ab',comp.dAb],['fe',comp.dFe]].forEach(([t,n])=>{
+    [['ab',comp.dAb+extraDiar.ab],['fe',comp.dFe+extraDiar.fe]].forEach(([t,n])=>{
       for(let i=0;i<n;i++){
         const pool=STATE.diaristaPool.filter(p=>diaristaOk(p,k)&&!diar.some(d=>d.name===p)).sort((a,b)=>used(a)-used(b)||((STATE.diaristaPool.indexOf(a)+diarRot)%9)-((STATE.diaristaPool.indexOf(b)+diarRot)%9));
         diar.push({name:pool[0]||'',t}); diarRot++;
