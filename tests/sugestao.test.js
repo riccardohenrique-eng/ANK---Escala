@@ -40,3 +40,12 @@ test('descartar grava null (o merge do servidor não ressuscita a sugestão)', (
   const out = mergeStates({ sugestao: { days: { x: 1 } }, _cfgAt: 1, days: {} }, { sugestao: null, _cfgAt: 2, days: {} });
   assert.strictEqual(out.sugestao, null);
 });
+
+test('quadro desenha dia vazio e dia montado sem erro', () => {
+  const a = loadApp(freshState(loadApp()));
+  const st = a.__get(), k = '2026-11-10';
+  st.days[k] = { conf: null, draft: dia(a, k, { joeli: 'abertura', alana: 'fechamento' }) };
+  const html = a.boardHTML(['2026-11-09', k], {});
+  assert.match(html, /Sem turno/);
+  assert.match(html, /data-k="2026-11-10" data-t="abertura"><div class="kb-card" data-id="joeli"/);
+});

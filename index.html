@@ -530,6 +530,42 @@ table.sg td:first-child{text-align:left;padding-left:6px;color:var(--label-2)}
 table.sg tr.we td{background:#FBFBFA} table.sg tr.lock td{opacity:.45}
 table.sg .mq-chip{min-width:22px;padding:1px 4px;font-size:12px;justify-content:center}
 .sg-iss{margin:10px 4px;font-size:13.5px} .sg-iss p{margin:4px 0}
+/* --- quadro estilo Trello --- */
+.mq-view{display:inline-flex;background:var(--cell-2);border-radius:8px;padding:2px;margin-left:6px}
+.mq-view button{border:0;background:transparent;color:var(--label-2);font:500 13px var(--font);padding:5px 10px;border-radius:6px;cursor:pointer}
+.mq-view button.on{background:var(--paper);color:var(--label);box-shadow:0 1px 2px rgba(15,15,15,.12)}
+.mq-scroll.kb-host{background:transparent;border:0;overflow:visible;max-height:none}
+.kb{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding:2px 2px 12px;-webkit-overflow-scrolling:touch}
+.kb-col{flex:0 0 232px;scroll-snap-align:start;background:var(--cell);border:1px solid var(--sep);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:6px}
+.kb-col.we{background:#F3F2EF}
+.kb-col.today{border-color:var(--tint);box-shadow:0 0 0 1px var(--tint)}
+.kb-h{position:relative;display:flex;flex-direction:column;gap:1px;padding:2px 4px 4px}
+.kb-day{all:unset;cursor:pointer;font-size:14px}
+.kb-day b{font-weight:600}
+.kb-hol{font-style:normal;color:var(--orange);font-size:12px;font-weight:600}
+.kb-n{font-size:12px;color:var(--label-2)}
+.kb-h .mq-dot{top:6px;right:4px}
+.kb-sec{display:flex;flex-direction:column;gap:4px}
+.kb-st{font-size:11.5px;font-weight:600;color:var(--label-2);text-transform:uppercase;letter-spacing:.03em;padding:4px 4px 0}
+.kb-st small{font-weight:500;text-transform:none;letter-spacing:0;color:var(--label-3)}
+.kb-list{min-height:40px;display:flex;flex-direction:column;gap:5px;padding:4px;border-radius:8px;border:1px dashed transparent}
+.kb-list.ab{background:rgba(250,222,201,.45)} .kb-list.in{background:rgba(211,229,239,.5)} .kb-list.fe{background:rgba(232,222,238,.55)}
+.kb-list.off{background:rgba(233,233,231,.6)} .kb-list.fer{background:rgba(219,237,219,.6)}
+.kb-card{position:relative;background:var(--paper);border-radius:7px;padding:8px 10px;box-shadow:0 1px 2px rgba(15,15,15,.1),0 0 0 1px rgba(15,15,15,.05);cursor:grab;font-size:14px;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.kb-card b{font-weight:500}
+.kb-card small{display:block;font-size:12px;color:var(--label-2)}
+.kb-card .mq-dot{top:8px;right:8px}
+.kb-cx{margin-left:6px;font-size:10.5px;color:var(--label-3);border:1px solid var(--sep);border-radius:4px;padding:0 4px}
+.kb-card.dia{border:1px dashed var(--sep);box-shadow:none;background:transparent;cursor:pointer}
+.kb-ghost{opacity:.35}
+.kb-chosen{box-shadow:0 6px 18px rgba(15,15,15,.18)}
+.kb-add{margin-top:2px;border:0;background:transparent;color:var(--label-2);font:500 13px var(--font);text-align:left;padding:6px 4px;cursor:pointer;border-radius:6px}
+.kb-add:hover{background:var(--cell-2)}
+@media (max-width:700px){
+  .mq-view{order:5;margin:4px 0 0}
+  .kb-col{flex-basis:78vw}
+  .kb-card{padding:10px 12px;font-size:15px}
+}
 </style>
 </head>
 <body>
@@ -545,6 +581,7 @@ table.sg .mq-chip{min-width:22px;padding:1px 4px;font-size:12px;justify-content:
       <div class="mq-top">
         <button class="nb-btn" onclick="mqShift(-1)" aria-label="Quinzena anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
         <div class="mid"><div class="wt" id="mq-title"></div><div class="ws" id="mq-sub"></div></div>
+        <div class="mq-view" role="group" aria-label="Forma de ver"><button data-v="grade" onclick="mqSetView('grade')">Grade</button><button data-v="quadro" onclick="mqSetView('quadro')">Quadro</button></div>
         <button class="nb-btn" onclick="mqShift(1)" aria-label="Próxima quinzena"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
         <div class="mq-acts">
           <button class="mq-btn" onclick="openSheet('sh-pedidos')"><span class="lg">Pedidos e férias</span><span class="sm">Pedidos</span></button>
@@ -1283,7 +1320,11 @@ function renderMontar(){
   ];
   const ab={Aberturas:'Abert.',Fechamentos:'Fech.',Domingos:'Dom.'};
   h+=`</tbody><tfoot>${rows.map(([n,f])=>`<tr><td class="mq-day"><span class="lg">${n}</span><span class="sm">${ab[n]||n}</span></td>${team.map(e=>`<td>${f(e.id)}</td>`).join('')}<td></td></tr>`).join('')}</tfoot></table>`;
-  host.innerHTML=h;
+  if(mqView()==='quadro') h=boardHTML(ks,iss);
+  host.innerHTML=h; host.classList.toggle('kb-host',mqView()==='quadro');
+  document.querySelectorAll('.mq-view button').forEach(b=>b.classList.toggle('on',b.dataset.v===mqView()));
+  document.querySelector('.mq-legend').hidden=mqView()==='quadro';
+  if(mqView()==='quadro') initBoard();
   renderAdvisor(items,ks);
   renderSugBanner();
 }
@@ -1339,6 +1380,52 @@ function mqComp(k,f,d){
   saveState(); renderMontar(); mqDayOpen(null,k);
 }
 function mqCompReset(k){ if(STATE.compDay) delete STATE.compDay[k]; saveState(); renderMontar(); mqDayOpen(null,k); }
+// ---------- Quadro estilo Trello (20/10/2026): colunas = dias, cartões = pessoas ----------
+// Arrastar um cartão para outro turno do MESMO dia troca o turno (editCell) e o assessor confere na hora.
+// Tocar no cartão abre o mesmo menu da grade. SortableJS (cdnjs) só carrega quando o quadro abre.
+function mqView(){ try{ return localStorage.getItem('ank_mq_view')||'grade'; }catch(e){ return 'grade'; } }
+function mqSetView(v){ try{ localStorage.setItem('ank_mq_view',v); }catch(e){} mqClose(); renderMontar(); }
+const KB_SECS=[['abertura','Abertura'],['intermediario','Intermediário'],['fechamento','Fechamento'],['folga','Folga'],['ferias','Férias'],['','Sem turno']];
+function boardHTML(ks,iss){
+  const team=STATE.team, it=assess(ks);
+  return `<div class="kb" id="kb">${ks.map(k=>{
+    const v=view(k), w=dDow(k), di=(v&&v.diar)||[];
+    const n=team.filter(e=>works(typeOn(k,e.id))).length+di.length;
+    const sev=['lei','loja'].find(s=>it.some(i=>i.k===k&&i.sev===s));
+    let h=`<section class="kb-col${w>=5?' we':''}${k===todayISO()?' today':''}" id="kb-${k}"><header class="kb-h"><button class="kb-day" onclick="mqDayOpen(event,'${k}')"><b>${DOW_LABELS[w]}</b> ${br(k)}${isHoliday(k)?` <i class="kb-hol">${esc(holidayName(k))}</i>`:''}</button><span class="kb-n">${n} pessoa${n===1?'':'s'}${(STATE.compDay||{})[k]?' 👥':''}</span>${sev?`<i class="mq-dot ${sev}"></i>`:''}</header>`;
+    KB_SECS.forEach(([t,l])=>{
+      const ppl=team.filter(e=>(typeOn(k,e.id)||'')===t);
+      const dz=t==='abertura'?di.filter(x=>x.t==='ab'):t==='fechamento'?di.filter(x=>x.t!=='ab'):[];
+      if((t==='ferias'||t==='')&&!ppl.length) return;
+      const tm=works(t)?shiftTime(w,t):'';
+      h+=`<div class="kb-sec"><div class="kb-st">${l}${tm?` <small>${tm.replace('–',' – ')}</small>`:''}</div><div class="kb-list ${TCLS[t]||'off'}" data-k="${k}" data-t="${t}">`;
+      h+=ppl.map(e=>{ const c=v&&v.sh[e.id], odd=c&&c.time&&works(t)&&c.time!==shiftTime(w,t); const sv=iss[k+'|'+e.id];
+        return `<div class="kb-card" data-id="${e.id}" onclick="mqOpen(event,'${k}','${e.id}')"><b>${esc(e.name)}</b>${e.podeOperarCaixa&&(t==='abertura'||t==='fechamento')?'<span class="kb-cx">caixa</span>':''}${odd?`<small>${esc(c.time.replace('–',' – '))}</small>`:''}${sv?`<i class="mq-dot ${sv}"></i>`:''}</div>`; }).join('');
+      h+=dz.map(x=>{ const j=di.indexOf(x); return `<div class="kb-card dia" onclick="openDiar('${k}',${j})"><b>${esc(x.name||'Diarista')}</b><small>diarista · ${diarTime(w,x.t).replace('–',' – ')}</small></div>`; }).join('');
+      h+=`</div></div>`;
+    });
+    h+=`<button class="kb-add" onclick="addDiarOpen('${k}')">+ diarista</button></section>`;
+    return h; }).join('')}</div>`;
+}
+let kbSortables=[];
+function loadSortable(){ return new Promise((ok,err)=>{ if(window.Sortable) return ok(); const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js'; s.onload=ok; s.onerror=()=>err(new Error('sem internet para arrastar')); document.head.appendChild(s); }); }
+function initBoard(){
+  loadSortable().then(()=>{
+    kbSortables.forEach(x=>x.destroy()); kbSortables=[];
+    document.querySelectorAll('.kb-list').forEach(el=>{
+      kbSortables.push(Sortable.create(el,{group:{name:'kb-'+el.dataset.k,pull:true,put:to=>to.el.dataset.t!==''},draggable:'.kb-card[data-id]',animation:160,delay:180,delayOnTouchOnly:true,touchStartThreshold:6,ghostClass:'kb-ghost',chosenClass:'kb-chosen',
+        onEnd:e=>{
+          const k=e.to.dataset.k, t=e.to.dataset.t, id=e.item.dataset.id;
+          if(e.to===e.from||!t){ renderMontar(); return; }
+          const top=predict(k,id,t)[0];
+          editCell(k,id,t);
+          toast(`${empName(id)} → ${TYPE_LABEL[t]||t}${top?` · ${SEV_INFO[top.sev].ic} ${top.msg}`:' · ✓ sem problemas'}`);
+        }}));
+    });
+    const today=document.querySelector('.kb-col.today'), kb=document.getElementById('kb'); if(today&&kb&&!MQ.kbScrolled){ MQ.kbScrolled=1; kb.scrollLeft=today.offsetLeft-kb.offsetLeft; }  // só de lado: abre no dia de hoje
+  }).catch(e=>toast(e.message));
+}
+
 // ---------- Caixa de sugestões (escala montada no chat com o Claude) ----------
 // STATE.sugestao={from,to,at,nota,days:{k:rascunho}} chega por ferramentas/enviar-sugestao.js.
 // É configuração (sincroniza por _cfgAt); para apagar grava null — se a chave sumisse, o merge
