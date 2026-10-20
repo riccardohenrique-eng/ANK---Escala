@@ -566,6 +566,18 @@ table.sg .mq-chip{min-width:22px;padding:1px 4px;font-size:12px;justify-content:
   .kb-col{flex-basis:78vw}
   .kb-card{padding:10px 12px;font-size:15px}
 }
+/* --- tarefas e marcas sem emoji --- */
+.sv{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:1px}
+.sv.lei{background:var(--red)} .sv.loja{background:var(--orange)} .sv.just{background:var(--yellow)}
+.mq-task{display:block;font-size:11px;color:var(--label-2);font-weight:500;margin-top:2px;max-width:150px;white-space:normal;line-height:1.25}
+.kb-task{font-size:12px;color:var(--label-2);margin-top:2px}
+.cp-task{margin:8px 10px 2px;padding-top:10px;border-top:1px solid var(--sep);display:flex;flex-direction:column;gap:5px}
+.cp-task label{font-size:14.5px}
+.cp-task input{border:1px solid var(--sep);border-radius:8px;padding:8px 10px;font:inherit;font-size:15px;background:var(--paper);color:var(--label)}
+.cp-task span{font-size:12.5px;color:var(--label-2)}
+.cp-task span button{border:0;background:transparent;color:var(--tint);font:500 12.5px var(--font);padding:0;cursor:pointer}
+@media (max-width:700px){ .mq-task{font-size:9.5px;max-width:44px;color:var(--label-3)} .mq-cp{display:block} }
+.cp-lab{font-size:11.5px;font-weight:600;color:var(--label-2);text-transform:uppercase;letter-spacing:.03em;padding:2px 10px 0}
 </style>
 </head>
 <body>
@@ -678,6 +690,9 @@ table.sg .mq-chip{min-width:22px;padding:1px 4px;font-size:12px;justify-content:
       <div class="group-h">Livro de regras</div>
       <div class="group" id="rules"></div>
       <div class="group-f">“Bloqueia” pede motivo para confirmar. “Avisa” só mostra.</div>
+      <div class="group-h">Tarefas da loja</div>
+      <div class="group" id="task-cfg"></div>
+      <div class="group-f">Padrão de cada dia da semana. Aparece no Montar e no PDF da equipe. Para mudar só uma data, toque no dia no Montar.</div>
       <div class="group-h">Pessoas por dia</div>
       <div class="tablewrap"><table class="comp" id="comp-table"></table></div>
       <div class="group-f">Base do gerador. Feriado usa a linha de sábado.</div>
@@ -871,6 +886,9 @@ const DOW_LABELS=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Doming
 const DOW_SHORT=['SEG','TER','QUA','QUI','SEX','SÁB','DOM'];
 const DOW_MIN=['seg','ter','qua','qui','sex','sáb','dom'];
 const CLEAN_TASKS={0:'Limpar freezers da bancada',2:'Limpar freezers da cozinha',5:'Limpeza da cozinha'};
+// Tarefa do dia (20/10/2026): STATE.tasks = padrão por dia da semana (0=seg), editável em Ajustes;
+// STATE.taskDay['AAAA-MM-DD'] = texto só daquela data ('' = sem tarefa nesse dia). Sai no PDF.
+function taskFor(k){ const td=STATE.taskDay||{}; if(Object.prototype.hasOwnProperty.call(td,k)) return td[k]; return ((STATE.tasks||CLEAN_TASKS)[dDow(k)])||''; }
 const SHIFTS=['abertura','intermediario','fechamento'];
 const TYPE_LABEL={abertura:'Abertura',intermediario:'Intermediário',fechamento:'Fechamento',folga:'Folga',ferias:'Férias'};
 const TYPE_VERB={abertura:'abrir',intermediario:'fazer intermediário',fechamento:'fechar'};
@@ -897,6 +915,7 @@ function defaultState(){
     rates:{weekday:80,weekend:90},
     escalaMode:'A', cctIntervaloReduzido:false,
     comp: JSON.parse(JSON.stringify(DEFAULT_COMP)),
+    tasks:{...CLEAN_TASKS}, taskDay:{},
     compDay:{},  // exceção por data: {'AAAA-MM-DD':{ab,int,fe,dAb,dFe}} (20/10/2026)
     levels: {...DEFAULT_LEVELS},
     sunRule:'tres', sunDiar:false,
@@ -913,6 +932,8 @@ function normalizeState(parsed){
     comp:{...d.comp,...(parsed.comp||{})},
     levels:{...d.levels,...(parsed.levels||{})},
     compDay:(parsed.compDay&&typeof parsed.compDay==='object')?parsed.compDay:{},
+    tasks:(parsed.tasks&&typeof parsed.tasks==='object')?parsed.tasks:{...CLEAN_TASKS},
+    taskDay:(parsed.taskDay&&typeof parsed.taskDay==='object')?parsed.taskDay:{},
     days:parsed.days||{},
     constraints:parsed.constraints||[]
   };
@@ -1232,7 +1253,7 @@ function extraChecks(k,v,w,push){
 }
 
 const SEV={sete:'lei',inter:'lei',dom:'lei',feriado:'lei',h44:'lei',caixa:'loja',cober:'loja',cond:'loja',plano:'loja',folgas:'loja',vinculo:'loja',teto:'loja',rot:'just',justica:'just'};
-const SEV_INFO={lei:{t:'Lei trabalhista',ic:'🔴'},loja:{t:'Regras da loja',ic:'🟠'},just:{t:'Justiça',ic:'🟡'}};
+const SEV_INFO={lei:{t:'Lei trabalhista',w:'Lei',ic:'<i class="sv lei"></i>'},loja:{t:'Regras da loja',w:'Loja',ic:'<i class="sv loja"></i>'},just:{t:'Justiça',w:'Justiça',ic:'<i class="sv just"></i>'}};
 const MQ_ANCHOR='2026-10-05';
 function mqStartFor(k){ const n=Math.floor((dD(k)-dD(MQ_ANCHOR))/864e5/14); return dAdd(MQ_ANCHOR,n*14); }
 const MQ={start:null,open:null};
@@ -1298,12 +1319,12 @@ function renderMontar(){
   const empty=ks.filter(k=>!view(k)).length, drafts=ks.filter(k=>STATE.days[k]&&STATE.days[k].draft).length;
   document.getElementById('mq-sub').textContent=empty===14?'Quinzena vazia — monte à mão ou gere uma sugestão':`${14-empty} de 14 dias montados${drafts?` · ${drafts} ainda não enviado${drafts>1?'s':''}`:''}`;
   const team=STATE.team;
-  let h=`<table class="mq"><thead><tr><th class="mq-day">Dia</th>${team.map(e=>`<th><span class="mq-hn"><span class="lg">${esc(e.name)}</span><span class="sm">${esc(shortName(e,team))}</span></span>${e.podeOperarCaixa?'<span class="mq-cx" title="Opera o caixa">caixa</span>':''}</th>`).join('')}<th class="mq-dih"><span class="lg">Diaristas</span><span class="sm">Diar.</span></th></tr></thead><tbody>`;
+  let h=`<table class="mq"><thead><tr><th class="mq-day">Dia</th>${team.map(e=>`<th><span class="mq-hn"><span class="lg">${esc(e.name)}</span><span class="sm">${esc(shortName(e,team))}</span></span></th>`).join('')}<th class="mq-dih"><span class="lg">Diaristas</span><span class="sm">Diar.</span></th></tr></thead><tbody>`;
   ks.forEach((k,i)=>{
     const v=view(k), w=dDow(k), d=STATE.days[k];
     const st=!v?'':(d.draft?'<span class="mq-st d" title="ainda não enviado"><span class="lg">não enviado</span></span>':'<span class="mq-st c" title="enviado à equipe"><span class="lg">enviado</span></span>');
     if(i===7) h+=`<tr class="mq-sep"><td colspan="${team.length+2}"></td></tr>`;
-    h+=`<tr class="${w>=5?'we':''}${isHoliday(k)?' hol':''}" id="mq-r-${k}"><td class="mq-day"><button class="mq-dbtn" onclick="mqDayOpen(event,'${k}')" aria-label="Quantas pessoas em ${DOW_LABELS[w]}, ${br(k)}"><b><span class="dw">${DOW_SHORT[w].toLowerCase()}</span> <span class="dd">${br(k)}</span></b>${isHoliday(k)?`<span class="mq-hol">${esc(holidayName(k))}</span>`:''}${(STATE.compDay||{})[k]?`<span class="mq-cp" title="Número de pessoas mudado para este dia">👥${compTotal(STATE.compDay[k])}</span>`:''}</button>${st}</td>`;
+    h+=`<tr class="${w>=5?'we':''}${isHoliday(k)?' hol':''}" id="mq-r-${k}"><td class="mq-day"><button class="mq-dbtn" onclick="mqDayOpen(event,'${k}')" aria-label="Quantas pessoas em ${DOW_LABELS[w]}, ${br(k)}"><b><span class="dw">${DOW_SHORT[w].toLowerCase()}</span> <span class="dd">${br(k)}</span></b>${isHoliday(k)?`<span class="mq-hol">${esc(holidayName(k))}</span>`:''}${(STATE.compDay||{})[k]?`<span class="mq-cp" title="Número de pessoas mudado para este dia">${compTotal(STATE.compDay[k])} pessoas</span>`:''}${taskFor(k)?`<span class="mq-task" title="${esc(taskFor(k))}"><span class="lg">${esc(taskFor(k))}</span><span class="sm">tarefa</span></span>`:''}</button>${st}</td>`;
     team.forEach(e=>{ const c=v&&v.sh[e.id]; h+=`<td><button class="mq-cell" id="mq-c-${k}-${e.id}" onclick="mqOpen(event,'${k}','${e.id}')">${chipHTML(c&&c.type,c&&works(c.type)?c.time:null,iss[k+'|'+e.id],w)}</button></td>`; });
     const di=(v&&v.diar)||[];
     h+=`<td class="mq-di">${di.map((x,j)=>`<button class="mq-chip dia" onclick="openDiar('${k}',${j})">${esc(x.name||'diarista')}<small>${diarTime(w,x.t).replace('–',' – ')}</small></button>`).join('')}<button class="mq-add" onclick="addDiarOpen('${k}')" aria-label="Adicionar diarista">+</button><button class="mq-dn${di.length?' has':''}" onclick="mqDiarMenu(event,'${k}')" aria-label="Diaristas">${di.length||'+'}</button></td></tr>`;
@@ -1338,7 +1359,7 @@ function renderAdvisor(items,ks){
   let h=`<button class="adv-h" onclick="MQ.adv=!MQ.adv;this.parentNode.classList.toggle('open',MQ.adv)" aria-expanded="${!!MQ.adv}"><b>Assessor de RH</b><span class="adv-st">${tot===0?(empty===14?'aguardando a escala':'tudo certo'):`${tot} ponto${tot>1?'s':''}`}</span><span class="adv-pills">${pill}<i class="adv-car">▾</i></span></button><div class="adv-body">`;
   if(tot===0){
     h+=empty===14?`<p class="adv-empty">Monte a quinzena tocando nas células, ou gere uma sugestão. Eu confiro cada mudança.</p>`
-      :`<div class="adv-ok">🟢 Nenhum problema nos ${14-empty} dias montados.${empty?` Faltam ${empty} dias.`:''}</div>`;
+      :`<div class="adv-ok">Nenhum problema nos ${14-empty} dias montados.${empty?` Faltam ${empty} dias.`:''}</div>`;
   }
   ['lei','loja','just'].forEach(s=>{
     if(!n(s)) return;
@@ -1358,11 +1379,13 @@ function compBase(k){ const w=dDow(k), d=STATE.days[k], hol=!!((d&&(d.draft||d.c
 function mqDayOpen(ev,k){
   if(ev) ev.stopPropagation();
   const menu=document.getElementById('mq-menu'), w=dDow(k), base=compBase(k), c=(STATE.compDay||{})[k]||base, own=!!(STATE.compDay||{})[k];
-  let h=`<div class="mm-h"><b>Quantas pessoas?</b><span>${DOW_LABELS[w]}, ${br(k)}</span></div>`;
+  let h=`<div class="mm-h"><b>${DOW_LABELS[w]}, ${br(k)}</b><span>pessoas, tarefa e feriado</span></div><div class="cp-lab">Quantas pessoas</div>`;
   h+=COMP_ROWS.map(([f,l])=>`<div class="cp-row"><span>${l}</span><button class="cp-b" onclick="mqComp('${k}','${f}',-1)" aria-label="Menos ${l}" ${(+c[f]||0)<=0?'disabled':''}>−</button><b class="num">${+c[f]||0}</b><button class="cp-b" onclick="mqComp('${k}','${f}',1)" aria-label="Mais ${l}" ${(+c[f]||0)>=4?'disabled':''}>+</button></div>`).join('');
   h+=`<div class="cp-tot"><b>${compTotal(c)} pessoas</b> neste dia<span>${own?`O normal de ${DOW_LABELS[w].toLowerCase()} é ${compTotal(base)}.`:`É o normal de ${DOW_LABELS[w].toLowerCase()}.`}</span></div>`;
   if(own) h+=`<button class="mm-undo cp-reset" onclick="mqCompReset('${k}')">Voltar ao normal de ${DOW_LABELS[w].toLowerCase()} (${compTotal(base)})</button>`;
   h+=`<p class="cp-hint">Depois toque em <b>Gerar</b> para o app preencher, ou ajuste as pessoas na grade. O assessor avisa se faltar gente.</p>`;
+  const td=STATE.taskDay||{}, own2=Object.prototype.hasOwnProperty.call(td,k), dflt=((STATE.tasks||CLEAN_TASKS)[w])||'';
+  h+=`<div class="cp-task"><label for="cp-task-in">Tarefa do dia</label><input id="cp-task-in" type="text" value="${esc(taskFor(k))}" placeholder="Ex.: Limpeza dos vidros, porta e mesas" onchange="mqTask('${k}',this.value)"><span>${own2?`Só neste dia. Padrão de ${DOW_LABELS[w].toLowerCase()}: ${dflt?esc(dflt):'nenhuma'}. <button onclick="mqTaskReset('${k}')">Voltar ao padrão</button>`:`Padrão de ${DOW_LABELS[w].toLowerCase()} (muda em Ajustes). Sai no PDF da equipe.`}</span></div>`;
   const v=view(k), hol=!!(v&&v.holiday);
   h+=`<label class="cp-sw"><span>Feriado${isHoliday(k)?` <small>(${esc(holidayName(k))})</small>`:''}</span><span class="sw"><input type="checkbox" ${hol?'checked':''} onchange="toggleHoliday('${k}');mqDayOpen(null,'${k}')" aria-label="Feriado"><span></span></span></label>`;
   if(v&&(v.why||[]).length) h+=`<div class="cp-notes">${v.why.map(m=>`<p>${esc(m)}</p>`).join('')}</div>`;
@@ -1379,6 +1402,13 @@ function mqComp(k,f,d){
   if(COMP_ROWS.every(([x])=>(+c[x]||0)===(+base[x]||0))) delete STATE.compDay[k]; else STATE.compDay[k]={ab:c.ab,int:c.int,fe:c.fe,dAb:c.dAb,dFe:c.dFe};
   saveState(); renderMontar(); mqDayOpen(null,k);
 }
+function setTaskDay(k,txt){
+  const t=String(txt||'').trim(), dflt=((STATE.tasks||CLEAN_TASKS)[dDow(k)])||'';
+  STATE.taskDay=STATE.taskDay||{};
+  if(t===dflt) delete STATE.taskDay[k]; else STATE.taskDay[k]=t;
+}
+function mqTask(k,txt){ setTaskDay(k,txt); saveState(); renderMontar(); mqDayOpen(null,k); }
+function mqTaskReset(k){ if(STATE.taskDay) delete STATE.taskDay[k]; saveState(); renderMontar(); mqDayOpen(null,k); }
 function mqCompReset(k){ if(STATE.compDay) delete STATE.compDay[k]; saveState(); renderMontar(); mqDayOpen(null,k); }
 // ---------- Quadro estilo Trello (20/10/2026): colunas = dias, cartões = pessoas ----------
 // Arrastar um cartão para outro turno do MESMO dia troca o turno (editCell) e o assessor confere na hora.
@@ -1392,7 +1422,7 @@ function boardHTML(ks,iss){
     const v=view(k), w=dDow(k), di=(v&&v.diar)||[];
     const n=team.filter(e=>works(typeOn(k,e.id))).length+di.length;
     const sev=['lei','loja'].find(s=>it.some(i=>i.k===k&&i.sev===s));
-    let h=`<section class="kb-col${w>=5?' we':''}${k===todayISO()?' today':''}" id="kb-${k}"><header class="kb-h"><button class="kb-day" onclick="mqDayOpen(event,'${k}')"><b>${DOW_LABELS[w]}</b> ${br(k)}${isHoliday(k)?` <i class="kb-hol">${esc(holidayName(k))}</i>`:''}</button><span class="kb-n">${n} pessoa${n===1?'':'s'}${(STATE.compDay||{})[k]?' 👥':''}</span>${sev?`<i class="mq-dot ${sev}"></i>`:''}</header>`;
+    let h=`<section class="kb-col${w>=5?' we':''}${k===todayISO()?' today':''}" id="kb-${k}"><header class="kb-h"><button class="kb-day" onclick="mqDayOpen(event,'${k}')"><b>${DOW_LABELS[w]}</b> ${br(k)}${isHoliday(k)?` <i class="kb-hol">${esc(holidayName(k))}</i>`:''}</button><span class="kb-n">${n} pessoa${n===1?'':'s'}${(STATE.compDay||{})[k]?' (ajustado)':''}</span>${taskFor(k)?`<span class="kb-task">${esc(taskFor(k))}</span>`:''}${sev?`<i class="mq-dot ${sev}"></i>`:''}</header>`;
     KB_SECS.forEach(([t,l])=>{
       const ppl=team.filter(e=>(typeOn(k,e.id)||'')===t);
       const dz=t==='abertura'?di.filter(x=>x.t==='ab'):t==='fechamento'?di.filter(x=>x.t!=='ab'):[];
@@ -1400,7 +1430,7 @@ function boardHTML(ks,iss){
       const tm=works(t)?shiftTime(w,t):'';
       h+=`<div class="kb-sec"><div class="kb-st">${l}${tm?` <small>${tm.replace('–',' – ')}</small>`:''}</div><div class="kb-list ${TCLS[t]||'off'}" data-k="${k}" data-t="${t}">`;
       h+=ppl.map(e=>{ const c=v&&v.sh[e.id], odd=c&&c.time&&works(t)&&c.time!==shiftTime(w,t); const sv=iss[k+'|'+e.id];
-        return `<div class="kb-card" data-id="${e.id}" onclick="mqOpen(event,'${k}','${e.id}')"><b>${esc(e.name)}</b>${e.podeOperarCaixa&&(t==='abertura'||t==='fechamento')?'<span class="kb-cx">caixa</span>':''}${odd?`<small>${esc(c.time.replace('–',' – '))}</small>`:''}${sv?`<i class="mq-dot ${sv}"></i>`:''}</div>`; }).join('');
+        return `<div class="kb-card" data-id="${e.id}" onclick="mqOpen(event,'${k}','${e.id}')"><b>${esc(e.name)}</b>${odd?`<small>${esc(c.time.replace('–',' – '))}</small>`:''}${sv?`<i class="mq-dot ${sv}"></i>`:''}</div>`; }).join('');
       h+=dz.map(x=>{ const j=di.indexOf(x); return `<div class="kb-card dia" onclick="openDiar('${k}',${j})"><b>${esc(x.name||'Diarista')}</b><small>diarista · ${diarTime(w,x.t).replace('–',' – ')}</small></div>`; }).join('');
       h+=`</div></div>`;
     });
@@ -1419,7 +1449,7 @@ function initBoard(){
           if(e.to===e.from||!t){ renderMontar(); return; }
           const top=predict(k,id,t)[0];
           editCell(k,id,t);
-          toast(`${empName(id)} → ${TYPE_LABEL[t]||t}${top?` · ${SEV_INFO[top.sev].ic} ${top.msg}`:' · ✓ sem problemas'}`);
+          toast(`${empName(id)} → ${TYPE_LABEL[t]||t}${top?` · ${SEV_INFO[top.sev].w}: ${top.msg}`:' · sem problemas'}`);
         }}));
     });
     const today=document.querySelector('.kb-col.today'), kb=document.getElementById('kb'); if(today&&kb&&!MQ.kbScrolled){ MQ.kbScrolled=1; kb.scrollLeft=today.offsetLeft-kb.offsetLeft; }  // só de lado: abre no dia de hoje
@@ -1436,7 +1466,7 @@ function renderSugBanner(){
   const el=document.getElementById('mq-sug'), g=sugView(); if(!el) return;
   el.hidden=!g; if(!g) return;
   const [a,b]=sugRange(g);
-  el.innerHTML=`<span class="sg-t">💡 <b>Sugestão do assessor</b> para ${br(a)} – ${br(b)}</span><span class="sg-a"><button onclick="sugOpen()">Ver</button><button class="pri" onclick="sugApply()">Aplicar</button><button onclick="sugDiscard()">Descartar</button></span>`;
+  el.innerHTML=`<span class="sg-t"><b>Sugestão do assessor</b> para ${br(a)} – ${br(b)}</span><span class="sg-a"><button onclick="sugOpen()">Ver</button><button class="pri" onclick="sugApply()">Aplicar</button><button onclick="sugDiscard()">Descartar</button></span>`;
 }
 function sugPreview(g){
   // simula a sugestão nos dias ainda não confirmados, roda o assessor e desfaz
@@ -1450,7 +1480,7 @@ function sugOpen(){
   const ks=Object.keys(g.days).sort(), team=STATE.team, conf=ks.filter(k=>STATE.days[k]&&STATE.days[k].conf), mine=ks.filter(k=>STATE.days[k]&&STATE.days[k].draft&&!STATE.days[k].conf);
   const it=sugPreview(g), c=s=>it.filter(i=>i.sev===s).length;
   let h=g.nota?`<p class="sg-nota">${esc(g.nota)}</p>`:'';
-  h+=`<div class="sg-sum">${['lei','loja','just'].filter(c).map(s=>`<span class="adv-pill ${s}">${SEV_INFO[s].ic} ${c(s)}</span>`).join(' ')||'<span class="adv-pill ok">🟢 sem problemas</span>'}</div>`;
+  h+=`<div class="sg-sum">${['lei','loja','just'].filter(c).map(s=>`<span class="adv-pill ${s}">${SEV_INFO[s].ic} ${c(s)}</span>`).join(' ')||'<span class="adv-pill ok">sem problemas</span>'}</div>`;
   h+=`<div class="tablewrap"><table class="sg"><thead><tr><th></th>${team.map(e=>`<th>${esc(shortName(e,team))}</th>`).join('')}<th>Diar.</th></tr></thead><tbody>${ks.map(k=>{ const d=g.days[k], w=dDow(k), lock=conf.includes(k);
     return `<tr class="${w>=5?'we':''}${lock?' lock':''}"><td>${DOW_SHORT[w].toLowerCase()} ${br(k)}</td>${team.map(e=>{ const x=d.sh[e.id]; const t=x&&x.type; return `<td>${t?`<span class="mq-chip ${TCLS[t]||'off'}">${MQ_LET[t]}</span>`:''}</td>`; }).join('')}<td>${(d.diar||[]).length||''}</td></tr>`; }).join('')}</tbody></table></div>`;
   if(it.filter(i=>i.sev!=='just').length) h+=`<div class="sg-iss">${it.filter(i=>i.sev!=='just').map(i=>`<p>${SEV_INFO[i.sev].ic} ${i.k?`<b>${DOW_MIN[dDow(i.k)]} ${br(i.k)}</b> · `:''}${esc(i.msg)}</p>`).join('')}</div>`;
@@ -1844,7 +1874,7 @@ function renderPrintView(){
     const sep=prevMon&&dMon(k)!==prevMon?`<tr class="sep"><td colspan="${STATE.team.length+3}"></td></tr>`:''; prevMon=dMon(k);
     const cells=STATE.team.map((e,i)=>{ const x=c.sh[e.id]; if(!x||x.type==='folga') return '<td class="off">Folga</td>'; if(x.type==='ferias') return '<td class="fer">FÉRIAS</td>'; return `<td class="p${i%6}"><b>${fmtH(x.time||shiftTime(w,x.type))}</b><small>(${TYPE_LABEL[x.type].toLowerCase()})</small></td>`; }).join('');
     const di=(c.diar||[]).map(x=>fmtH(diarTime(w,x.t))); const dtxt=di.length?`<td class="dia"><b>${di.join(' / ')}</b></td>`:'<td></td>';
-    return `${sep}<tr><td class="task">${CLEAN_TASKS[w]||''}</td><td class="day${w===0?' mon':''}">${DOW_LABELS[w].toLowerCase()} (${br(k)})${c.holiday?'<br>feriado':''}</td>${cells}${dtxt}</tr>`;
+    return `${sep}<tr><td class="task">${esc(taskFor(k))}</td><td class="day${w===0?' mon':''}">${DOW_LABELS[w].toLowerCase()} (${br(k)})${c.holiday?'<br>feriado':''}</td>${cells}${dtxt}</tr>`;
   }).join('');
   box.innerHTML=`<div class="pdf pdf-block"><h3>ESCALA - Açaí NoKilo - Cruz das Almas (Período: ${brY(days[0])} - ${brY(days[days.length-1])})</h3>
     <table class="pdft"><tr><th></th><th></th>${STATE.team.map(e=>`<th>${esc(e.name)}</th>`).join('')}<th>Diaristas</th></tr>${rows}</table></div>`;
@@ -2028,7 +2058,7 @@ function dayView(k,chk){
     +((v.why||[]).map(m=>`<div class="cell"><div class="alert info"><i></i><span>${esc(m)}</span></div></div>`).join(''))
     +(d.conf&&d.conf.motivo&&!d.draft?`<div class="cell"><div class="alert info"><i></i><span>Confirmado com exceção: “${esc(d.conf.motivo)}”</span></div></div>`:'')
     ||'<div class="cell"><div class="alert ok"><i></i><span>Tudo dentro das regras</span></div></div>';
-  return `<div class="dayhead"><div><div class="dt">${dayLong(k)}</div>${CLEAN_TASKS[w]?`<div class="ds">${CLEAN_TASKS[w]}</div>`:''}</div>${pill}</div>
+  return `<div class="dayhead"><div><div class="dt">${dayLong(k)}</div>${taskFor(k)?`<div class="ds">${esc(taskFor(k))}</div>`:''}</div>${pill}</div>
     <div class="group-h">Equipe</div><div class="group">${people}</div>
     <div class="group-h">Diaristas</div><div class="group">${diar}</div>
     <div class="group-h">Regras</div><div class="group">${alerts}</div>
@@ -2207,6 +2237,11 @@ function renderRules(){
   document.getElementById('rules').innerHTML=RULES.map(r=>`<div class="rule"><b>${r.nome}</b><p>${r.txt}</p>
     <div class="lvl" role="group" aria-label="Nível: ${r.nome}">${[['block','Bloqueia'],['warn','Avisa'],['off','Desligada']].map(([l,t])=>`<button data-l="${l}" aria-pressed="${lvl(r.id)===l}" onclick="STATE.levels['${r.id}']='${l}'; saveState(); renderAll();">${t}</button>`).join('')}</div></div>`).join('');
 }
+function renderTasksCfg(){
+  const el=document.getElementById('task-cfg'); if(!el) return;
+  const t=STATE.tasks||CLEAN_TASKS;
+  el.innerHTML=DOW_LABELS.map((l,d)=>`<label class="cell"><span class="grow" style="flex:0 0 96px">${l}</span><input type="text" value="${esc(t[d]||'')}" placeholder="sem tarefa" aria-label="Tarefa de ${l}" onchange="STATE.tasks={...(STATE.tasks||CLEAN_TASKS),${d}:this.value.trim()}; saveState(); renderAll();" style="flex:1;text-align:right"></label>`).join('');
+}
 function renderComp(){
   const cols=[['ab','Abre'],['int','Inter.'],['fe','Fecha'],['dAb','Diar. manhã'],['dFe','Diar. noite']];
   document.getElementById('comp-table').innerHTML=`<tr><th>Dia</th>${cols.map(c=>`<th>${c[1]}</th>`).join('')}</tr>`+
@@ -2251,7 +2286,7 @@ function saveConfig(){
 
 function renderAll(){
   const checks={}; sortedDays().forEach(k=>{ checks[k]=checkDay(k); }); lastChecks=checks;
-  renderEscala(); renderMontar(); renderSundays(); renderPeople(); renderRules(); renderComp(); renderTeamTable(); renderActiveConstraints(); renderChatSub();
+  renderEscala(); renderMontar(); renderSundays(); renderPeople(); renderRules(); renderComp(); renderTasksCfg(); renderTeamTable(); renderActiveConstraints(); renderChatSub();
   if(UI.tab==='tab-imprimir') renderPrintView();
 }
 function initUI(){
