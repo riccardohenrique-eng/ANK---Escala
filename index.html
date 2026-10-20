@@ -484,6 +484,52 @@ table.mq{border-collapse:separate;border-spacing:0;width:100%;font-size:13.5px}
   .mq-adv .adv-i{padding:6px 8px;font-size:13.5px}
   .mq-adv .adv-i b{display:inline;margin-right:6px}
 }
+/* --- pessoas por dia (exceção por data) --- */
+.mq-dbtn{all:unset;display:block;cursor:pointer;width:100%;border-radius:6px}
+.mq-dbtn:hover b{color:var(--tint)}
+.mq-dbtn:focus-visible{outline:2px solid var(--tint)}
+.mq-cp{display:inline-block;font-size:11px;font-weight:600;color:var(--tint);background:var(--tint-wash);border-radius:4px;padding:0 4px;margin-top:2px}
+.cp-row{display:grid;grid-template-columns:1fr 36px 30px 36px;align-items:center;gap:6px;padding:5px 10px}
+.cp-row span{font-size:14.5px}
+.cp-row b{text-align:center;font-size:17px}
+.cp-b{width:36px;height:36px;border-radius:8px;border:1px solid var(--sep);background:var(--paper);color:var(--label);font:600 18px var(--font);cursor:pointer}
+.cp-b:disabled{opacity:.3;cursor:default}
+.cp-b:not(:disabled):active{background:var(--cell-2)}
+.cp-tot{margin:6px 10px 2px;padding-top:10px;border-top:1px solid var(--sep);font-size:15px}
+.cp-tot span{display:block;font-size:12.5px;color:var(--label-2);margin-top:2px}
+.cp-reset{color:var(--tint)!important}
+.cp-hint{margin:6px 10px 6px;font-size:12.5px;color:var(--label-2);line-height:1.4}
+@media (max-width:700px){ .mq-cp{font-size:9.5px;padding:0 2px} }
+/* --- simplificação (20/10 noite) --- */
+.back-link{border:0;background:transparent;color:var(--tint);font:500 16px var(--font);padding:8px 0;cursor:pointer}
+.cp-sw{display:flex;align-items:center;justify-content:space-between;margin:8px 10px 2px;padding-top:10px;border-top:1px solid var(--sep);font-size:14.5px;cursor:pointer}
+.cp-sw small{color:var(--label-2)}
+.cp-notes{margin:8px 10px 4px;padding:8px 10px;background:var(--cell);border-radius:8px;font-size:13px;color:var(--label-2)}
+.cp-notes p{margin:2px 0}
+details.adv-g summary{cursor:pointer;list-style:none}
+details.adv-g summary::-webkit-details-marker{display:none}
+details.adv-g summary em{font-style:normal;font-weight:500;color:var(--tint);text-transform:none;letter-spacing:0;margin-left:4px}
+details.adv-g[open] summary em{display:none}
+.rep-warn{background:var(--orange-wash);color:var(--label);border-radius:10px;padding:12px 14px;font-size:14.5px;line-height:1.45;margin:0 0 12px}
+.rep-warn button{display:block;margin-top:8px;border:0;background:var(--tint-fill);color:var(--on-tint);border-radius:8px;padding:8px 12px;font:600 14px var(--font);cursor:pointer}
+#mq-menu{max-height:calc(100vh - 24px);overflow:auto}
+/* --- caixa de sugestões --- */
+.mq-sug{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--tint-wash);border:1px solid rgba(116,41,132,.18);border-radius:10px;padding:10px 12px;margin:0 0 12px;font-size:14.5px}
+.mq-sug .sg-a{display:flex;gap:6px;margin-left:auto}
+.mq-sug button{border:1px solid var(--sep);background:var(--paper);color:var(--label);border-radius:8px;padding:6px 12px;font:500 14px var(--font);cursor:pointer}
+.mq-sug button.pri{background:var(--tint-fill);border-color:var(--tint-fill);color:var(--on-tint)}
+@media (max-width:700px){ .mq-sug{font-size:13.5px;padding:9px 10px;margin-bottom:8px} .mq-sug .sg-a{width:100%} .mq-sug .sg-a button{flex:1} }
+.sg-nota{margin:0 4px 10px;color:var(--label-2);font-size:14px}
+.sg-sum{display:flex;gap:6px;margin:0 4px 10px}
+.sg-sum .adv-pill{font-style:normal;font-size:13px;font-weight:600;border-radius:10px;padding:2px 10px}
+.sg-sum .adv-pill.lei{background:var(--red-wash);color:var(--red)} .sg-sum .adv-pill.loja{background:var(--orange-wash);color:var(--orange)} .sg-sum .adv-pill.just{background:var(--cell-2);color:var(--label-2)} .sg-sum .adv-pill.ok{background:var(--green-wash);color:var(--green)}
+table.sg{width:100%;border-collapse:collapse;font-size:12.5px;background:var(--paper)}
+table.sg th,table.sg td{border-bottom:1px solid var(--sep);padding:4px 2px;text-align:center;white-space:nowrap}
+table.sg th{color:var(--label-2);font-weight:500;font-size:11.5px}
+table.sg td:first-child{text-align:left;padding-left:6px;color:var(--label-2)}
+table.sg tr.we td{background:#FBFBFA} table.sg tr.lock td{opacity:.45}
+table.sg .mq-chip{min-width:22px;padding:1px 4px;font-size:12px;justify-content:center}
+.sg-iss{margin:10px 4px;font-size:13.5px} .sg-iss p{margin:4px 0}
 </style>
 </head>
 <body>
@@ -495,7 +541,7 @@ table.mq{border-collapse:separate;border-spacing:0;width:100%;font-size:13.5px}
 
   <main>
     <!-- ===== MONTAR (estilo Notion) ===== -->
-    <section class="tabpage" id="tab-montar" data-title="Montar">
+    <section class="tabpage on" id="tab-montar" data-title="Montar">
       <div class="mq-top">
         <button class="nb-btn" onclick="mqShift(-1)" aria-label="Quinzena anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
         <div class="mid"><div class="wt" id="mq-title"></div><div class="ws" id="mq-sub"></div></div>
@@ -503,10 +549,11 @@ table.mq{border-collapse:separate;border-spacing:0;width:100%;font-size:13.5px}
         <div class="mq-acts">
           <button class="mq-btn" onclick="openSheet('sh-pedidos')"><span class="lg">Pedidos e férias</span><span class="sm">Pedidos</span></button>
           <button class="mq-btn" onclick="mqGenerate()"><span class="lg">Gerar sugestão</span><span class="sm">Gerar</span></button>
-          <label class="mq-btn"><span class="lg">Importar planilha</span><span class="sm">Importar</span><input type="file" accept=".xlsx" hidden onchange="importXlsx(this)"></label>
-          <button class="mq-btn pri" onclick="openConfirm()">Confirmar</button>
+          <button class="mq-btn" onclick="openSheet('sh-actions')"><span class="lg">Mais</span><span class="sm">Mais</span></button>
+          <button class="mq-btn pri" onclick="openConfirm()"><span class="lg">Confirmar e enviar</span><span class="sm">Confirmar</span></button>
         </div>
       </div>
+      <div class="mq-sug" id="mq-sug" hidden></div>
       <div class="mq-legend"><span class="mq-chip ab">A</span>abertura <span class="mq-chip in">I</span>interm. <span class="mq-chip fe">F</span>fecham. <span class="mq-chip off">–</span>folga <span class="mq-chip fer">Fé</span>férias</div>
       <div class="mq-wrap">
         <div class="mq-scroll" id="mq-body"></div>
@@ -515,7 +562,7 @@ table.mq{border-collapse:separate;border-spacing:0;width:100%;font-size:13.5px}
     </section>
 
     <!-- ===== ESCALA ===== -->
-    <section class="tabpage on" id="tab-escala" data-title="Escala">
+    <section class="tabpage" id="tab-escala" data-title="Escala">
       <h1 class="lt">Escala</h1>
       <div class="weekbar">
         <button class="nb-btn" onclick="shiftWeek(-1)" aria-label="Semana anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
@@ -532,6 +579,7 @@ table.mq{border-collapse:separate;border-spacing:0;width:100%;font-size:13.5px}
 
     <!-- ===== DOMINGOS ===== -->
     <section class="tabpage" id="tab-domingos" data-title="Domingos">
+      <button class="back-link" onclick="showTab('tab-config')">‹ Ajustes</button>
       <h1 class="lt">Domingos</h1>
       <p class="lt-sub">Quem trabalhou e quem deve folgar no próximo.</p>
       <div class="tablewrap"><table class="sun" id="sun-table"></table></div>
@@ -549,6 +597,7 @@ table.mq{border-collapse:separate;border-spacing:0;width:100%;font-size:13.5px}
     <section class="tabpage" id="tab-relatorio" data-title="Relatórios">
       <h1 class="lt">Relatórios</h1>
       <p class="lt-sub">Pré-cálculo da folha a partir dos dias confirmados.</p>
+      <div class="rep-warn" id="rep-warn" hidden></div>
       <div class="group" style="padding:12px;display:grid;gap:10px">
         <select id="rep-emp" aria-label="Colaboradora" onchange="renderReport()"></select>
         <select id="rep-period" aria-label="Período">
@@ -566,9 +615,9 @@ table.mq{border-collapse:separate;border-spacing:0;width:100%;font-size:13.5px}
     </section>
 
     <!-- ===== EQUIPE / PDF ===== -->
-    <section class="tabpage" id="tab-imprimir" data-title="Equipe">
-      <h1 class="lt">Para a equipe</h1>
-      <p class="lt-sub">Só dias confirmados, no formato do PDF.</p>
+    <section class="tabpage" id="tab-imprimir" data-title="Enviar">
+      <h1 class="lt">Enviar para a equipe</h1>
+      <p class="lt-sub">Dias já confirmados, no formato que o grupo recebe.</p>
       <div class="group no-print">
         <label class="cell"><span class="grow">De</span><input type="date" id="print-from" onchange="renderPrintView()"></label>
         <label class="cell"><span class="grow">Até</span><input type="date" id="print-to" onchange="renderPrintView()"></label>
@@ -583,6 +632,9 @@ table.mq{border-collapse:separate;border-spacing:0;width:100%;font-size:13.5px}
     <!-- ===== AJUSTES ===== -->
     <section class="tabpage" id="tab-config" data-title="Ajustes">
       <h1 class="lt">Ajustes</h1>
+      <div class="group">
+        <button class="cell" onclick="showTab('tab-domingos')"><span class="grow">Domingos<span class="sub">Quem trabalhou, quem folga no próximo e a regra (2×1)</span></span>›</button>
+      </div>
       <div class="group-h">Condições de cada pessoa</div>
       <div class="people" id="people"></div>
       <div class="group-f">Quem opera o caixa e quais turnos cada pessoa pode fazer.</div>
@@ -616,11 +668,9 @@ table.mq{border-collapse:separate;border-spacing:0;width:100%;font-size:13.5px}
 
 <nav class="tabbar" aria-label="Seções">
   <div class="tabs">
-    <button data-tab="tab-montar" onclick="showTab('tab-montar')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M9 9.5V20M14.5 9.5V20"/></svg>Montar</button>
-    <button class="on" data-tab="tab-escala" onclick="showTab('tab-escala')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Escala</button>
-    <button data-tab="tab-domingos" onclick="showTab('tab-domingos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>Domingos</button>
+    <button class="on" data-tab="tab-montar" onclick="showTab('tab-montar')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M9 9.5V20M14.5 9.5V20"/></svg>Montar</button>
+    <button data-tab="tab-imprimir" onclick="showTab('tab-imprimir')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h7l4 4v13H7z"/><path d="M14 3.5v4h4M10 12.5h5M10 16h5"/></svg>Enviar</button>
     <button data-tab="tab-relatorio" onclick="showTab('tab-relatorio')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 20V11M12 20V4M19 20v-6"/></svg>Relatórios</button>
-    <button data-tab="tab-imprimir" onclick="showTab('tab-imprimir')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h7l4 4v13H7z"/><path d="M14 3.5v4h4M10 12.5h5M10 16h5"/></svg>Equipe</button>
     <button data-tab="tab-config" onclick="showTab('tab-config')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2.2"/><circle cx="8" cy="17" r="2.2"/></svg>Ajustes</button>
   </div>
 </nav>
@@ -636,17 +686,23 @@ table.mq{border-collapse:separate;border-spacing:0;width:100%;font-size:13.5px}
   </div>
 </div>
 
+<div class="sheet" id="sh-sug" role="dialog" aria-modal="true" aria-labelledby="sh-sug-t" hidden>
+  <div class="grab"></div>
+  <div class="sh"><h2 id="sh-sug-t">Sugestão do assessor</h2><button class="close" onclick="closeSheet()">Fechar</button></div>
+  <div class="sb" id="sug-body"></div>
+</div>
+
 <div class="scrim" id="scrim" hidden onclick="closeSheet()"></div>
 
 <div class="sheet asheet" id="sh-actions" role="dialog" aria-modal="true" aria-label="Ações" hidden>
   <div class="grab"></div>
   <div class="sb">
     <div class="group">
-      <button class="cell" onclick="openSheet('sh-period')">Montar período…</button>
-      <button class="cell" onclick="openSheet('sh-pedidos')">Férias e pedidos…</button>
-      <button class="cell" onclick="openSheet('sh-chat')">Editar por comando…</button>
+      <label class="cell" style="cursor:pointer">Importar planilha do Google Sheets…<input type="file" accept=".xlsx" hidden onchange="closeSheet();importXlsx(this)"></label>
+      <button class="cell" onclick="openSheet('sh-chat')">Editar por comando de texto…</button>
+      <button class="cell" onclick="openSheet('sh-period')">Gerar outro período…</button>
     </div>
-    <div class="group"><button class="cell danger" onclick="openSheet('sh-discard')">Descartar rascunho</button></div>
+    <div class="group"><button class="cell danger" onclick="openSheet('sh-discard')">Apagar o que ainda não foi enviado</button></div>
     <div class="group"><button class="cell bold" onclick="closeSheet()">Cancelar</button></div>
   </div>
 </div>
@@ -728,7 +784,7 @@ table.mq{border-collapse:separate;border-spacing:0;width:100%;font-size:13.5px}
 
 <div class="sheet" id="sh-confirm" role="dialog" aria-modal="true" aria-labelledby="sh-confirm-t" hidden>
   <div class="grab"></div>
-  <div class="sh"><h2 id="sh-confirm-t">Confirmar escala</h2><button class="close" onclick="closeSheet()">Cancelar</button></div>
+  <div class="sh"><h2 id="sh-confirm-t">Confirmar e enviar</h2><button class="close" onclick="closeSheet()">Cancelar</button></div>
   <div class="sb">
     <div class="group-f" id="bar-sum" style="margin:0 4px 12px"></div>
     <div class="group"><label class="cell"><span class="grow">Confirmar até</span><select id="upto" onchange="renderConfirmSheet()" style="max-width:60%"></select></label></div>
@@ -739,16 +795,16 @@ table.mq{border-collapse:separate;border-spacing:0;width:100%;font-size:13.5px}
       <textarea id="motivo" placeholder="Ex.: Joeli cobre o domingo porque não sobrou ninguém do caixa"></textarea>
     </div>
     <div class="btn-row"><button class="btn fill" id="confirm-btn" onclick="doConfirm()">Confirmar</button></div>
-    <div class="group-f">Por 10 segundos depois de confirmar dá para desfazer.</div>
+    <div class="group-f">Depois de confirmar você vai direto para o envio no WhatsApp. Por 10 segundos dá para desfazer.</div>
   </div>
 </div>
 
-<div class="sheet asheet" id="sh-discard" role="dialog" aria-modal="true" aria-label="Descartar rascunho" hidden>
+<div class="sheet asheet" id="sh-discard" role="dialog" aria-modal="true" aria-label="Apagar o que não foi enviado" hidden>
   <div class="grab"></div>
   <div class="sb">
     <div class="group">
       <div class="cell center" id="discard-msg" style="font-size:13px;color:var(--label-2);min-height:0;padding:14px 16px;text-align:center"></div>
-      <button class="cell danger" onclick="uiDiscardDrafts(); closeSheet();">Descartar rascunho</button>
+      <button class="cell danger" onclick="uiDiscardDrafts(); closeSheet();">Apagar o que não foi enviado</button>
     </div>
     <div class="group"><button class="cell bold" onclick="closeSheet()">Cancelar</button></div>
   </div>
@@ -793,7 +849,7 @@ const DEFAULT_TEAM=[
 ];
 // Quantas pessoas por dia (0=seg). ab/int/fe = fixas; dAb/dFe = diaristas manhã/noite. Igual à escala real de set/out 2026.
 const DEFAULT_COMP={0:{ab:2,int:0,fe:2,dAb:0,dFe:0},1:{ab:2,int:0,fe:2,dAb:0,dFe:0},2:{ab:2,int:0,fe:2,dAb:0,dFe:0},3:{ab:2,int:0,fe:2,dAb:0,dFe:0},4:{ab:2,int:0,fe:2,dAb:0,dFe:0},5:{ab:2,int:1,fe:1,dAb:0,dFe:1},6:{ab:1,int:1,fe:1,dAb:1,dFe:1}};
-const DEFAULT_LEVELS={caixa:'block',cober:'block',cond:'block',sete:'block',inter:'block',dom:'block',feriado:'block',h44:'block',folgas:'warn',rot:'off',justica:'warn',vinculo:'warn',teto:'off'};
+const DEFAULT_LEVELS={caixa:'block',cober:'block',cond:'block',sete:'block',inter:'block',dom:'block',feriado:'block',h44:'block',folgas:'warn',plano:'warn',rot:'off',justica:'warn',vinculo:'warn',teto:'off'};
 
 function defaultState(){
   return {
@@ -804,6 +860,7 @@ function defaultState(){
     rates:{weekday:80,weekend:90},
     escalaMode:'A', cctIntervaloReduzido:false,
     comp: JSON.parse(JSON.stringify(DEFAULT_COMP)),
+    compDay:{},  // exceção por data: {'AAAA-MM-DD':{ab,int,fe,dAb,dFe}} (20/10/2026)
     levels: {...DEFAULT_LEVELS},
     sunRule:'tres', sunDiar:false,
     days:{}, constraints:[]
@@ -818,6 +875,7 @@ function normalizeState(parsed){
     rates:{...d.rates,...(parsed.rates||{})},
     comp:{...d.comp,...(parsed.comp||{})},
     levels:{...d.levels,...(parsed.levels||{})},
+    compDay:(parsed.compDay&&typeof parsed.compDay==='object')?parsed.compDay:{},
     days:parsed.days||{},
     constraints:parsed.constraints||[]
   };
@@ -1023,6 +1081,7 @@ const RULES=[
   {id:'dom',nome:'Rodízio de domingos',txt:'Regra escolhida na aba Domingos. Padrão: domingos alternados (art. 386 da CLT).'},
   {id:'feriado',nome:'Folga extra depois de feriado trabalhado',txt:'Quem trabalha no feriado ganha uma folga a mais nos 7 dias seguintes. Sem ela, o feriado é pago em dobro (Súmula 146 do TST).'},
   {id:'h44',nome:'No máximo 44 horas por semana',txt:'Art. 7º, XIII da Constituição. Conta de segunda a domingo.'},
+  {id:'plano',nome:'Pessoas escolhidas para o dia',txt:'Quando você muda quantas pessoas trabalham num dia (toque no dia, na aba Montar), avisa se faltou gente.'},
   {id:'folgas',nome:'2 folgas por semana',txt:'Regra da loja: cada pessoa folga 2 dias de segunda a domingo (a lei exige ao menos 1).'},
   {id:'justica',nome:'Divisão justa na quinzena',txt:'Avisa quando fechamentos, aberturas ou sábados à noite ficam concentrados em poucas pessoas.'},
   {id:'rot',nome:'Metas de rodízio',txt:'Máximo de fechamentos e aberturas por semana para cada pessoa (definido em Equipe).'},
@@ -1102,6 +1161,14 @@ function holidayName(k){ return HOLIDAYS[k]||'Feriado'; }
 
 // Checagens que o livro antigo não tinha: feriado sem folga extra, 44h, 2 folgas na semana.
 function extraChecks(k,v,w,push){
+  const pl=STATE.compDay&&STATE.compDay[k];
+  if(pl){
+    const n=t=>STATE.team.filter(e=>v.sh[e.id]&&v.sh[e.id].type===t).length, dn=t=>(v.diar||[]).filter(x=>x.t===t).length;
+    const has=n('abertura')+n('intermediario')+n('fechamento')+(v.diar||[]).length, want=compTotal(pl);
+    const gap=[['na abertura',n('abertura')+dn('ab'),pl.ab+pl.dAb],['no intermediário',n('intermediario'),pl.int],['no fechamento',n('fechamento')+dn('fe'),pl.fe+pl.dFe]].filter(([,a,b])=>a<b);
+    const falta=gap.reduce((s,[,a,b])=>s+b-a,0);
+    if(gap.length) push('plano',`Você escolheu ${want} pessoas e tem ${has}: falta${falta>1?'m':''} ${gap.map(([t,a,b])=>`${b-a} ${t}`).join(' e ')}`,[]);
+  }
   if(isHoliday(k)){
     const nxt=dRange(dAdd(k,1),dAdd(k,7));
     if(nxt.every(x=>view(x))){
@@ -1127,7 +1194,7 @@ function extraChecks(k,v,w,push){
   }
 }
 
-const SEV={sete:'lei',inter:'lei',dom:'lei',feriado:'lei',h44:'lei',caixa:'loja',cober:'loja',cond:'loja',folgas:'loja',vinculo:'loja',teto:'loja',rot:'just',justica:'just'};
+const SEV={sete:'lei',inter:'lei',dom:'lei',feriado:'lei',h44:'lei',caixa:'loja',cober:'loja',cond:'loja',plano:'loja',folgas:'loja',vinculo:'loja',teto:'loja',rot:'just',justica:'just'};
 const SEV_INFO={lei:{t:'Lei trabalhista',ic:'🔴'},loja:{t:'Regras da loja',ic:'🟠'},just:{t:'Justiça',ic:'🟡'}};
 const MQ_ANCHOR='2026-10-05';
 function mqStartFor(k){ const n=Math.floor((dD(k)-dD(MQ_ANCHOR))/864e5/14); return dAdd(MQ_ANCHOR,n*14); }
@@ -1152,10 +1219,10 @@ function fairness(ks){
 }
 // Dia montado pela metade: contagem de gente e caixa só valem quando todas tiverem turno.
 function dayComplete(k){ const v=view(k); return !!v&&STATE.team.every(e=>v.sh[e.id]&&v.sh[e.id].type); }
-const RULE_ORDER=['cond','sete','inter','dom','feriado','h44','caixa','cober','folgas','vinculo','teto','rot','justica'];
+const RULE_ORDER=['cond','sete','inter','dom','feriado','h44','caixa','cober','plano','folgas','vinculo','teto','rot','justica'];
 function assess(ks){
   const items=[];
-  ks.forEach(k=>{ if(!view(k)) return; const full=dayComplete(k); checkDay(k).flags.forEach(f=>{ if(!full&&(f.rule==='cober'||f.rule==='caixa')) return; items.push({sev:SEV[f.rule]||'loja',rule:f.rule,k,who:f.who||[],msg:f.msg,l:f.l}); }); });
+  ks.forEach(k=>{ if(!view(k)) return; const full=dayComplete(k); checkDay(k).flags.forEach(f=>{ if(!full&&(f.rule==='cober'||f.rule==='caixa'||f.rule==='plano')) return; items.push({sev:SEV[f.rule]||'loja',rule:f.rule,k,who:f.who||[],msg:f.msg,l:f.l}); }); });
   return items.concat(fairness(ks));
 }
 function cellIssues(items){ const r={lei:3,loja:2,just:1}, m={}; items.forEach(it=>{ if(!it.k) return; (it.who||[]).forEach(id=>{ const key=it.k+'|'+id; if(!m[key]||r[it.sev]>r[m[key]]) m[key]=it.sev; }); }); return m; }
@@ -1192,14 +1259,14 @@ function renderMontar(){
   const a=dD(ks[0]), b=dD(ks[13]);
   document.getElementById('mq-title').textContent=`${a.getUTCDate()} ${MES[a.getUTCMonth()]} – ${b.getUTCDate()} ${MES[b.getUTCMonth()]}`;
   const empty=ks.filter(k=>!view(k)).length, drafts=ks.filter(k=>STATE.days[k]&&STATE.days[k].draft).length;
-  document.getElementById('mq-sub').textContent=empty===14?'Quinzena vazia — monte à mão ou gere uma sugestão':`${14-empty} de 14 dias montados${drafts?` · ${drafts} em rascunho`:''}`;
+  document.getElementById('mq-sub').textContent=empty===14?'Quinzena vazia — monte à mão ou gere uma sugestão':`${14-empty} de 14 dias montados${drafts?` · ${drafts} ainda não enviado${drafts>1?'s':''}`:''}`;
   const team=STATE.team;
   let h=`<table class="mq"><thead><tr><th class="mq-day">Dia</th>${team.map(e=>`<th><span class="mq-hn"><span class="lg">${esc(e.name)}</span><span class="sm">${esc(shortName(e,team))}</span></span>${e.podeOperarCaixa?'<span class="mq-cx" title="Opera o caixa">caixa</span>':''}</th>`).join('')}<th class="mq-dih"><span class="lg">Diaristas</span><span class="sm">Diar.</span></th></tr></thead><tbody>`;
   ks.forEach((k,i)=>{
     const v=view(k), w=dDow(k), d=STATE.days[k];
-    const st=!v?'':(d.draft?'<span class="mq-st d" title="rascunho"><span class="lg">rascunho</span></span>':'<span class="mq-st c" title="confirmado"><span class="lg">confirmado</span></span>');
+    const st=!v?'':(d.draft?'<span class="mq-st d" title="ainda não enviado"><span class="lg">não enviado</span></span>':'<span class="mq-st c" title="enviado à equipe"><span class="lg">enviado</span></span>');
     if(i===7) h+=`<tr class="mq-sep"><td colspan="${team.length+2}"></td></tr>`;
-    h+=`<tr class="${w>=5?'we':''}${isHoliday(k)?' hol':''}" id="mq-r-${k}"><td class="mq-day"><b><span class="dw">${DOW_SHORT[w].toLowerCase()}</span> <span class="dd">${br(k)}</span></b>${isHoliday(k)?`<span class="mq-hol">${esc(holidayName(k))}</span>`:''}${st}</td>`;
+    h+=`<tr class="${w>=5?'we':''}${isHoliday(k)?' hol':''}" id="mq-r-${k}"><td class="mq-day"><button class="mq-dbtn" onclick="mqDayOpen(event,'${k}')" aria-label="Quantas pessoas em ${DOW_LABELS[w]}, ${br(k)}"><b><span class="dw">${DOW_SHORT[w].toLowerCase()}</span> <span class="dd">${br(k)}</span></b>${isHoliday(k)?`<span class="mq-hol">${esc(holidayName(k))}</span>`:''}${(STATE.compDay||{})[k]?`<span class="mq-cp" title="Número de pessoas mudado para este dia">👥${compTotal(STATE.compDay[k])}</span>`:''}</button>${st}</td>`;
     team.forEach(e=>{ const c=v&&v.sh[e.id]; h+=`<td><button class="mq-cell" id="mq-c-${k}-${e.id}" onclick="mqOpen(event,'${k}','${e.id}')">${chipHTML(c&&c.type,c&&works(c.type)?c.time:null,iss[k+'|'+e.id],w)}</button></td>`; });
     const di=(v&&v.diar)||[];
     h+=`<td class="mq-di">${di.map((x,j)=>`<button class="mq-chip dia" onclick="openDiar('${k}',${j})">${esc(x.name||'diarista')}<small>${diarTime(w,x.t).replace('–',' – ')}</small></button>`).join('')}<button class="mq-add" onclick="addDiarOpen('${k}')" aria-label="Adicionar diarista">+</button><button class="mq-dn${di.length?' has':''}" onclick="mqDiarMenu(event,'${k}')" aria-label="Diaristas">${di.length||'+'}</button></td></tr>`;
@@ -1218,6 +1285,7 @@ function renderMontar(){
   h+=`</tbody><tfoot>${rows.map(([n,f])=>`<tr><td class="mq-day"><span class="lg">${n}</span><span class="sm">${ab[n]||n}</span></td>${team.map(e=>`<td>${f(e.id)}</td>`).join('')}<td></td></tr>`).join('')}</tfoot></table>`;
   host.innerHTML=h;
   renderAdvisor(items,ks);
+  renderSugBanner();
 }
 function renderAdvisor(items,ks){
   const el=document.getElementById('mq-adv'); if(!el) return;
@@ -1233,14 +1301,85 @@ function renderAdvisor(items,ks){
   }
   ['lei','loja','just'].forEach(s=>{
     if(!n(s)) return;
-    h+=`<div class="adv-g ${s}"><div class="adv-gt">${SEV_INFO[s].ic} ${SEV_INFO[s].t} <span>${n(s)}</span></div>`;
+    // justiça é sugestão, não obrigação: fica recolhida para não esconder o que precisa ser resolvido
+    h+=s==='just'?`<details class="adv-g just"><summary class="adv-gt">${SEV_INFO[s].ic} ${SEV_INFO[s].t} <span>${n(s)}</span> <em>ver</em></summary>`:`<div class="adv-g ${s}"><div class="adv-gt">${SEV_INFO[s].ic} ${SEV_INFO[s].t} <span>${n(s)}</span></div>`;
     by[s].sort((a,b)=>(a.k||'').localeCompare(b.k||'')).forEach(it=>{
       h+=`<button class="adv-i" onclick="mqFocus('${it.k||''}','${(it.who||[])[0]||''}')">${it.k?`<b>${DOW_MIN[dDow(it.k)]} ${br(it.k)}</b>`:''}<span>${esc(it.msg)}</span></button>`;
     });
-    h+=`</div>`;
+    h+=s==='just'?`</details>`:`</div>`;
   });
   el.innerHTML=h+'</div>'; el.classList.toggle('open',!!MQ.adv);
 }
+// Quantas pessoas trabalham num dia específico (exceção por data; o padrão fica em Ajustes › Pessoas por dia).
+const COMP_ROWS=[['ab','Abertura'],['int','Intermediário'],['fe','Fechamento'],['dAb','Diarista de manhã'],['dFe','Diarista à noite']];
+function compTotal(c){ return COMP_ROWS.reduce((s,[f])=>s+(+c[f]||0),0); }
+function compBase(k){ const w=dDow(k), d=STATE.days[k], hol=!!((d&&(d.draft||d.conf)||{}).holiday)||isHoliday(k); return (hol&&w<5)?STATE.comp[5]:STATE.comp[w]; }
+function mqDayOpen(ev,k){
+  if(ev) ev.stopPropagation();
+  const menu=document.getElementById('mq-menu'), w=dDow(k), base=compBase(k), c=(STATE.compDay||{})[k]||base, own=!!(STATE.compDay||{})[k];
+  let h=`<div class="mm-h"><b>Quantas pessoas?</b><span>${DOW_LABELS[w]}, ${br(k)}</span></div>`;
+  h+=COMP_ROWS.map(([f,l])=>`<div class="cp-row"><span>${l}</span><button class="cp-b" onclick="mqComp('${k}','${f}',-1)" aria-label="Menos ${l}" ${(+c[f]||0)<=0?'disabled':''}>−</button><b class="num">${+c[f]||0}</b><button class="cp-b" onclick="mqComp('${k}','${f}',1)" aria-label="Mais ${l}" ${(+c[f]||0)>=4?'disabled':''}>+</button></div>`).join('');
+  h+=`<div class="cp-tot"><b>${compTotal(c)} pessoas</b> neste dia<span>${own?`O normal de ${DOW_LABELS[w].toLowerCase()} é ${compTotal(base)}.`:`É o normal de ${DOW_LABELS[w].toLowerCase()}.`}</span></div>`;
+  if(own) h+=`<button class="mm-undo cp-reset" onclick="mqCompReset('${k}')">Voltar ao normal de ${DOW_LABELS[w].toLowerCase()} (${compTotal(base)})</button>`;
+  h+=`<p class="cp-hint">Depois toque em <b>Gerar</b> para o app preencher, ou ajuste as pessoas na grade. O assessor avisa se faltar gente.</p>`;
+  const v=view(k), hol=!!(v&&v.holiday);
+  h+=`<label class="cp-sw"><span>Feriado${isHoliday(k)?` <small>(${esc(holidayName(k))})</small>`:''}</span><span class="sw"><input type="checkbox" ${hol?'checked':''} onchange="toggleHoliday('${k}');mqDayOpen(null,'${k}')" aria-label="Feriado"><span></span></span></label>`;
+  if(v&&(v.why||[]).length) h+=`<div class="cp-notes">${v.why.map(m=>`<p>${esc(m)}</p>`).join('')}</div>`;
+  menu.innerHTML=h; menu.hidden=false;
+  const t=ev&&ev.currentTarget;
+  if(innerWidth<700||!t){ menu.classList.add('bottom'); menu.style.left=menu.style.top=''; }
+  else{ menu.classList.remove('bottom'); const r=t.getBoundingClientRect(); menu.style.left=Math.min(r.right+6,innerWidth-388)+'px'; menu.style.top=Math.max(8,Math.min(r.top,innerHeight-menu.offsetHeight-8))+'px'; }
+  MQ.open='day|'+k;
+}
+function mqComp(k,f,d){
+  const base=compBase(k), c={...base,...((STATE.compDay||{})[k]||{})};
+  c[f]=Math.max(0,Math.min(4,(+c[f]||0)+d));
+  STATE.compDay=STATE.compDay||{};
+  if(COMP_ROWS.every(([x])=>(+c[x]||0)===(+base[x]||0))) delete STATE.compDay[k]; else STATE.compDay[k]={ab:c.ab,int:c.int,fe:c.fe,dAb:c.dAb,dFe:c.dFe};
+  saveState(); renderMontar(); mqDayOpen(null,k);
+}
+function mqCompReset(k){ if(STATE.compDay) delete STATE.compDay[k]; saveState(); renderMontar(); mqDayOpen(null,k); }
+// ---------- Caixa de sugestões (escala montada no chat com o Claude) ----------
+// STATE.sugestao={from,to,at,nota,days:{k:rascunho}} chega por ferramentas/enviar-sugestao.js.
+// É configuração (sincroniza por _cfgAt); para apagar grava null — se a chave sumisse, o merge
+// do servidor traria a sugestão antiga de volta.
+function sugView(){ const g=STATE.sugestao; return g&&g.days&&Object.keys(g.days).length?g:null; }
+function sugRange(g){ const ks=Object.keys(g.days).sort(); return [ks[0],ks[ks.length-1]]; }
+function renderSugBanner(){
+  const el=document.getElementById('mq-sug'), g=sugView(); if(!el) return;
+  el.hidden=!g; if(!g) return;
+  const [a,b]=sugRange(g);
+  el.innerHTML=`<span class="sg-t">💡 <b>Sugestão do assessor</b> para ${br(a)} – ${br(b)}</span><span class="sg-a"><button onclick="sugOpen()">Ver</button><button class="pri" onclick="sugApply()">Aplicar</button><button onclick="sugDiscard()">Descartar</button></span>`;
+}
+function sugPreview(g){
+  // simula a sugestão nos dias ainda não confirmados, roda o assessor e desfaz
+  const ks=Object.keys(g.days).sort(), saved={};
+  ks.forEach(k=>{ saved[k]=STATE.days[k]; if(!(STATE.days[k]&&STATE.days[k].conf)) STATE.days[k]={conf:null,draft:g.days[k]}; });
+  let items=[]; try{ items=assess(ks); } finally { ks.forEach(k=>{ if(saved[k]) STATE.days[k]=saved[k]; else delete STATE.days[k]; }); }
+  const seen=new Set(); return items.filter(it=>{ const key=it.sev+it.msg+(it.k||''); if(seen.has(key)) return false; seen.add(key); return !it.k||ks.includes(it.k); });
+}
+function sugOpen(){
+  const g=sugView(); if(!g) return;
+  const ks=Object.keys(g.days).sort(), team=STATE.team, conf=ks.filter(k=>STATE.days[k]&&STATE.days[k].conf), mine=ks.filter(k=>STATE.days[k]&&STATE.days[k].draft&&!STATE.days[k].conf);
+  const it=sugPreview(g), c=s=>it.filter(i=>i.sev===s).length;
+  let h=g.nota?`<p class="sg-nota">${esc(g.nota)}</p>`:'';
+  h+=`<div class="sg-sum">${['lei','loja','just'].filter(c).map(s=>`<span class="adv-pill ${s}">${SEV_INFO[s].ic} ${c(s)}</span>`).join(' ')||'<span class="adv-pill ok">🟢 sem problemas</span>'}</div>`;
+  h+=`<div class="tablewrap"><table class="sg"><thead><tr><th></th>${team.map(e=>`<th>${esc(shortName(e,team))}</th>`).join('')}<th>Diar.</th></tr></thead><tbody>${ks.map(k=>{ const d=g.days[k], w=dDow(k), lock=conf.includes(k);
+    return `<tr class="${w>=5?'we':''}${lock?' lock':''}"><td>${DOW_SHORT[w].toLowerCase()} ${br(k)}</td>${team.map(e=>{ const x=d.sh[e.id]; const t=x&&x.type; return `<td>${t?`<span class="mq-chip ${TCLS[t]||'off'}">${MQ_LET[t]}</span>`:''}</td>`; }).join('')}<td>${(d.diar||[]).length||''}</td></tr>`; }).join('')}</tbody></table></div>`;
+  if(it.filter(i=>i.sev!=='just').length) h+=`<div class="sg-iss">${it.filter(i=>i.sev!=='just').map(i=>`<p>${SEV_INFO[i.sev].ic} ${i.k?`<b>${DOW_MIN[dDow(i.k)]} ${br(i.k)}</b> · `:''}${esc(i.msg)}</p>`).join('')}</div>`;
+  h+=`<p class="foot" style="padding:0 4px">Aplicar coloca a sugestão como “não enviado” para você ajustar e confirmar.${conf.length?` ${conf.length} dia(s) já confirmado(s) não mudam.`:''}${mine.length?` <b>${mine.length} dia(s) que você já começou serão substituídos.</b>`:''}</p>`;
+  h+=`<div class="btn-row"><button class="btn fill" onclick="sugApply()">Aplicar</button><button class="btn" onclick="sugDiscard()">Descartar</button></div>`;
+  document.getElementById('sug-body').innerHTML=h; openSheet('sh-sug');
+}
+function sugApply(){
+  const g=sugView(); if(!g) return;
+  const ks=Object.keys(g.days).sort(); let n=0;
+  ks.forEach(k=>{ if(STATE.days[k]&&STATE.days[k].conf) return; STATE.days[k]={conf:null,draft:JSON.parse(JSON.stringify(g.days[k]))}; n++; });
+  STATE.sugestao=null; MQ.start=mqStartFor(ks[0]);
+  closeSheet(); saveState(); renderAll();
+  toast(`Sugestão aplicada em ${n} dia${n>1?'s':''}. Confira o assessor e confirme.`);
+}
+function sugDiscard(){ STATE.sugestao=null; closeSheet(); saveState(); renderAll(); toast('Sugestão descartada.'); }
 function mqDiarMenu(ev,k){
   ev.stopPropagation();
   const menu=document.getElementById('mq-menu'), v=view(k), w=dDow(k), di=(v&&v.diar)||[];
@@ -1289,7 +1428,7 @@ function mqTime(k,id){
   const dr=ensureDraft(k); dr.sh[id]={...dr.sh[id],time:`${a}–${b}`,manual:true}; mqClose(); saveState(); renderAll();
 }
 function mqGenerate(){ const ks=mqDays(); generateRange(ks[0],ks[13]); saveState(); renderAll(); toast('Sugestão pronta. Suas edições foram mantidas; confira o assessor.'); }
-document.addEventListener('click',e=>{ const m=document.getElementById('mq-menu'); if(m&&!m.hidden&&!m.contains(e.target)) mqClose(); });
+document.addEventListener('click',e=>{ const m=document.getElementById('mq-menu'); if(m&&!m.hidden&&e.target.isConnected&&!m.contains(e.target)) mqClose(); }); // isConnected: botão do próprio menu que acabou de ser redesenhado
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') mqClose(); });
 
 // ================= IMPORTAR PLANILHA (.xlsx do Google Sheets) =================
@@ -1374,7 +1513,7 @@ function doImport(){
 
 // ================= GERADOR =================
 // Lê como base só dias CONFIRMADOS (e os do próprio lote). Rascunhos soltos fora do lote não influenciam.
-function compFor(k,holiday){ const w=dDow(k); return (holiday&&w<5)?STATE.comp[5]:STATE.comp[w]; }
+function compFor(k,holiday){ if(STATE.compDay&&STATE.compDay[k]) return STATE.compDay[k]; const w=dDow(k); return (holiday&&w<5)?STATE.comp[5]:STATE.comp[w]; }
 function generateRange(from,to){
   let diarRot=0;
   dRange(from,to).forEach(k=>{
@@ -1672,7 +1811,7 @@ async function shareEscala(){
 // ================= INTERFACE (visual iOS, 2026-09-28) =================
 // Escala: uma semana por vez (setas ‹ ›), faixa de 7 dias, visão Dia (lista agrupada) ou
 // Semana (grade). Ações secundárias ficam no "+" da barra; confirmar fica no botão flutuante.
-const UI={day:null,mode:'dia',tab:'tab-escala'};
+const UI={day:null,mode:'dia',tab:'tab-montar'};
 const MES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
 const MES_L=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 const CHEV='<svg class="chev" viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l6 6-6 6"/></svg>';
@@ -1701,7 +1840,8 @@ let titleObs=null;
 function showTab(id){
   UI.tab=id; mqClose(); document.body.classList.toggle('wide',id==='tab-montar');
   document.querySelectorAll('.tabpage').forEach(p=>p.classList.toggle('on',p.id===id));
-  document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('on',b.dataset.tab===id));
+  const bar=id==='tab-domingos'?'tab-config':id;  // Domingos mora dentro de Ajustes
+  document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('on',b.dataset.tab===bar));
   const page=document.getElementById(id);
   document.getElementById('nb-title').textContent=page.dataset.title;
   document.getElementById('nb-action').style.visibility=id==='tab-escala'?'visible':'hidden';
@@ -1885,7 +2025,7 @@ function openConfirm(){
   sel.innerHTML=seq.map(k=>`<option value="${k}">${DOW_MIN[dDow(k)]} ${br(k)}</option>`).join('');
   sel.value=seq.filter(k=>STATE.days[k].draft).pop();
   const gap=p.filter(k=>!seq.includes(k)).length;
-  document.getElementById('bar-sum').textContent=`${p.length} dia${p.length>1?'s':''} em rascunho a partir de ${DOW_MIN[dDow(p[0])]} ${br(p[0])}. A confirmação é sempre em sequência.`+(gap?` ${gap} dia(s) depois de um buraco ficam para depois.`:'');
+  document.getElementById('bar-sum').textContent=`${p.length} dia${p.length>1?'s':''} ainda não enviado${p.length>1?'s':''}, a partir de ${DOW_MIN[dDow(p[0])]} ${br(p[0])}. A confirmação é sempre em sequência.`+(gap?` ${gap} dia(s) depois de um buraco ficam para depois.`:'');
   document.getElementById('motivo').value='';
   renderConfirmSheet();
   openSheet('sh-confirm');
@@ -1900,7 +2040,13 @@ function renderConfirmSheet(){
 }
 function doConfirm(){
   const upto=document.getElementById('upto').value, motivo=document.getElementById('motivo').value.trim();
-  if(confirmRange(upto,motivo)){ closeSheet(); }
+  const first=pendingDays()[0];
+  if(confirmRange(upto,motivo)){
+    closeSheet();
+    // passo seguinte do caminho Montar → Conferir → Enviar
+    document.getElementById('print-from').value=first; document.getElementById('print-to').value=upto;
+    showTab('tab-imprimir');
+  }
   else if(!document.getElementById('override').hidden) document.getElementById('motivo').focus();
 }
 
@@ -2370,6 +2516,8 @@ function renderPeriodSummary(dateList){
   </table></div>`;
 }
 function renderReport(){
+  const zero=STATE.team.filter(e=>e.employmentType!=='mensalista'&&!(+e.hourlyRate>0)), rw=document.getElementById('rep-warn');
+  if(rw){ rw.hidden=!zero.length; rw.innerHTML=zero.length?`<b>Falta o valor da hora</b> de ${zero.map(e=>esc(e.name)).join(', ')}. Sem ele, a folha dessas pessoas sai R$ 0. <button onclick="showTab('tab-config');setTimeout(()=>document.getElementById('team-table').scrollIntoView({block:'center'}),50)">Preencher em Ajustes</button>`:''; }
   const empSel=document.getElementById('rep-emp').value;
   const period=document.getElementById('rep-period').value;
   const dateList = period==='month' ? dateRangeForMonth(document.getElementById('rep-month').value)
@@ -2467,6 +2615,7 @@ function init(){
   initUI();
   periodDefaults();
   renderAll();
+  showTab(UI.tab);
   syncStateFromServerOnLoad();
 }
 init();
