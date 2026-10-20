@@ -583,6 +583,22 @@ table.sg .mq-chip{min-width:22px;padding:1px 4px;font-size:12px;justify-content:
 table.pdft td.day{min-width:112px;max-width:150px}
 table.pdft td.day .tk{display:block;margin-top:5px;background:#FFF1C9;color:#3b3b3b;font-size:10.5px;font-weight:700;line-height:1.25;padding:4px 6px;border-radius:4px;white-space:normal;text-align:center}
 .pdf-week+.pdf-week{margin-top:18px}
+/* --- situação do envio e histórico --- */
+.mq-st.s-rascunho,.mq-st.s-pendente{color:var(--orange)} .mq-st.s-confirmada{color:var(--tint)} .mq-st.s-enviada{color:var(--green)} .mq-st.s-mudou{color:var(--red)}
+@media (max-width:700px){ .mq-st.s-rascunho,.mq-st.s-pendente{background:var(--orange)} .mq-st.s-confirmada{background:var(--tint)} .mq-st.s-enviada{background:var(--green)} .mq-st.s-mudou{background:var(--red)} }
+.send-box{background:var(--cell);border:1px solid var(--sep);border-radius:12px;padding:12px 14px;margin:12px 0}
+.send-box .sb-h{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.send-box .sb-h span{font-size:13px;color:var(--label-2)}
+.send-box .sb-p{font-size:14px;color:var(--label-2);margin:10px 0 6px}
+.send-box textarea{width:100%;border:1px solid var(--sep);border-radius:8px;padding:8px 10px;font:14px/1.45 var(--font);background:var(--paper);color:var(--label);resize:vertical}
+.send-box .sb-a{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.send-box button{border:1px solid var(--sep);background:var(--paper);color:var(--label);border-radius:8px;padding:8px 12px;font:500 14px var(--font);cursor:pointer}
+.send-box button.pri{background:var(--tint-fill);border-color:var(--tint-fill);color:var(--on-tint)}
+.cp-hist{margin:8px 10px 6px;padding-top:10px;border-top:1px solid var(--sep);font-size:13px}
+.cp-hist .hs{margin:4px 0;color:var(--label-2)} .cp-hist .hs.s-enviada{color:var(--green)} .cp-hist .hs.s-mudou{color:var(--red)} .cp-hist .hs.s-confirmada{color:var(--tint)}
+.cp-hist .hl{margin:6px 0;padding:6px 8px;background:var(--cell);border-radius:6px}
+.cp-hist .hl b{display:block;font-size:12px;color:var(--label-2);font-weight:600}
+.cp-hist .hl span{display:block} .cp-hist .hl em{display:block;font-style:normal;color:var(--label-2);font-size:12px}
 </style>
 </head>
 <body>
@@ -680,6 +696,7 @@ table.pdft td.day .tk{display:block;margin-top:5px;background:#FFF1C9;color:#3b3
         <button class="btn fill block" id="share-btn" onclick="shareEscala()">Enviar no WhatsApp</button>
         <button class="btn block" onclick="window.print()">Gerar PDF</button>
       </div>
+      <div class="send-box no-print" id="send-box"></div>
       <div id="print-weeks"></div>
     </section>
 
@@ -1118,6 +1135,32 @@ function sortedDays(){ return Object.keys(STATE.days).sort(); }
 function view(k){ const d=STATE.days[k]; return d?(d.draft||d.conf):null; }
 function typeOn(k,id){ const v=view(k); return v&&v.sh[id]?v.sh[id].type:null; }
 function lastConfirmed(){ let l=null; sortedDays().forEach(k=>{ if(STATE.days[k].conf) l=k; }); return l; }
+// Envio ao grupo e histórico (20/10/2026). Moram DENTRO de conf porque o merge do servidor só guarda
+// {conf,draft} de cada dia. conf.sent={at,sig,snap}: o que a equipe recebeu; conf.log=[{at,ch,motivo}].
+function confSnap(c){ const sh={}; Object.keys(c.sh||{}).sort().forEach(id=>{ const x=c.sh[id]; sh[id]=x?[x.type,works(x.type)?(x.time||''):'']:['','']; }); return {sh,diar:(c.diar||[]).map(x=>[x.name||'',x.t])}; }
+function confSig(c){ return JSON.stringify(confSnap(c)); }
+function shiftLabel(x,w){ if(!x||!x[0]) return 'sem turno'; if(x[0]==='folga') return 'Folga'; if(x[0]==='ferias') return 'Férias'; return `${TYPE_LABEL[x[0]]} ${fmtH(x[1]||shiftTime(w,x[0]))}`; }
+function diffSnaps(a,b,w){
+  // lista legível do que mudou entre duas versões do dia
+  const out=[];
+  STATE.team.forEach(e=>{ const x=a.sh[e.id]||['',''], y=b.sh[e.id]||['','']; if(x[0]!==y[0]||x[1]!==y[1]) out.push({id:e.id,txt:`${e.name}: ${shiftLabel(y,w)} (antes: ${shiftLabel(x,w)})`}); });
+  const dl=d=>d.length?d.map(([n,t])=>`${n||'diarista'} ${fmtH(diarTime(w,t))}`).join(', '):'nenhuma';
+  if(JSON.stringify(a.diar)!==JSON.stringify(b.diar)) out.push({id:'diar',txt:`Diaristas: ${dl(b.diar)} (antes: ${dl(a.diar)})`});
+  return out;
+}
+function dayStatus(k){
+  const d=STATE.days[k]; if(!d||(!d.conf&&!d.draft)) return '';
+  if(d.draft) return d.conf?'pendente':'rascunho';
+  const c=d.conf;
+  if(c.sent) return c.sent.sig===confSig(c)?'enviada':'mudou';
+  return c.motivo==='importado da planilha'?'enviada':'confirmada';
+}
+const STATUS_TXT={rascunho:'rascunho',pendente:'alteração pendente',confirmada:'confirmada, não enviada',enviada:'enviada ao grupo',mudou:'mudou após o envio'};
+function markSent(ks){
+  const now=Date.now(); let n=0;
+  ks.forEach(k=>{ const d=STATE.days[k]; if(!d||!d.conf||d.draft) return; d.conf.sent={at:now,sig:confSig(d.conf),snap:confSnap(d.conf)}; d.conf.at=now; n++; });  // at sobe para o merge do servidor ficar com esta versão
+  return n;
+}
 function pendingDays(){ return sortedDays().filter(k=>STATE.days[k].draft); }
 function empById(id){ return STATE.team.find(e=>e.id===id); }
 function empName(id){ const e=empById(id); return e?e.name:id; }
@@ -1322,12 +1365,12 @@ function renderMontar(){
   const a=dD(ks[0]), b=dD(ks[13]);
   document.getElementById('mq-title').textContent=`${a.getUTCDate()} ${MES[a.getUTCMonth()]} – ${b.getUTCDate()} ${MES[b.getUTCMonth()]}`;
   const empty=ks.filter(k=>!view(k)).length, drafts=ks.filter(k=>STATE.days[k]&&STATE.days[k].draft).length;
-  document.getElementById('mq-sub').textContent=empty===14?'Quinzena vazia — monte à mão ou gere uma sugestão':`${14-empty} de 14 dias montados${drafts?` · ${drafts} ainda não enviado${drafts>1?'s':''}`:''}`;
+  document.getElementById('mq-sub').textContent=empty===14?'Quinzena vazia — monte à mão ou gere uma sugestão':(()=>{ const c=t=>ks.filter(k=>dayStatus(k)===t).length, parts=[]; if(c('rascunho')+c('pendente')) parts.push(`${c('rascunho')+c('pendente')} para confirmar`); if(c('confirmada')) parts.push(`${c('confirmada')} sem enviar`); if(c('mudou')) parts.push(`${c('mudou')} mudaram após o envio`); return `${14-empty} de 14 dias montados${parts.length?' · '+parts.join(' · '):''}`; })();
   const team=STATE.team;
   let h=`<table class="mq"><thead><tr><th class="mq-day">Dia</th>${team.map(e=>`<th><span class="mq-hn"><span class="lg">${esc(e.name)}</span><span class="sm">${esc(shortName(e,team))}</span></span></th>`).join('')}<th class="mq-dih"><span class="lg">Diaristas</span><span class="sm">Diar.</span></th></tr></thead><tbody>`;
   ks.forEach((k,i)=>{
     const v=view(k), w=dDow(k), d=STATE.days[k];
-    const st=!v?'':(d.draft?'<span class="mq-st d" title="ainda não enviado"><span class="lg">não enviado</span></span>':'<span class="mq-st c" title="enviado à equipe"><span class="lg">enviado</span></span>');
+    const ds=dayStatus(k), st=ds?`<span class="mq-st s-${ds}" title="${STATUS_TXT[ds]}"><span class="lg">${STATUS_TXT[ds]}</span></span>`:'';
     if(i===7) h+=`<tr class="mq-sep"><td colspan="${team.length+2}"></td></tr>`;
     h+=`<tr class="${w>=5?'we':''}${isHoliday(k)?' hol':''}" id="mq-r-${k}"><td class="mq-day"><button class="mq-dbtn" onclick="mqDayOpen(event,'${k}')" aria-label="Quantas pessoas em ${DOW_LABELS[w]}, ${br(k)}"><b><span class="dw">${DOW_SHORT[w].toLowerCase()}</span> <span class="dd">${br(k)}</span></b>${isHoliday(k)?`<span class="mq-hol">${esc(holidayName(k))}</span>`:''}${(STATE.compDay||{})[k]?`<span class="mq-cp" title="Número de pessoas mudado para este dia">${compTotal(STATE.compDay[k])} pessoas</span>`:''}${taskFor(k)?`<span class="mq-task" title="${esc(taskFor(k))}"><span class="lg">${esc(taskFor(k))}</span><span class="sm">tarefa</span></span>`:''}</button>${st}</td>`;
     team.forEach(e=>{ const c=v&&v.sh[e.id]; h+=`<td><button class="mq-cell" id="mq-c-${k}-${e.id}" onclick="mqOpen(event,'${k}','${e.id}')">${chipHTML(c&&c.type,c&&works(c.type)?c.time:null,iss[k+'|'+e.id],w)}</button></td>`; });
@@ -1394,6 +1437,14 @@ function mqDayOpen(ev,k){
   const v=view(k), hol=!!(v&&v.holiday);
   h+=`<label class="cp-sw"><span>Feriado${isHoliday(k)?` <small>(${esc(holidayName(k))})</small>`:''}</span><span class="sw"><input type="checkbox" ${hol?'checked':''} onchange="toggleHoliday('${k}');mqDayOpen(null,'${k}')" aria-label="Feriado"><span></span></span></label>`;
   if(v&&(v.why||[]).length) h+=`<div class="cp-notes">${v.why.map(m=>`<p>${esc(m)}</p>`).join('')}</div>`;
+  const cf=STATE.days[k]&&STATE.days[k].conf;
+  if(cf){
+    const dt=t=>{ const x=new Date(t); return `${String(x.getDate()).padStart(2,'0')}/${String(x.getMonth()+1).padStart(2,'0')} ${String(x.getHours()).padStart(2,'0')}:${String(x.getMinutes()).padStart(2,'0')}`; };
+    const ds=dayStatus(k);
+    h+=`<div class="cp-hist"><div class="cp-lab" style="padding:0">Situação e histórico</div><p class="hs s-${ds}">${STATUS_TXT[ds]||''}${cf.sent&&cf.sent.at?` · enviada em ${dt(cf.sent.at)}`:''}</p>`;
+    h+=(cf.log||[]).slice().reverse().map(l=>`<div class="hl"><b>${dt(l.at)}</b>${l.ch.map(c=>`<span>${esc(c)}</span>`).join('')}${l.motivo?`<em>Motivo: ${esc(l.motivo)}</em>`:''}</div>`).join('')||'<p class="hs">Sem alterações depois da primeira confirmação.</p>';
+    h+=`</div>`;
+  }
   menu.innerHTML=h; menu.hidden=false;
   const t=ev&&ev.currentTarget;
   if(innerWidth<700||!t){ menu.classList.add('bottom'); menu.style.left=menu.style.top=''; }
@@ -1822,7 +1873,13 @@ function confirmRange(upto,motivo){
     const d=STATE.days[k], dr=d.draft, hasBlock=checkDay(k).flags.some(f=>f.l==='block');
     const brk=computeBreaks(dr,k), sh={};
     Object.entries(dr.sh).forEach(([id,c])=>{ sh[id]={type:c.type,time:works(c.type)?(c.time||shiftTime(dDow(k),c.type)):null,breakInfo:brk[id]||null}; });
-    d.conf={sh,diar:(dr.diar||[]).map(x=>({name:x.name,t:x.t})),holiday:!!dr.holiday,motivo:hasBlock?motivo:null,at:Date.now()};
+    const old=d.conf, nc={sh,diar:(dr.diar||[]).map(x=>({name:x.name,t:x.t})),holiday:!!dr.holiday,motivo:hasBlock?motivo:null,at:Date.now()};
+    if(old){
+      const ch=diffSnaps(confSnap(old),confSnap(nc),dDow(k)).map(x=>x.txt);
+      nc.log=[...(old.log||[]),...(ch.length?[{at:nc.at,ch,motivo:motivo||''}]:[])];
+      if(old.sent) nc.sent=old.sent; else if(old.motivo==='importado da planilha') nc.sent={at:old.at||0,sig:confSig(old),snap:confSnap(old)};
+    }
+    d.conf=nc;
     d.draft=null;
   });
   // grava no servidor só depois de 10s, para o "Desfazer" não esbarrar na proteção de dias confirmados
@@ -1887,7 +1944,27 @@ function renderPrintView(){
   box.innerHTML=`<div class="pdf pdf-block">${weeks.map(wk=>`<section class="pdf-week"><h3>ESCALA - Açaí NoKilo - Cruz das Almas (Semana: ${brY(wk.ks[0])} - ${brY(wk.ks[wk.ks.length-1])})</h3>
     <table class="pdft">${head}${wk.ks.map(row).join('')}</table></section>`).join('')}</div>`;
   prepareShare(days[0],days[days.length-1]);
+  renderSendBox(days);
 }
+function renderSendBox(days){
+  const el=document.getElementById('send-box'); if(!el) return;
+  const by=t=>days.filter(k=>dayStatus(k)===t);
+  const notSent=by('confirmada'), changed=by('mudou'), sent=by('enviada');
+  let h=`<div class="sb-h"><b>Situação do envio</b><span>${sent.length} enviado${sent.length===1?'':'s'} · ${notSent.length} sem enviar · ${changed.length} mudou após o envio</span></div>`;
+  if(changed.length){
+    const msg=sendUpdateText(changed);
+    h+=`<p class="sb-p">Estes dias mudaram depois do último envio. Mande só a atualização no grupo:</p><textarea id="sb-msg" rows="${Math.min(10,msg.split('\n').length+1)}" readonly>${esc(msg)}</textarea><div class="sb-a"><button onclick="copySendMsg()">Copiar mensagem</button><button class="pri" onclick="sbMark(${JSON.stringify(changed).replace(/"/g,"'")})">Marquei como enviada</button></div>`;
+  }
+  if(notSent.length) h+=`<p class="sb-p">Depois de mandar a escala no grupo, marque aqui. Exportar ou gerar de novo não muda nada.</p><div class="sb-a"><button class="pri" onclick="sbMark(${JSON.stringify(notSent).replace(/"/g,"'")})">Marcar ${notSent.length} dia${notSent.length>1?'s':''} como enviado${notSent.length>1?'s':''} ao grupo</button></div>`;
+  if(!changed.length&&!notSent.length) h+=`<p class="sb-p">Tudo deste período já foi enviado ao grupo.</p>`;
+  el.innerHTML=h;
+}
+function sendUpdateText(ks){
+  const lines=ks.map(k=>{ const c=STATE.days[k].conf, w=dDow(k); return `${DOW_LABELS[w].toLowerCase()} ${br(k)}: `+diffSnaps(c.sent.snap,confSnap(c),w).map(x=>x.txt).join('; '); });
+  return `Atualização da escala:\n${lines.join('\n')}`;
+}
+function copySendMsg(){ const t=document.getElementById('sb-msg'); try{ navigator.clipboard.writeText(t.value).then(()=>toast('Mensagem copiada. Cole no grupo.')); }catch(e){ t.select(); document.execCommand('copy'); toast('Mensagem copiada.'); } }
+function sbMark(ks){ const n=markSent(ks); saveState(); renderAll(); renderPrintView(); toast(`${n} dia${n>1?'s':''} marcado${n>1?'s':''} como enviado${n>1?'s':''} ao grupo.`); }
 
 // ---------- ENVIAR NO WHATSAPP (2026-10-08) ----------
 // Gera uma imagem da tabela da aba Equipe e abre o compartilhar do celular (WhatsApp → grupo).
