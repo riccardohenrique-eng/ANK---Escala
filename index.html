@@ -2141,7 +2141,8 @@ function renderFab(){
   fab.hidden=false;
 }
 function openConfirm(){
-  const p=pendingDays(); if(!p.length) return;
+  const p=pendingDays();
+  if(!p.length){ toast('Tudo já está confirmado. Abrindo o envio para a equipe.'); showTab('tab-imprimir'); return; }  // antes não fazia nada
   const seq=confirmSeq(), sel=document.getElementById('upto');
   sel.innerHTML=seq.map(k=>`<option value="${k}">${DOW_MIN[dDow(k)]} ${br(k)}</option>`).join('');
   sel.value=seq.filter(k=>STATE.days[k].draft).pop();
