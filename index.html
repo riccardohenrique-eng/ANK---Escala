@@ -712,8 +712,15 @@ function confirmedCount(s){
   if(s.days) return Object.values(s.days).filter(d=>d&&d.conf).length;
   return (s.history||[]).reduce((n,w)=>n+((w.days||[]).length),0);
 }
+// Configuração = tudo menos os dias (mesma lista NOT_CFG de api/_merge.js — manter iguais).
+// _cfgAt marca quando a configuração mudou neste aparelho; o servidor usa para não deixar
+// um aparelho com configuração velha passar por cima da nova.
+const NOT_CFG=['days','_updatedAt','_cfgAt','schema','legacyHistory','history'];
+function cfgJson(s){ const o={}; Object.keys(s).sort().forEach(k=>{ if(!NOT_CFG.includes(k)) o[k]=s[k]; }); return JSON.stringify(o); }
+let lastCfg='', localRev=0;
 function saveState(opts){
-  STATE._updatedAt=Date.now();
+  STATE._updatedAt=Date.now(); localRev++;
+  const cj=cfgJson(STATE); if(cj!==lastCfg){ STATE._cfgAt=STATE._updatedAt; lastCfg=cj; }
   try{ localStorage.setItem(STORE_KEY, JSON.stringify(STATE)); }catch(e){}
   if(!(opts&&opts.keepUndo)) dropUndo();
   syncStateToServer(opts&&opts.delay);
@@ -741,18 +748,26 @@ function saveAccessKey(){
   syncStateFromServerOnLoad();
 }
 // ---------- SINCRONIZAÇÃO (Upstash via /api/state) ----------
-// Regra de ouro: um aparelho nunca substitui dados que têm MAIS dias confirmados que os dele.
-// Isso vale nos dois sentidos — o servidor recusa (409) e o app no carregamento não sobrescreve.
+// Regra de ouro (2026-10-20): o servidor JUNTA o estado deste aparelho com o dele, dia a dia
+// (api/_merge.js) — dia confirmado nunca some. Se faltava algo aqui, ele responde 409 com o
+// estado já junto, e este aparelho adota (a não ser que tenha editado de novo nesse meio tempo;
+// aí a próxima gravação junta outra vez).
 let syncTimer=null, syncPending=false;
 function syncStateToServer(delay){
   clearTimeout(syncTimer); syncPending=true;
   syncTimer=setTimeout(async ()=>{
     syncPending=false;
+    const sentRev=localRev;
     try{
       const res=await apiFetch('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(STATE)});
       if(res.status===409){
         const data=await res.json();
-        if(data && data.state){ adoptServerState(data.state); toast('Este aparelho estava desatualizado. Carreguei a versão do servidor, que tem mais dias confirmados.'); }
+        if(data && data.state){
+          if(localRev!==sentRev){ syncStateToServer(); return; }
+          const before=confirmedCount(STATE);
+          adoptServerState(data.state);
+          if(confirmedCount(STATE)!==before) toast('Este aparelho estava desatualizado. Juntei com a versão do servidor.');
+        }
       }
     }catch(e){}
   },delay||400);
@@ -771,22 +786,25 @@ window.addEventListener('pagehide',()=>{
   }catch(e){}
 });
 function adoptServerState(raw){
-  STATE=normalizeState(raw);
+  STATE=normalizeState(raw); lastCfg=cfgJson(STATE);
   try{ localStorage.setItem(STORE_KEY, JSON.stringify(STATE)); }catch(e){}
   renderAll(); periodDefaults();
 }
+// No carregamento: aparelho sem nada próprio só lê o servidor; com dados próprios, manda
+// para o servidor juntar (ele só grava se algo mudou e devolve 409 + o junto se faltava algo aqui).
 async function syncStateFromServerOnLoad(){
   try{
-    const res=await apiFetch('/api/state');
-    if(!res.ok) return;
-    const data=await res.json();
-    if(!data.state){ if(confirmedCount(STATE)) syncStateToServer(); return; }
-    const sc=confirmedCount(data.state), lc=confirmedCount(STATE);
-    if(sc>lc || (sc===lc && (data.state._updatedAt||0)>(STATE._updatedAt||0))) adoptServerState(data.state);
-    else if(lc>sc || (STATE._updatedAt||0)>(data.state._updatedAt||0)) syncStateToServer();
+    if(!STATE._updatedAt && !confirmedCount(STATE)){
+      const res=await apiFetch('/api/state');
+      if(!res.ok) return;
+      const data=await res.json();
+      if(data.state) adoptServerState(data.state);
+      return;
+    }
+    syncStateToServer(1);
   }catch(e){}
 }
-let STATE=loadState();
+let STATE=loadState(); lastCfg=cfgJson(STATE);
 
 // ---------- datas em texto 'AAAA-MM-DD' (sem fuso) ----------
 function dD(s){ const p=s.split('-'); return new Date(Date.UTC(+p[0],+p[1]-1,+p[2])); }

@@ -14,16 +14,10 @@
 // localStorage (degrada graciosamente, mesmo padrão do interpret-constraints).
 
 const checkAccess = require('./_auth');
+const { mergeStates, stable, summary } = require('./_merge');
 
 const KV_KEY = 'ank_escala_v1';
 const BAK_KEY = 'ank_escala_v1_bak';
-
-// Dias confirmados: formato atual (days[data].conf) ou o antigo por semanas (history[].days).
-function confirmedCount(s) {
-  if (!s || typeof s !== 'object') return 0;
-  if (s.days && typeof s.days === 'object') return Object.values(s.days).filter((d) => d && d.conf).length;
-  return (Array.isArray(s.history) ? s.history : []).reduce((n, w) => n + ((w && w.days) || []).length, 0);
-}
 
 module.exports = async (req, res) => {
   if (!checkAccess(req, res)) return;
@@ -37,6 +31,23 @@ module.exports = async (req, res) => {
 
   if (req.method === 'GET') {
     try {
+      const q = req.query || {};
+      // Versões guardadas (2026-10-20): ?versions=1 lista um resumo de cada; ?version=N devolve a N-ésima inteira.
+      if (q.versions) {
+        const r = await fetch(`${base}/lrange/${BAK_KEY}/0/29`, { headers: auth });
+        if (!r.ok) throw new Error('kv lrange http ' + r.status);
+        const data = await r.json();
+        const versions = (data.result || []).map((raw, i) => ({ i, ...summary(JSON.parse(raw)) }));
+        res.status(200).json({ versions });
+        return;
+      }
+      if (q.version !== undefined) {
+        const r = await fetch(`${base}/lindex/${BAK_KEY}/${parseInt(q.version, 10) || 0}`, { headers: auth });
+        if (!r.ok) throw new Error('kv lindex http ' + r.status);
+        const data = await r.json();
+        res.status(200).json({ state: data.result ? JSON.parse(data.result) : null });
+        return;
+      }
       const r = await fetch(`${base}/get/${KV_KEY}`, { headers: auth });
       if (!r.ok) throw new Error('kv get http ' + r.status);
       const data = await r.json();
@@ -61,20 +72,25 @@ module.exports = async (req, res) => {
       return;
     }
     try {
-      // Proteção (2026-09-28, depois do histórico ter sido apagado por um aparelho com cópia antiga
-      // em 27/09): nunca aceitar uma gravação com MENOS dias confirmados do que o servidor já tem.
-      // Devolve 409 + o estado atual, e o app daquele aparelho adota a versão do servidor.
+      // Proteção: o servidor JUNTA o que chegou com o que já tem, dia a dia (regras em _merge.js) —
+      // dia confirmado nunca some. Substitui a regra antiga "menos dias confirmados = 409", que deixou
+      // um aparelho com dados velhos (porém mais dias) apagar a escala real em 08/10/2026.
       const cur = await fetch(`${base}/get/${KV_KEY}`, { headers: auth }).then((r) => r.json());
       const currentRaw = cur && cur.result ? cur.result : null;
       const current = currentRaw ? JSON.parse(currentRaw) : null;
-      if (current && confirmedCount(body) < confirmedCount(current)) {
-        res.status(409).json({ error: 'gravação recusada: tem menos dias confirmados que o servidor', state: current });
+      const merged = mergeStates(current, body);
+      const mergedStable = stable(merged);
+      // Se o aparelho estava atrás (faltava algo do servidor), devolve 409 + o estado junto:
+      // o app adota (inclusive versões antigas do app, que já adotavam o state do 409).
+      const behind = mergedStable !== stable(body);
+      if (current && mergedStable === stable(current)) {
+        res.status(behind ? 409 : 200).json(behind ? { error: 'aparelho desatualizado: juntei com o servidor', state: merged } : { ok: true });
         return;
       }
       // Guarda as 30 últimas versões em ank_escala_v1_bak (LPUSH/LTRIM) antes de sobrescrever.
       const cmds = [];
       if (currentRaw) cmds.push(['LPUSH', BAK_KEY, currentRaw], ['LTRIM', BAK_KEY, '0', '29']);
-      cmds.push(['SET', KV_KEY, JSON.stringify(body)]);
+      cmds.push(['SET', KV_KEY, JSON.stringify(merged)]);
       const r = await fetch(`${base}/pipeline`, {
         method: 'POST',
         headers: { ...auth, 'Content-Type': 'application/json' },
@@ -84,7 +100,7 @@ module.exports = async (req, res) => {
       const data = await r.json();
       const last = Array.isArray(data) ? data[data.length - 1] : null;
       if (!last || last.result !== 'OK') throw new Error('resposta inesperada do KV: ' + JSON.stringify(data));
-      res.status(200).json({ ok: true });
+      res.status(behind ? 409 : 200).json(behind ? { error: 'aparelho desatualizado: juntei com o servidor', state: merged } : { ok: true });
     } catch (err) {
       res.status(500).json({ error: 'falha ao salvar no KV', detail: String(err && err.message || err) });
     }
