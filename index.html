@@ -5,39 +5,30 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Escala · Açaí No Kilo</title>
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#FFFFFF">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Escala ANK">
 <link rel="apple-touch-icon" href="/icons/icon-192.png">
 <style>
 /* ===== Escala ANK — visual iOS (2026-09-28) =====
    Listas agrupadas, barra de navegação translúcida com título grande, barra de abas,
    folhas que sobem de baixo. Contraste medido: textos ≥4,5:1 nos dois temas.
-   Escuro é o padrão (decisão de 21/09); claro/sistema em Ajustes → Aparência. */
+   Desde 20/10/2026: só tema claro, minimalista (referência Notion). */
 :root{
-  --bg:#000000; --cell:#1C1C1E; --cell-2:#2C2C2E; --cell-3:#3A3A3C;
-  --sep:rgba(84,84,88,.62); --label:#FFFFFF; --label-2:#98989F; --label-3:#6E6E73;
-  --tint:#C58CE0; --tint-fill:#8C3FA3; --on-tint:#FFFFFF; --tint-wash:rgba(197,140,224,.16);
-  --red:#FF6961; --green:#30D158; --orange:#FF9F0A; --yellow:#FFD60A;
-  --red-wash:rgba(255,105,97,.16); --orange-wash:rgba(255,159,10,.16); --green-wash:rgba(48,209,88,.15);
-  --ab-fg:#FFB340; --ab-bg:#3A2A12; --fe-fg:#D5A6F0; --fe-bg:#33243F;
-  --in-fg:#6FE0D0; --in-bg:#173430; --off-fg:#AEAEB2; --off-bg:#2C2C2E;
-  --bar:rgba(22,22,24,.78); --scrim:rgba(0,0,0,.5); --shadow:0 10px 40px rgba(0,0,0,.55);
-  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  /* tema único claro, minimalista estilo Notion (decisão de 20/10/2026: sem modo noite) */
+  --bg:#FFFFFF; --paper:#FFFFFF; --cell:#F7F7F5; --cell-2:#EFEFED; --cell-3:#E3E2E0;
+  --sep:rgba(55,53,47,.13); --label:#37352F; --label-2:#73726E; --label-3:#9B9A97;
+  --tint:#742984; --tint-fill:#742984; --on-tint:#FFFFFF; --tint-wash:rgba(116,41,132,.07);
+  --red:#C4332F; --green:#2F7A4F; --orange:#B5560F; --yellow:#C29226;
+  --red-wash:#FDEBEC; --orange-wash:#FBF3DB; --green-wash:#EDF3EC;
+  --ab-fg:#49290E; --ab-bg:#FADEC9; --fe-fg:#412454; --fe-bg:#E8DEEE;
+  --in-fg:#183347; --in-bg:#D3E5EF; --off-fg:#32302C; --off-bg:#E9E9E7;
+  --bar:rgba(255,255,255,.88); --scrim:rgba(15,15,15,.28);
+  --shadow:0 0 0 1px rgba(15,15,15,.05),0 3px 6px rgba(15,15,15,.08),0 9px 24px rgba(15,15,15,.14);
+  --font:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
   --ease:cubic-bezier(.32,.72,0,1);
-  color-scheme:dark;
-}
-:root[data-theme="light"]{
-  --bg:#F2F2F7; --cell:#FFFFFF; --cell-2:#EFEFF4; --cell-3:#E3E3E8;
-  --sep:rgba(60,60,67,.22); --label:#000000; --label-2:#6C6C70; --label-3:#8E8E93;
-  --tint:#742984; --tint-fill:#742984; --on-tint:#FFFFFF; --tint-wash:rgba(116,41,132,.10);
-  --red:#D70015; --green:#1E7B34; --orange:#B35300; --yellow:#8A5F00;
-  --red-wash:rgba(215,0,21,.08); --orange-wash:rgba(255,149,0,.13); --green-wash:rgba(52,199,89,.13);
-  --ab-fg:#A64B00; --ab-bg:#FFEBD6; --fe-fg:#6B2A80; --fe-bg:#F1E3F7;
-  --in-fg:#0C6B60; --in-bg:#DDF3EF; --off-fg:#636366; --off-bg:#EFEFF4;
-  --bar:rgba(249,249,251,.82); --scrim:rgba(0,0,0,.32); --shadow:0 10px 40px rgba(0,0,0,.14);
   color-scheme:light;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -117,7 +108,7 @@ select{background-image:linear-gradient(45deg,transparent 50%,var(--label-2) 50%
 .seg{display:flex;background:var(--cell-2);border-radius:9px;padding:2px;position:relative}
 .seg button{flex:1;border:0;background:transparent;color:var(--label);font-size:14px;font-weight:500;padding:6px 8px;border-radius:7px;min-height:32px;transition:background .2s var(--ease),box-shadow .2s}
 .seg button.on,.seg button[aria-pressed="true"]{background:var(--cell-3);font-weight:600;box-shadow:0 2px 6px rgba(0,0,0,.18)}
-:root[data-theme="light"] .seg button.on,:root[data-theme="light"] .seg button[aria-pressed="true"]{background:#fff}
+.seg button.on,.seg button[aria-pressed="true"]{background:#fff}
 
 /* ---------- switch ---------- */
 .sw{position:relative;width:51px;height:31px;flex-shrink:0}
@@ -188,12 +179,8 @@ table.wgrid td.nm{text-align:left;padding-left:14px;font-size:14px;font-weight:5
 .scrim{position:fixed;inset:0;z-index:60;background:var(--scrim);opacity:0;transition:opacity .35s var(--ease)}
 .scrim.on{opacity:1}
 .sheet{position:fixed;left:0;right:0;bottom:0;z-index:61;margin:0 auto;max-width:680px;max-height:92vh;display:flex;flex-direction:column;background:var(--bg);border-radius:14px 14px 0 0;box-shadow:var(--shadow);transform:translateY(105%);transition:transform .42s var(--ease);padding-bottom:env(safe-area-inset-bottom)}
-:root[data-theme="light"] .sheet{background:#F2F2F7}
-:root[data-theme="light"] .sheet textarea,:root[data-theme="light"] .sheet input[type=text],:root[data-theme="light"] .sheet input[type=date]:not(.cell input){background:#fff}
-:root:not([data-theme="light"]) .sheet{background:#1C1C1E}
-:root:not([data-theme="light"]) .sheet .group,:root:not([data-theme="light"]) .sheet .grp,:root:not([data-theme="light"]) .sheet .seg{background:var(--cell-2)}
-:root:not([data-theme="light"]) .sheet .seg button.on{background:#48484A}
-:root:not([data-theme="light"]) .sheet textarea,:root:not([data-theme="light"]) .sheet input,:root:not([data-theme="light"]) .sheet select{background:var(--cell-2)}
+.sheet{background:var(--paper)}
+.sheet textarea,.sheet input[type=text],.sheet input[type=date]:not(.cell input){background:#fff}
 .sheet.on{transform:translateY(0)}
 .sheet.dragging{transition:none}
 .sheet .grab{flex-shrink:0;padding:8px 0 4px;display:grid;place-items:center;touch-action:none;cursor:grab}
@@ -213,10 +200,10 @@ table.wgrid td.nm{text-align:left;padding-left:14px;font-size:14px;font-weight:5
 
 /* ---------- toast ---------- */
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(136px + env(safe-area-inset-bottom));z-index:70;background:var(--cell-3);color:var(--label);padding:12px 18px;border-radius:14px;font-size:15px;font-weight:500;max-width:calc(100% - 32px);box-shadow:var(--shadow);display:flex;align-items:center;gap:12px;animation:toastin .35s var(--ease)}
-:root[data-theme="light"] .toast{background:#1C1C1E;color:#fff}
+.toast{background:#1C1C1E;color:#fff}
 @keyframes toastin{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
 .toast .tact{border:0;background:transparent;color:var(--tint);font-weight:700;font-size:15px;padding:4px 2px}
-:root[data-theme="light"] .toast .tact{color:#D9A6EE}
+.toast .tact{color:#D9A6EE}
 
 /* ---------- componentes das outras abas ---------- */
 .section{margin-top:22px}
@@ -283,7 +270,6 @@ td.due.red{color:var(--red)} td.due.green{color:var(--green)} td.due.yel{color:v
 .opt span{display:block;font-size:13px;color:var(--label-2);margin-top:2px}
 .people{display:grid;gap:10px}
 .pcard{background:var(--cell);border-radius:12px;padding:12px 10px}
-:root:not([data-theme="light"]) .sheet .pcard{background:var(--cell-2)}
 .pcard .ph{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 4px 10px}
 .pcard h3{margin:0;font-size:17px;font-weight:600}
 .pcard .ph label{font-size:14px;color:var(--label-2);display:flex;align-items:center;gap:8px}
@@ -352,6 +338,152 @@ table.pdft td.dia{background:#FCE3CC}
   table.pdft td,table.pdft th,.pdf h3{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 
+
+/* ===== MONTAR (2026-10-20): tabela estilo Notion + assessor ao lado ===== */
+body.wide .app{max-width:1480px}
+.mq-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 4px 14px}
+.mq-top .mid{min-width:150px}
+@media (max-width:700px){ .mq-top .mid{flex:1;min-width:0} .mq-top .mq-acts{width:100%;margin-left:0;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px} .mq-btn{white-space:nowrap;flex:none} .mq-scroll{max-height:none} .mq-adv{position:static;max-height:none} }
+.mq-top .wt{font-size:20px;font-weight:700;letter-spacing:-.01em}
+.mq-top .ws{font-size:13px;color:var(--label-2)}
+.mq-acts{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap}
+.mq-btn{border:0;border-radius:9px;padding:9px 14px;font:600 14px var(--font);background:var(--cell-2);color:var(--label);cursor:pointer}
+.mq-btn.pri{background:var(--tint-fill);color:var(--on-tint)}
+.mq-btn:active{opacity:.7}
+.mq-wrap{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:16px;align-items:start}
+@media (max-width:1100px){ .mq-wrap{grid-template-columns:minmax(0,1fr)} }
+.mq-scroll{overflow:auto;border:1px solid var(--sep);border-radius:12px;background:var(--cell);max-height:calc(100vh - 220px)}
+table.mq{border-collapse:separate;border-spacing:0;width:100%;font-size:13.5px}
+.mq th,.mq td{border-bottom:1px solid var(--sep);border-right:1px solid var(--sep);padding:0;text-align:left;vertical-align:middle}
+.mq thead th{position:sticky;top:0;z-index:3;background:var(--cell);padding:10px 10px 9px;font-weight:600;color:var(--label-2);font-size:12.5px;white-space:nowrap}
+.mq-hn{color:var(--label);font-size:13.5px}
+.mq-cx{margin-left:6px;font-size:10.5px;font-weight:600;color:var(--label-3);border:1px solid var(--sep);border-radius:5px;padding:0 4px}
+.mq .mq-day{position:sticky;left:0;z-index:2;background:var(--cell);padding:8px 10px;min-width:118px;white-space:nowrap}
+.mq thead .mq-day{z-index:4}
+.mq-day b{font-weight:600;display:block}
+.mq tr.we td{background:color-mix(in srgb,var(--cell) 92%,var(--tint) 8%)}
+.mq tr.we .mq-day{background:color-mix(in srgb,var(--cell) 92%,var(--tint) 8%)}
+.mq-hol{display:block;font-size:11px;font-weight:600;color:var(--orange)}
+.mq-st{display:inline-block;font-size:10.5px;color:var(--label-3)}
+.mq-st.d{color:var(--orange)}
+.mq-sep td{height:6px;background:var(--bg)!important;border-right:0}
+.mq-cell{position:relative;display:flex;align-items:center;width:100%;min-width:132px;min-height:46px;border:0;background:transparent;padding:6px 8px;cursor:pointer;text-align:left;color:inherit;font:inherit}
+.mq-cell:hover{background:var(--tint-wash)}
+.mq-cell.flash,.mq tr.flash{animation:mqflash 1.6s ease}
+@keyframes mqflash{0%,40%{box-shadow:inset 0 0 0 2px var(--tint)}100%{box-shadow:inset 0 0 0 2px transparent}}
+.mq-chip{display:inline-flex;flex-direction:column;gap:1px;border-radius:6px;padding:3px 8px;font-weight:600;font-size:12.5px;line-height:1.25;border:0;font-family:inherit;color:inherit}
+.mq-chip small{font-weight:500;font-size:11px;opacity:.85}
+.mq-chip.ab{background:var(--ab-bg);color:var(--ab-fg)} .mq-chip.fe{background:var(--fe-bg);color:var(--fe-fg)}
+.mq-chip.in{background:var(--in-bg);color:var(--in-fg)} .mq-chip.off{background:var(--off-bg);color:var(--off-fg)}
+.mq-chip.fer{background:var(--green-wash);color:var(--green)} .mq-chip.empty{color:var(--label-3);background:transparent}
+.mq-chip.dia{background:var(--cell-2);color:var(--label);margin:3px 4px 3px 0;cursor:pointer}
+.mq-di{padding:4px 8px!important;min-width:150px}
+.mq-add{border:1px dashed var(--sep);background:transparent;color:var(--label-2);border-radius:6px;width:26px;height:26px;cursor:pointer}
+.mq-dot{position:absolute;top:6px;right:6px;width:9px;height:9px;border-radius:50%}
+.mq-dot.lei{background:var(--red)} .mq-dot.loja{background:var(--orange)} .mq-dot.just{background:var(--yellow)}
+.mq tfoot td{padding:7px 10px;font-size:12.5px;color:var(--label-2);font-variant-numeric:tabular-nums;background:var(--cell)}
+.mq tfoot .mq-day{color:var(--label-2);font-weight:600}
+.mq-adv{position:sticky;top:70px;border:1px solid var(--sep);border-radius:12px;background:var(--cell);padding:14px;max-height:calc(100vh - 220px);overflow:auto}
+.adv-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.adv-h b{font-size:15px} .adv-h span{font-size:12.5px;color:var(--label-2)}
+.adv-empty{color:var(--label-2);font-size:14px;margin:0}
+.adv-ok{background:var(--green-wash);color:var(--green);border-radius:9px;padding:10px 12px;font-size:14px;font-weight:600}
+.adv-g{margin-top:12px}
+.adv-gt{font-size:12.5px;font-weight:700;color:var(--label-2);text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px}
+.adv-gt span{font-weight:600;color:var(--label-3)}
+.adv-i{display:block;width:100%;text-align:left;border:0;background:transparent;color:var(--label);font:14px/1.35 var(--font);padding:8px 10px;border-radius:8px;cursor:pointer;border-left:3px solid transparent}
+.adv-g.lei .adv-i{border-left-color:var(--red)} .adv-g.loja .adv-i{border-left-color:var(--orange)} .adv-g.just .adv-i{border-left-color:var(--yellow)}
+.adv-i:hover{background:var(--cell-2)}
+.adv-i b{display:block;font-size:12px;color:var(--label-2);font-weight:600}
+.mq-menu{position:fixed;z-index:70;width:380px;max-width:calc(100vw - 16px);background:var(--cell);border:1px solid var(--sep);border-radius:12px;box-shadow:var(--shadow);padding:6px}
+.mq-menu.bottom{left:8px!important;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));top:auto!important;width:auto;max-width:none}
+.mm-h{display:flex;justify-content:space-between;align-items:baseline;padding:8px 10px 6px}
+.mm-h span{font-size:12.5px;color:var(--label-2)}
+.mm-o{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;width:100%;border:0;background:transparent;color:var(--label);text-align:left;padding:8px 10px;border-radius:8px;cursor:pointer;font:inherit}
+.mm-o:hover,.mm-o.on{background:var(--cell-2)}
+.mm-t{font-size:12.5px;color:var(--label-2)}
+.mm-ok,.mm-w{grid-column:1/-1;font-size:12.5px}
+.mm-ok{color:var(--label-3)} .mm-w.lei{color:var(--red)} .mm-w.loja{color:var(--orange)} .mm-w.just{color:var(--label-2)}
+.mm-time{display:flex;align-items:center;gap:6px;padding:8px 10px;border-top:1px solid var(--sep);margin-top:4px;font-size:13px;color:var(--label-2)}
+.mm-time input{background:var(--cell-2);border:0;border-radius:6px;color:var(--label);padding:5px;font:inherit}
+.mm-time button,.mm-undo{border:0;background:var(--cell-2);color:var(--label);border-radius:6px;padding:6px 10px;font:600 13px var(--font);cursor:pointer}
+.mm-undo{display:block;width:100%;margin-top:4px;color:var(--red);background:transparent;text-align:left}
+/* --- Montar: acabamento Notion + modo compacto no celular (20/10 noite) --- */
+.mq .sm,.mq-btn .sm,.mq-st .sm,.mq-chip .sm{display:none}
+.mq-chip .lg{display:flex;flex-direction:column;gap:1px}
+.mq-scroll,.mq-adv,.mq-menu{background:var(--paper)}
+.mq thead th,.mq .mq-day,.mq tfoot td{background:var(--paper)}
+.mq thead th{color:var(--label-2);font-weight:500}
+.mq tr.we td,.mq tr.we .mq-day{background:#FBFBFA}
+.mq-sep td{background:var(--cell)!important}
+.mq-btn{background:transparent;border:1px solid var(--sep);font-weight:500;color:var(--label)}
+.mq-btn:hover{background:var(--cell)}
+.mq-btn.pri{border-color:var(--tint-fill)}
+.mq-chip{font-weight:500;border-radius:4px}
+.mq-chip.fer{color:#1C3829;background:#DBEDDB}
+.mq-chip.dia{background:var(--cell-2)}
+.mq-dn{display:none}
+.mq-legend{display:none}
+.adv-h{display:flex;width:100%;border:0;background:transparent;padding:0;color:inherit;font:inherit;text-align:left;cursor:default}
+.adv-h .adv-st{margin-left:auto;font-size:12.5px;color:var(--label-2)}
+.adv-pills{display:none}
+.mq-st.d,.mq-st.c{font-size:10.5px}
+@media (max-width:700px){
+  .mq .lg,.mq-btn .lg,.mq-st .lg{display:none}
+  .mq .sm,.mq-btn .sm{display:inline}
+  .mq .mq-chip .sm{display:flex;flex-direction:column;align-items:center;line-height:1.1}
+  .mq .mq-chip .lg{display:none}
+  #tab-montar{margin:0 -10px}
+  .mq-top{margin:0 0 8px;gap:4px}
+  .mq-top .wt{font-size:17px}
+  .mq-top .ws{font-size:12px}
+  .mq-top .mq-acts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;width:100%;overflow:visible}
+  .mq-btn{padding:7px 4px;font-size:13px;text-align:center;justify-content:center;display:flex;align-items:center}
+  .mq-legend{display:flex;flex-wrap:wrap;align-items:center;gap:3px 5px;font-size:11px;color:var(--label-2);margin:0 2px 8px}
+  .mq-legend .mq-chip{padding:0 5px;font-size:11px;margin-left:4px}
+  .mq-wrap{display:flex;flex-direction:column;align-items:stretch;gap:8px}
+  .mq-adv{order:-1;position:static;padding:0;max-height:none;border-radius:10px}
+  .mq-adv .adv-h{cursor:pointer;padding:10px 12px;align-items:center;gap:8px;margin:0}
+  .mq-adv .adv-h .adv-st{display:none}
+  .adv-pills{display:flex;gap:4px;margin-left:auto;align-items:center}
+  .adv-pill{font-style:normal;font-size:12px;font-weight:600;border-radius:10px;padding:1px 8px;min-width:22px;text-align:center}
+  .adv-pill.lei{background:var(--red-wash);color:var(--red)} .adv-pill.loja{background:var(--orange-wash);color:var(--orange)}
+  .adv-pill.just{background:var(--cell-2);color:var(--label-2)} .adv-pill.ok{background:var(--green-wash);color:var(--green)}
+  .adv-car{font-style:normal;color:var(--label-3);margin-left:4px;transition:transform .2s}
+  .mq-adv.open .adv-car{transform:rotate(180deg)}
+  .mq-adv .adv-body{display:none;padding:0 12px 12px}
+  .mq-adv.open .adv-body{display:block}
+  .mq-scroll{border-radius:10px;overflow:hidden}
+  table.mq{table-layout:fixed;font-size:12px}
+  .mq thead th{padding:7px 1px;letter-spacing:-.02em;text-align:center;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mq-hn{font-size:11.5px}
+  .mq-cx{display:none}
+  .mq th.mq-dih{width:40px}
+  .mq .mq-day{min-width:0;width:50px;padding:3px 0 3px 7px;white-space:normal;line-height:1.15}
+  .mq-day b{font-size:12px}
+  .mq-day .dw{display:block;font-weight:500;color:var(--label-2);font-size:10.5px}
+  .mq-day .dd{font-size:12px}
+  .mq-hol{font-size:9.5px;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:44px}
+  .mq-st{position:absolute;top:5px;right:4px;width:5px;height:5px;border-radius:50%;background:var(--green)}
+  .mq-st.d{background:var(--orange)}
+  .mq .mq-day{position:relative}
+  .mq-cell{min-width:0;min-height:35px;padding:2px;justify-content:center}
+  .mq-chip{min-width:26px;padding:2px 4px;font-size:12.5px;font-weight:600;align-items:center;text-align:center}
+  .mq-chip small{font-size:9.5px;font-weight:600}
+  .mq-chip.empty{color:var(--label-3)}
+  .mq-dot{top:3px;right:3px;width:7px;height:7px}
+  .mq-di{min-width:0!important;padding:0!important;text-align:center}
+  .mq-di .mq-chip.dia,.mq-di .mq-add{display:none}
+  .mq-dn{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:6px;border:1px dashed var(--sep);background:transparent;color:var(--label-3);font:600 12.5px var(--font)}
+  .mq-dn.has{border:0;background:var(--cell-2);color:var(--label)}
+  .mq tfoot td{padding:5px 0;text-align:center;font-size:11.5px}
+  .mq tfoot .mq-day{text-align:left;padding-left:7px;font-size:11px}
+  .mq-sep td{height:4px}
+  .mq-legend{flex-wrap:nowrap;white-space:nowrap;font-size:10.5px}
+  .mq-legend .mq-chip{margin-left:3px;font-size:10.5px;min-width:0}
+  .mq-adv .adv-i{padding:6px 8px;font-size:13.5px}
+  .mq-adv .adv-i b{display:inline;margin-right:6px}
+}
 </style>
 </head>
 <body>
@@ -362,6 +494,26 @@ table.pdft td.dia{background:#FCE3CC}
   </header>
 
   <main>
+    <!-- ===== MONTAR (estilo Notion) ===== -->
+    <section class="tabpage" id="tab-montar" data-title="Montar">
+      <div class="mq-top">
+        <button class="nb-btn" onclick="mqShift(-1)" aria-label="Quinzena anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <div class="mid"><div class="wt" id="mq-title"></div><div class="ws" id="mq-sub"></div></div>
+        <button class="nb-btn" onclick="mqShift(1)" aria-label="Próxima quinzena"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+        <div class="mq-acts">
+          <button class="mq-btn" onclick="openSheet('sh-pedidos')"><span class="lg">Pedidos e férias</span><span class="sm">Pedidos</span></button>
+          <button class="mq-btn" onclick="mqGenerate()"><span class="lg">Gerar sugestão</span><span class="sm">Gerar</span></button>
+          <label class="mq-btn"><span class="lg">Importar planilha</span><span class="sm">Importar</span><input type="file" accept=".xlsx" hidden onchange="importXlsx(this)"></label>
+          <button class="mq-btn pri" onclick="openConfirm()">Confirmar</button>
+        </div>
+      </div>
+      <div class="mq-legend"><span class="mq-chip ab">A</span>abertura <span class="mq-chip in">I</span>interm. <span class="mq-chip fe">F</span>fecham. <span class="mq-chip off">–</span>folga <span class="mq-chip fer">Fé</span>férias</div>
+      <div class="mq-wrap">
+        <div class="mq-scroll" id="mq-body"></div>
+        <aside class="mq-adv" id="mq-adv" aria-live="polite"></aside>
+      </div>
+    </section>
+
     <!-- ===== ESCALA ===== -->
     <section class="tabpage on" id="tab-escala" data-title="Escala">
       <h1 class="lt">Escala</h1>
@@ -431,14 +583,6 @@ table.pdft td.dia{background:#FCE3CC}
     <!-- ===== AJUSTES ===== -->
     <section class="tabpage" id="tab-config" data-title="Ajustes">
       <h1 class="lt">Ajustes</h1>
-      <div class="group-h">Aparência</div>
-      <div class="group" style="padding:10px 12px">
-        <div class="seg" id="seg-theme" role="group" aria-label="Aparência">
-          <button data-t="dark" onclick="setTheme('dark')">Escuro</button>
-          <button data-t="light" onclick="setTheme('light')">Claro</button>
-          <button data-t="system" onclick="setTheme('system')">Sistema</button>
-        </div>
-      </div>
       <div class="group-h">Condições de cada pessoa</div>
       <div class="people" id="people"></div>
       <div class="group-f">Quem opera o caixa e quais turnos cada pessoa pode fazer.</div>
@@ -472,6 +616,7 @@ table.pdft td.dia{background:#FCE3CC}
 
 <nav class="tabbar" aria-label="Seções">
   <div class="tabs">
+    <button data-tab="tab-montar" onclick="showTab('tab-montar')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M9 9.5V20M14.5 9.5V20"/></svg>Montar</button>
     <button class="on" data-tab="tab-escala" onclick="showTab('tab-escala')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Escala</button>
     <button data-tab="tab-domingos" onclick="showTab('tab-domingos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>Domingos</button>
     <button data-tab="tab-relatorio" onclick="showTab('tab-relatorio')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 20V11M12 20V4M19 20v-6"/></svg>Relatórios</button>
@@ -479,6 +624,17 @@ table.pdft td.dia{background:#FCE3CC}
     <button data-tab="tab-config" onclick="showTab('tab-config')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2.2"/><circle cx="8" cy="17" r="2.2"/></svg>Ajustes</button>
   </div>
 </nav>
+
+<div class="mq-menu" id="mq-menu" hidden role="menu"></div>
+<div class="sheet" id="sh-import" role="dialog" aria-modal="true" aria-labelledby="sh-import-t" hidden>
+  <div class="grab"></div>
+  <div class="sh"><h2 id="sh-import-t">Importar planilha</h2><button class="close" onclick="closeSheet()">Cancelar</button></div>
+  <div class="sb">
+    <div class="group"><div class="cell" id="imp-sum" style="display:block;line-height:1.45"></div></div>
+    <p class="foot" style="padding:0 16px">Os dias entram como confirmados (igual à escala que a equipe recebeu) e passam a valer para o assessor: domingos seguidos, fechamentos, folgas.</p>
+    <div class="group"><button class="cell" style="justify-content:center;font-weight:600;color:var(--tint)" onclick="doImport()">Importar</button></div>
+  </div>
+</div>
 
 <div class="scrim" id="scrim" hidden onclick="closeSheet()"></div>
 
@@ -633,11 +789,11 @@ const DEFAULT_TEAM=[
   {id:'mjose',name:'Maria José',hourlyRate:0,employmentType:'horista',podeOperarCaixa:false,cond:{abertura:allDays(1),intermediario:allDays(1),fechamento:[1,1,1,1,1,0,0]}},
   {id:'joeli',name:'Joeli',hourlyRate:0,employmentType:'horista',podeOperarCaixa:true,cond:defaultCond()},
   {id:'alana',name:'Alana',hourlyRate:0,employmentType:'horista',podeOperarCaixa:true,cond:defaultCond()},
-  {id:'duda',name:'Duda',hourlyRate:0,employmentType:'horista',podeOperarCaixa:true,cond:{abertura:[1,1,0,0,0,1,1],intermediario:[1,1,0,0,0,1,1],fechamento:allDays(1)}}, // qua–sex só fecha (Ricardo, 07/10/2026)
+  {id:'duda',name:'Duda',hourlyRate:0,employmentType:'horista',podeOperarCaixa:true,cond:{abertura:[1,1,0,0,0,1,1],intermediario:allDays(1),fechamento:allDays(1)}}, // não abre qua–sex: estuda à tarde (Ricardo, 20/10/2026)
 ];
 // Quantas pessoas por dia (0=seg). ab/int/fe = fixas; dAb/dFe = diaristas manhã/noite. Igual à escala real de set/out 2026.
 const DEFAULT_COMP={0:{ab:2,int:0,fe:2,dAb:0,dFe:0},1:{ab:2,int:0,fe:2,dAb:0,dFe:0},2:{ab:2,int:0,fe:2,dAb:0,dFe:0},3:{ab:2,int:0,fe:2,dAb:0,dFe:0},4:{ab:2,int:0,fe:2,dAb:0,dFe:0},5:{ab:2,int:1,fe:1,dAb:0,dFe:1},6:{ab:1,int:1,fe:1,dAb:1,dFe:1}};
-const DEFAULT_LEVELS={caixa:'block',cober:'block',cond:'block',sete:'block',inter:'block',dom:'block',rot:'warn',vinculo:'warn',teto:'off'};
+const DEFAULT_LEVELS={caixa:'block',cober:'block',cond:'block',sete:'block',inter:'block',dom:'block',feriado:'block',h44:'block',folgas:'warn',rot:'off',justica:'warn',vinculo:'warn',teto:'off'};
 
 function defaultState(){
   return {
@@ -649,7 +805,7 @@ function defaultState(){
     escalaMode:'A', cctIntervaloReduzido:false,
     comp: JSON.parse(JSON.stringify(DEFAULT_COMP)),
     levels: {...DEFAULT_LEVELS},
-    sunRule:'alt', sunDiar:false,
+    sunRule:'tres', sunDiar:false,
     days:{}, constraints:[]
   };
 }
@@ -700,6 +856,13 @@ function normalizeState(parsed){
     s.legacyHistory=parsed.history;
   }
   delete s.history; delete s.ponto; delete s.pushSubscriptions; delete s.coverage;
+  if(!s._mig20261020){
+    // 2026-10-20 (Ricardo): domingo 2×1 e Duda só não ABRE qua–sex (a regra de 07/10 estava trocada).
+    s.sunRule='tres'; s.levels.rot='off';
+    const du=s.team.find(e=>e.id==='duda');
+    if(du&&du.cond){ if(String(du.cond.intermediario)==='1,1,0,0,0,1,1') du.cond.intermediario=allDays(1); [2,3,4].forEach(i=>{ du.cond.abertura[i]=0; }); }
+    s._mig20261020=1;
+  }
   s.schema=SCHEMA;
   return s;
 }
@@ -841,6 +1004,8 @@ function canCaixa(id){ const e=empById(id); return !!(e&&e.podeOperarCaixa); }
 function allowed(id,type,dow){ const e=empById(id); return !e||!e.cond||!e.cond[type]||!!e.cond[type][dow]; }
 function cActive(c,k){ return c.dateStart&&c.dateEnd&&k>=c.dateStart&&k<=c.dateEnd&&(!c.allowedDows||!c.allowedDows.length||c.allowedDows.includes(dDow(k))); }
 function absentOn(id,k){ return (STATE.constraints||[]).some(c=>c.type==='absence'&&c.empId===id&&cActive(c,k)); }
+// Pedido de até 3 dias é folga (conta nas folgas da semana); mais longo é férias/afastamento.
+function absenceType(id,k){ const c=(STATE.constraints||[]).find(c=>c.type==='absence'&&c.empId===id&&cActive(c,k)); return c&&(dD(c.dateEnd)-dD(c.dateStart))/864e5<3?'folga':'ferias'; }
 function forcedOn(id,k){ const c=(STATE.constraints||[]).find(c=>c.type==='forced_shift'&&c.empId===id&&cActive(c,k)); return c?c.shiftType:null; }
 function noPairsOn(k){ return (STATE.constraints||[]).filter(c=>c.type==='no_pair'&&c.dateStart&&c.dateEnd&&k>=c.dateStart&&k<=c.dateEnd).map(c=>c.empIds); }
 function diaristaOk(name,k){ return !(STATE.constraints||[]).some(c=>c.type==='diarista_limit'&&c.diaristaName===name&&c.dateStart<=k&&c.dateEnd>=k&&!(c.allowedDows||[]).includes(dDow(k))); }
@@ -856,6 +1021,10 @@ const RULES=[
   {id:'sete',nome:'No máximo 6 dias seguidos',txt:'OJ 410 do TST: folga depois do 7º dia seguido é paga em dobro. Conta atravessando a virada da semana.'},
   {id:'inter',nome:'11 horas entre um turno e outro',txt:'Art. 66 da CLT, pelo horário combinado da escala.'},
   {id:'dom',nome:'Rodízio de domingos',txt:'Regra escolhida na aba Domingos. Padrão: domingos alternados (art. 386 da CLT).'},
+  {id:'feriado',nome:'Folga extra depois de feriado trabalhado',txt:'Quem trabalha no feriado ganha uma folga a mais nos 7 dias seguintes. Sem ela, o feriado é pago em dobro (Súmula 146 do TST).'},
+  {id:'h44',nome:'No máximo 44 horas por semana',txt:'Art. 7º, XIII da Constituição. Conta de segunda a domingo.'},
+  {id:'folgas',nome:'2 folgas por semana',txt:'Regra da loja: cada pessoa folga 2 dias de segunda a domingo (a lei exige ao menos 1).'},
+  {id:'justica',nome:'Divisão justa na quinzena',txt:'Avisa quando fechamentos, aberturas ou sábados à noite ficam concentrados em poucas pessoas.'},
   {id:'rot',nome:'Metas de rodízio',txt:'Máximo de fechamentos e aberturas por semana para cada pessoa (definido em Equipe).'},
   {id:'vinculo',nome:'Diarista 3 semanas seguidas',txt:'Uso recorrente da mesma diarista pode caracterizar vínculo (art. 3º CLT).'},
   {id:'teto',nome:'Teto de horas por semana',txt:'Avisa quando alguém passa do teto informado em Equipe (ex.: Maria, 21h).'}
@@ -875,7 +1044,7 @@ function weekStats(k,id){
 function checkDay(k){
   const v=view(k), w=dDow(k), out=[], bad={};
   if(!v) return {flags:out,bad};
-  const push=(rule,msg,who)=>{ const l=lvl(rule); if(l==='off') return; out.push({rule,l,msg}); if(who&&l==='block') who.forEach(x=>bad[x]=1); };
+  const push=(rule,msg,who)=>{ const l=lvl(rule); if(l==='off') return; out.push({rule,l,msg,who:who||[]}); if(who&&l==='block') who.forEach(x=>bad[x]=1); };
   ['abertura','fechamento'].forEach(t=>{
     const fix=STATE.team.filter(e=>v.sh[e.id]&&v.sh[e.id].type===t).map(e=>e.id);
     const dia=(v.diar||[]).filter(x=>x.t===(t==='abertura'?'ab':'fe')).length;
@@ -912,7 +1081,295 @@ function checkDay(k){
       if(inWeek(7)&&inWeek(14)) push('vinculo',`${n}: 3ª semana seguida como diarista — risco de vínculo`);
     });
   }
+  extraChecks(k,v,w,push);
   return {flags:out,bad};
+}
+
+
+// ================= MONTAR + ASSESSOR DE RH (2026-10-20) =================
+// Grade da quinzena no estilo de uma tabela do Notion: cada célula é um "select" colorido.
+// O assessor confere a cada mudança, usando o mesmo livro de regras (checkDay) + justiça da quinzena.
+const HOLIDAYS={
+  '2026-01-01':'Confraternização','2026-04-03':'Sexta-feira Santa','2026-04-21':'Tiradentes','2026-05-01':'Dia do Trabalho',
+  '2026-07-02':'Independência da Bahia','2026-09-07':'Independência','2026-10-12':'Nossa Senhora Aparecida','2026-11-02':'Finados',
+  '2026-11-15':'Proclamação da República','2026-11-20':'Consciência Negra','2026-12-25':'Natal',
+  '2027-01-01':'Confraternização','2027-03-26':'Sexta-feira Santa','2027-04-21':'Tiradentes','2027-05-01':'Dia do Trabalho',
+  '2027-07-02':'Independência da Bahia','2027-09-07':'Independência','2027-10-12':'Nossa Senhora Aparecida','2027-11-02':'Finados',
+  '2027-11-15':'Proclamação da República','2027-11-20':'Consciência Negra','2027-12-25':'Natal'
+};
+function isHoliday(k){ const v=view(k); return !!((v&&v.holiday)||HOLIDAYS[k]); }
+function holidayName(k){ return HOLIDAYS[k]||'Feriado'; }
+
+// Checagens que o livro antigo não tinha: feriado sem folga extra, 44h, 2 folgas na semana.
+function extraChecks(k,v,w,push){
+  if(isHoliday(k)){
+    const nxt=dRange(dAdd(k,1),dAdd(k,7));
+    if(nxt.every(x=>view(x))){
+      STATE.team.forEach(e=>{
+        if(!works(typeOn(k,e.id))) return;
+        const off=nxt.filter(x=>typeOn(x,e.id)==='folga').length;
+        if(off<3) push('feriado',`${e.name} trabalhou no feriado (${holidayName(k)}) e não tem folga extra nos 7 dias seguintes`,[e.id]);
+      });
+    }
+  }
+  if(w===6){
+    const wk=dRange(dMon(k),k);
+    if(wk.every(x=>view(x))){
+      STATE.team.forEach(e=>{
+        const st=weekStats(k,e.id);
+        if(st.min/60>44) push('h44',`${e.name}: ${(st.min/60).toFixed(1).replace('.',',')}h na semana (máximo 44h)`,[e.id]);
+        const types=wk.map(x=>typeOn(x,e.id));
+        if(types.every(t=>t==='ferias')) return;
+        const off=types.filter(t=>t==='folga'||t==='ferias').length;
+        if(off<(STATE.caps.folgaTarget||2)) push('folgas',`${e.name}: ${off} folga${off===1?'':'s'} na semana de ${br(dMon(k))}`,[e.id]);
+      });
+    }
+  }
+}
+
+const SEV={sete:'lei',inter:'lei',dom:'lei',feriado:'lei',h44:'lei',caixa:'loja',cober:'loja',cond:'loja',folgas:'loja',vinculo:'loja',teto:'loja',rot:'just',justica:'just'};
+const SEV_INFO={lei:{t:'Lei trabalhista',ic:'🔴'},loja:{t:'Regras da loja',ic:'🟠'},just:{t:'Justiça',ic:'🟡'}};
+const MQ_ANCHOR='2026-10-05';
+function mqStartFor(k){ const n=Math.floor((dD(k)-dD(MQ_ANCHOR))/864e5/14); return dAdd(MQ_ANCHOR,n*14); }
+const MQ={start:null,open:null};
+function mqDays(){ if(!MQ.start) MQ.start=mqStartFor(todayISO()); return dRange(MQ.start,dAdd(MQ.start,13)); }
+function canEver(id,type){ const e=empById(id); return !!(e&&(!e.cond||!e.cond[type]||e.cond[type].some(Boolean))); }
+
+// Justiça: olha a quinzena inteira.
+function fairness(ks){
+  const out=[]; if(lvl('justica')==='off') return out;
+  const known=ks.filter(k=>view(k)); if(known.length<7) return out;
+  const both=e=>canEver(e.id,'abertura')&&canEver(e.id,'fechamento');
+  const cnt=t=>{ const m={}; STATE.team.forEach(e=>{ if(both(e)) m[e.id]=known.filter(k=>typeOn(k,e.id)===t).length; }); return m; };
+  [['fechamento','fechamentos'],['abertura','aberturas']].forEach(([t,pl])=>{
+    const m=cnt(t), ids=Object.keys(m).filter(id=>known.some(k=>works(typeOn(k,id)))); if(ids.length<2) return;
+    ids.sort((a,b)=>m[b]-m[a]); const hi=ids[0], lo=ids[ids.length-1];
+    if(m[hi]-m[lo]>=3) out.push({sev:'just',rule:'justica',k:null,who:[hi,lo],msg:`${pl[0].toUpperCase()+pl.slice(1)} desiguais: ${empName(hi)} ${m[hi]} · ${empName(lo)} ${m[lo]}. Passe 1 ou 2 de ${empName(hi)} para ${empName(lo)}.`});
+  });
+  const sats=known.filter(k=>dDow(k)===5);
+  if(sats.length>=2) STATE.team.forEach(e=>{ if(sats.every(k=>typeOn(k,e.id)==='fechamento')) out.push({sev:'just',rule:'justica',k:sats[0],who:[e.id],msg:`${e.name} fecha os ${sats.length} sábados da quinzena.`}); });
+  return out;
+}
+// Dia montado pela metade: contagem de gente e caixa só valem quando todas tiverem turno.
+function dayComplete(k){ const v=view(k); return !!v&&STATE.team.every(e=>v.sh[e.id]&&v.sh[e.id].type); }
+const RULE_ORDER=['cond','sete','inter','dom','feriado','h44','caixa','cober','folgas','vinculo','teto','rot','justica'];
+function assess(ks){
+  const items=[];
+  ks.forEach(k=>{ if(!view(k)) return; const full=dayComplete(k); checkDay(k).flags.forEach(f=>{ if(!full&&(f.rule==='cober'||f.rule==='caixa')) return; items.push({sev:SEV[f.rule]||'loja',rule:f.rule,k,who:f.who||[],msg:f.msg,l:f.l}); }); });
+  return items.concat(fairness(ks));
+}
+function cellIssues(items){ const r={lei:3,loja:2,just:1}, m={}; items.forEach(it=>{ if(!it.k) return; (it.who||[]).forEach(id=>{ const key=it.k+'|'+id; if(!m[key]||r[it.sev]>r[m[key]]) m[key]=it.sev; }); }); return m; }
+
+// Prévia: o que acontece se eu colocar esse turno aqui? (simula sem salvar)
+function predict(k,id,type){
+  const before=STATE.days[k]?JSON.stringify(STATE.days[k]):null;
+  const win=dRange(dAdd(k,-1),dAdd(k,8));
+  const base=new Set(assess(win).filter(it=>(it.who||[]).includes(id)).map(it=>it.msg));
+  const dr=ensureDraft(k); dr.sh[id]={type,time:shiftTime(dDow(k),type)};
+  const after=assess(win).filter(it=>(it.who||[]).includes(id)&&!base.has(it.msg));
+  if(before) STATE.days[k]=JSON.parse(before); else delete STATE.days[k];
+  const r={lei:3,loja:2,just:1}; after.sort((a,b)=>r[b.sev]-r[a.sev]||RULE_ORDER.indexOf(a.rule)-RULE_ORDER.indexOf(b.rule));
+  return after;
+}
+
+function mqShift(d){ MQ.start=dAdd(mqDays()[0],14*d); renderMontar(); }
+const MQ_LET={abertura:'A',intermediario:'I',fechamento:'F',folga:'–',ferias:'Fé'};
+function chipHTML(t,time,sev,w){
+  if(!t) return `<span class="mq-chip empty">—</span>`;
+  const cls={abertura:'ab',intermediario:'in',fechamento:'fe',folga:'off',ferias:'fer'}[t];
+  const lab={abertura:'Abertura',intermediario:'Interm.',fechamento:'Fechamento',folga:'Folga',ferias:'Férias'}[t];
+  // no celular só a letra; horário aparece só quando foge do padrão do turno
+  const odd=time&&w!=null&&time!==shiftTime(w,t)?`<small>${esc(String(time).split('–')[0].replace(/^0/,'').replace(':00',''))}</small>`:'';
+  return `<span class="mq-chip ${cls}" title="${lab}${time?' '+esc(time):''}"><span class="lg">${lab}${time?`<small>${esc(String(time).replace('–',' – '))}</small>`:''}</span><span class="sm">${MQ_LET[t]}${odd}</span></span>${sev?`<i class="mq-dot ${sev}" aria-label="${SEV_INFO[sev].t}"></i>`:''}`;
+}
+function shortName(e,team){
+  const f=e.name.split(/\s+/);
+  return team.filter(o=>o.name.split(/\s+/)[0]===f[0]).length>1&&f[1]?f[0][0]+'.'+f[1]:f[0];
+}
+function renderMontar(){
+  const host=document.getElementById('mq-body'); if(!host) return;
+  const ks=mqDays(), items=assess(ks), iss=cellIssues(items);
+  const a=dD(ks[0]), b=dD(ks[13]);
+  document.getElementById('mq-title').textContent=`${a.getUTCDate()} ${MES[a.getUTCMonth()]} – ${b.getUTCDate()} ${MES[b.getUTCMonth()]}`;
+  const empty=ks.filter(k=>!view(k)).length, drafts=ks.filter(k=>STATE.days[k]&&STATE.days[k].draft).length;
+  document.getElementById('mq-sub').textContent=empty===14?'Quinzena vazia — monte à mão ou gere uma sugestão':`${14-empty} de 14 dias montados${drafts?` · ${drafts} em rascunho`:''}`;
+  const team=STATE.team;
+  let h=`<table class="mq"><thead><tr><th class="mq-day">Dia</th>${team.map(e=>`<th><span class="mq-hn"><span class="lg">${esc(e.name)}</span><span class="sm">${esc(shortName(e,team))}</span></span>${e.podeOperarCaixa?'<span class="mq-cx" title="Opera o caixa">caixa</span>':''}</th>`).join('')}<th class="mq-dih"><span class="lg">Diaristas</span><span class="sm">Diar.</span></th></tr></thead><tbody>`;
+  ks.forEach((k,i)=>{
+    const v=view(k), w=dDow(k), d=STATE.days[k];
+    const st=!v?'':(d.draft?'<span class="mq-st d" title="rascunho"><span class="lg">rascunho</span></span>':'<span class="mq-st c" title="confirmado"><span class="lg">confirmado</span></span>');
+    if(i===7) h+=`<tr class="mq-sep"><td colspan="${team.length+2}"></td></tr>`;
+    h+=`<tr class="${w>=5?'we':''}${isHoliday(k)?' hol':''}" id="mq-r-${k}"><td class="mq-day"><b><span class="dw">${DOW_SHORT[w].toLowerCase()}</span> <span class="dd">${br(k)}</span></b>${isHoliday(k)?`<span class="mq-hol">${esc(holidayName(k))}</span>`:''}${st}</td>`;
+    team.forEach(e=>{ const c=v&&v.sh[e.id]; h+=`<td><button class="mq-cell" id="mq-c-${k}-${e.id}" onclick="mqOpen(event,'${k}','${e.id}')">${chipHTML(c&&c.type,c&&works(c.type)?c.time:null,iss[k+'|'+e.id],w)}</button></td>`; });
+    const di=(v&&v.diar)||[];
+    h+=`<td class="mq-di">${di.map((x,j)=>`<button class="mq-chip dia" onclick="openDiar('${k}',${j})">${esc(x.name||'diarista')}<small>${diarTime(w,x.t).replace('–',' – ')}</small></button>`).join('')}<button class="mq-add" onclick="addDiarOpen('${k}')" aria-label="Adicionar diarista">+</button><button class="mq-dn${di.length?' has':''}" onclick="mqDiarMenu(event,'${k}')" aria-label="Diaristas">${di.length||'+'}</button></td></tr>`;
+  });
+  // rodapé = placar (como o "calcular" do Notion)
+  const known=ks.filter(k=>view(k));
+  const cnt=(id,f)=>known.filter(k=>f(typeOn(k,id),k)).length;
+  const rows=[
+    ['Aberturas',id=>cnt(id,t=>t==='abertura')],
+    ['Fechamentos',id=>cnt(id,t=>t==='fechamento')],
+    ['Domingos',id=>{ const s=known.filter(k=>dDow(k)===6); return s.length?`${s.filter(k=>works(typeOn(k,id))).length}/${s.length}`:'–'; }],
+    ['Folgas',id=>cnt(id,t=>t==='folga')],
+    ['Horas',id=>{ let m=0; known.forEach(k=>{ const c=view(k).sh[id]; if(c&&works(c.type)&&c.time){ const r=rangeMin(c.time); m+=r[1]-r[0]; } }); return (m/60).toFixed(0)+'h'; }]
+  ];
+  const ab={Aberturas:'Abert.',Fechamentos:'Fech.',Domingos:'Dom.'};
+  h+=`</tbody><tfoot>${rows.map(([n,f])=>`<tr><td class="mq-day"><span class="lg">${n}</span><span class="sm">${ab[n]||n}</span></td>${team.map(e=>`<td>${f(e.id)}</td>`).join('')}<td></td></tr>`).join('')}</tfoot></table>`;
+  host.innerHTML=h;
+  renderAdvisor(items,ks);
+}
+function renderAdvisor(items,ks){
+  const el=document.getElementById('mq-adv'); if(!el) return;
+  const by={lei:[],loja:[],just:[]}; const seen=new Set();
+  items.forEach(it=>{ const key=it.sev+it.msg+(it.k||''); if(seen.has(key)) return; seen.add(key); (by[it.sev]||by.loja).push(it); });
+  const n=s=>by[s].length, tot=n('lei')+n('loja')+n('just');
+  const empty=ks.filter(k=>!view(k)).length;
+  const pill=tot?['lei','loja','just'].filter(n).map(s=>`<i class="adv-pill ${s}">${n(s)}</i>`).join(''):`<i class="adv-pill ok">${empty===14?'—':'ok'}</i>`;
+  let h=`<button class="adv-h" onclick="MQ.adv=!MQ.adv;this.parentNode.classList.toggle('open',MQ.adv)" aria-expanded="${!!MQ.adv}"><b>Assessor de RH</b><span class="adv-st">${tot===0?(empty===14?'aguardando a escala':'tudo certo'):`${tot} ponto${tot>1?'s':''}`}</span><span class="adv-pills">${pill}<i class="adv-car">▾</i></span></button><div class="adv-body">`;
+  if(tot===0){
+    h+=empty===14?`<p class="adv-empty">Monte a quinzena tocando nas células, ou gere uma sugestão. Eu confiro cada mudança.</p>`
+      :`<div class="adv-ok">🟢 Nenhum problema nos ${14-empty} dias montados.${empty?` Faltam ${empty} dias.`:''}</div>`;
+  }
+  ['lei','loja','just'].forEach(s=>{
+    if(!n(s)) return;
+    h+=`<div class="adv-g ${s}"><div class="adv-gt">${SEV_INFO[s].ic} ${SEV_INFO[s].t} <span>${n(s)}</span></div>`;
+    by[s].sort((a,b)=>(a.k||'').localeCompare(b.k||'')).forEach(it=>{
+      h+=`<button class="adv-i" onclick="mqFocus('${it.k||''}','${(it.who||[])[0]||''}')">${it.k?`<b>${DOW_MIN[dDow(it.k)]} ${br(it.k)}</b>`:''}<span>${esc(it.msg)}</span></button>`;
+    });
+    h+=`</div>`;
+  });
+  el.innerHTML=h+'</div>'; el.classList.toggle('open',!!MQ.adv);
+}
+function mqDiarMenu(ev,k){
+  ev.stopPropagation();
+  const menu=document.getElementById('mq-menu'), v=view(k), w=dDow(k), di=(v&&v.diar)||[];
+  let h=`<div class="mm-h"><b>Diaristas</b><span>${DOW_LABELS[w]}, ${br(k)}</span></div>`;
+  h+=di.map((x,j)=>`<button class="mm-o" onclick="mqClose();openDiar('${k}',${j})"><span class="mq-chip dia">${esc(x.name||'diarista')}</span><span class="mm-t">${diarTime(w,x.t).replace('–',' – ')}</span></button>`).join('');
+  h+=`<button class="mm-o" onclick="mqClose();addDiarOpen('${k}')"><span class="mq-chip empty">+</span><span class="mm-t">Adicionar diarista</span></button>`;
+  menu.innerHTML=h; menu.hidden=false; menu.classList.add('bottom'); menu.style.left=menu.style.top='';
+}
+function mqFocus(k,id){
+  const el=(k&&id&&document.getElementById(`mq-c-${k}-${id}`))||(k&&document.getElementById('mq-r-'+k));
+  if(!el) return;
+  el.scrollIntoView({behavior:'smooth',block:'center',inline:'center'});
+  el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+}
+
+// Menu de seleção (estilo "select" do Notion) com a prévia do assessor em cada opção.
+function mqOpen(ev,k,id){
+  ev.stopPropagation();
+  const menu=document.getElementById('mq-menu'), cur=typeOn(k,id), w=dDow(k);
+  let h=`<div class="mm-h"><b>${esc(empName(id))}</b><span>${DOW_LABELS[w]}, ${br(k)}</span></div>`;
+  ['abertura','intermediario','fechamento','folga','ferias'].forEach(t=>{
+    const p=t===cur?[]:predict(k,id,t), top=p[0];
+    const tm=works(t)?shiftTime(w,t):'';
+    h+=`<button class="mm-o${t===cur?' on':''}" onclick="mqPick('${k}','${id}','${t}')">${chipHTML(t,null,null)}<span class="mm-t">${tm?tm.replace('–',' – '):''}</span>${t===cur?'<span class="mm-ok">atual</span>':top?`<span class="mm-w ${top.sev}">${SEV_INFO[top.sev].ic} ${esc(top.msg)}</span>`:'<span class="mm-ok">✓ sem problemas</span>'}</button>`;
+  });
+  if(works(cur)){
+    const t=(view(k).sh[id].time||'').split('–');
+    h+=`<div class="mm-time"><span>Horário</span><input type="time" id="mm-a" value="${t[0]||''}"><span>até</span><input type="time" id="mm-b" value="${t[1]||''}"><button onclick="mqTime('${k}','${id}')">OK</button></div>`;
+  }
+  if(STATE.days[k]&&STATE.days[k].draft&&STATE.days[k].conf) h+=`<button class="mm-undo" onclick="mqClose();undoDay('${k}')">Desfazer alterações deste dia</button>`;
+  menu.innerHTML=h; menu.hidden=false;
+  const r=ev.currentTarget.getBoundingClientRect();
+  if(innerWidth<700){ menu.classList.add('bottom'); menu.style.left=menu.style.top=''; }
+  else{
+    menu.classList.remove('bottom');
+    const mw=380, left=Math.min(Math.max(8,r.left),innerWidth-mw-8);
+    const below=innerHeight-r.bottom>menu.offsetHeight+12;
+    menu.style.left=left+'px'; menu.style.top=(below?r.bottom+6:Math.max(8,r.top-menu.offsetHeight-6))+'px';
+  }
+  MQ.open=k+'|'+id;
+}
+function mqClose(){ const m=document.getElementById('mq-menu'); if(m) m.hidden=true; MQ.open=null; }
+function mqPick(k,id,t){ mqClose(); editCell(k,id,t); }
+function mqTime(k,id){
+  const a=document.getElementById('mm-a').value, b=document.getElementById('mm-b').value; if(!a||!b) return;
+  const dr=ensureDraft(k); dr.sh[id]={...dr.sh[id],time:`${a}–${b}`,manual:true}; mqClose(); saveState(); renderAll();
+}
+function mqGenerate(){ const ks=mqDays(); generateRange(ks[0],ks[13]); saveState(); renderAll(); toast('Sugestão pronta. Suas edições foram mantidas; confira o assessor.'); }
+document.addEventListener('click',e=>{ const m=document.getElementById('mq-menu'); if(m&&!m.hidden&&!m.contains(e.target)) mqClose(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') mqClose(); });
+
+// ================= IMPORTAR PLANILHA (.xlsx do Google Sheets) =================
+let IMP=null;
+function loadXLSX(){ return new Promise((ok,err)=>{ if(window.XLSX) return ok(); const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; s.onload=ok; s.onerror=()=>err(new Error('sem internet para ler a planilha')); document.head.appendChild(s); }); }
+function normName(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').trim().toUpperCase(); }
+function parseCellShift(raw){
+  const s=String(raw==null?'':raw).trim(); if(!s) return null;
+  const u=normName(s);
+  if(u.startsWith('FOLGA')) return {type:'folga',time:null};
+  if(u.includes('FERIAS')) return {type:'ferias',time:null};
+  const segs=[...s.replace(/\(?\s*pausa[^)]*\)?/i,'').matchAll(/(\d{1,2})(?::(\d{2}))?\s*h?\s*-\s*(\d{1,2})(?::(\d{2}))?\s*h?/g)];
+  if(!segs.length) return null;
+  const f=(h,m)=>String(+h).padStart(2,'0')+':'+(m||'00');
+  const a=f(segs[0][1],segs[0][2]), b=f(segs[segs.length-1][3],segs[segs.length-1][4]);
+  const l=s.toLowerCase();
+  const type=l.includes('fecha')?'fechamento':l.includes('abert')?'abertura':l.includes('interm')?'intermediario':(timeToMin(b)>=21*60+30?'fechamento':timeToMin(a)<12*60?'abertura':'intermediario');
+  return {type,time:`${a}–${b}`};
+}
+function parseDiaristas(raw){
+  const s=String(raw==null?'':raw), out=[];
+  const re=/(\d{1,2})(?::(\d{2}))?\s*h?\s*-\s*(\d{1,2})(?::(\d{2}))?\s*h?\s*\(?\s*([A-Za-zÀ-ú]+)?/g; let m;
+  while((m=re.exec(s))){ let n=m[5]||''; if(/^diarista$/i.test(n)) n=''; out.push({name:n,t:+m[1]<14?'ab':'fe'}); }
+  return out;
+}
+// Lê o .xlsx baixado do Google Sheets (uma aba por quinzena). Regras de desempate quando a mesma data
+// aparece mais de uma vez: vale a aba de período mais recente; dentro dela, descarta a versão que é
+// cópia idêntica de outra aba (sobra de copiar/colar) e fica a última.
+async function importXlsx(input){
+  const file=input.files&&input.files[0]; input.value=''; if(!file) return;
+  try{
+    await loadXLSX();
+    const wb=XLSX.read(await file.arrayBuffer(),{type:'array'});
+    const ids={}; STATE.team.forEach(e=>ids[normName(e.name)]=e.id);
+    const versions={}; let sheets=0;
+    wb.SheetNames.forEach(name=>{
+      const rows=XLSX.utils.sheet_to_json(wb.Sheets[name],{header:1,raw:false,defval:''});
+      const m=String((rows[0]||[]).join(' ')).match(/(\d{2})\/(\d{2})\/(\d{2})/);
+      if(!m||+m[3]<26) return;
+      const year=2000+ +m[3], start=`${year}-${m[2]}-${m[1]}`;
+      const col={}; (rows[1]||[]).map(normName).forEach((h,i)=>{ if(ids[h]) col[ids[h]]=i; if(h==='DIARISTAS') col._d=i; });
+      if(Object.keys(col).length<3) return;
+      sheets++;
+      const lastType={};
+      rows.slice(2,45).forEach((r,ri)=>{
+        const dm=String(r[1]||'').match(/\((\d{2})\/(\d{2})\)/); if(!dm) return;
+        const y=+dm[2]<+m[2]-6?year+1:year, k=`${y}-${dm[2]}-${dm[1]}`, sh={};
+        STATE.team.forEach(e=>{
+          if(col[e.id]==null) return;
+          let c=parseCellShift(r[col[e.id]]);
+          if(!c&&lastType[e.id]==='ferias') c={type:'ferias',time:null};
+          if(c){ sh[e.id]=c; lastType[e.id]=c.type; }
+        });
+        if(!Object.keys(sh).length) return;
+        (versions[k]=versions[k]||[]).push({start,sh,diar:col._d!=null?parseDiaristas(r[col._d]):[],sig:JSON.stringify(sh)});
+      });
+    });
+    const days={};
+    Object.keys(versions).forEach(k=>{
+      const vs=versions[k], newest=vs.reduce((a,v)=>v.start>a?v.start:a,'');
+      let cand=vs.filter(v=>v.start===newest);
+      if(cand.length>1){ const others=new Set(vs.filter(v=>v.start!==newest).map(v=>v.sig)); const fresh=cand.filter(v=>!others.has(v.sig)); if(fresh.length) cand=fresh; }
+      const v=cand[cand.length-1]; days[k]={sh:v.sh,diar:v.diar};
+    });
+    const ks=Object.keys(days).sort();
+    if(!ks.length){ toast('Não encontrei escalas de 2026 nessa planilha.'); return; }
+    const overwrite=ks.filter(k=>STATE.days[k]&&STATE.days[k].conf).length;
+    IMP={days,ks};
+    document.getElementById('imp-sum').innerHTML=`Encontrei <b>${ks.length} dias</b> (${brY(ks[0])} a ${brY(ks[ks.length-1])}) em ${sheets} abas.`+(overwrite?`<br>${overwrite} dias que já estavam confirmados no app serão trocados pelos da planilha.`:'');
+    openSheet('sh-import');
+  }catch(e){ toast('Não consegui ler a planilha: '+e.message); }
+}
+function doImport(){
+  if(!IMP) return; const now=Date.now();
+  IMP.ks.forEach(k=>{
+    const w=dDow(k), x=IMP.days[k], sh={};
+    STATE.team.forEach(e=>{ const c=x.sh[e.id]; sh[e.id]=c?{type:c.type,time:works(c.type)?(c.time||shiftTime(w,c.type)):null}:{type:'folga',time:null}; });
+    STATE.days[k]={conf:{sh,diar:x.diar,holiday:!!HOLIDAYS[k],at:now,motivo:'importado da planilha'},draft:null};
+  });
+  const n=IMP.ks.length; IMP=null; closeSheet(); saveState(); renderAll(); toast(`${n} dias importados como confirmados.`);
 }
 
 // ================= GERADOR =================
@@ -935,7 +1392,7 @@ function generateRange(from,to){
     const interOK=(id,t)=>{ const pk=dAdd(k,-1), p=hs(id,pk); if(!works(p)) return true; return 24*60-rangeMin(shiftTime(dDow(pk),p))[1]+rangeMin(shiftTime(w,t))[0]>=660; };
     const weekMin=id=>{ let m=0; for(let x=dMon(k);x<k;x=dAdd(x,1)){ const t=hs(id,x); if(works(t)){ const [a,b]=rangeMin(shiftTime(dDow(x),t)); m+=b-a; } } return m; };
     STATE.team.forEach(e=>{ sh[e.id]=null; });
-    STATE.team.forEach(e=>{ if(absentOn(e.id,k)) sh[e.id]={type:'ferias',time:null}; });
+    STATE.team.forEach(e=>{ if(absentOn(e.id,k)) sh[e.id]={type:absenceType(e.id,k),time:null}; });
     Object.entries(manual).forEach(([id,c])=>{ if(id in sh) sh[id]=c; });
     STATE.team.forEach(e=>{ const f=forcedOn(e.id,k); if(f&&sh[e.id]===null) sh[e.id]={type:f,time:shiftTime(w,f)}; });
     // Folgas da semana (2026-10-07): cada fixa fica com caps.folgaTarget folgas por semana seg–dom
@@ -947,6 +1404,9 @@ function generateRange(from,to){
     const folgaDue=id=>folgaGoal(id)-offWeek(id);
     const forcedOff=[];
     STATE.team.forEach(e=>{ if(sh[e.id]===null&&folgaDue(e.id)>0&&folgaDue(e.id)>=daysLeft(e.id)){ sh[e.id]={type:'folga',time:null}; forcedOff.push(e.id); } });
+    // Feriado trabalhado (Ricardo, 20/10): folga extra nos 7 dias seguintes (3 folgas na janela). Hoje vira folga se não der mais para deixar depois.
+    const owedHol=id=>{ for(let i=1;i<=7;i++){ const h=dAdd(k,-i); if(!isHoliday(h)||!works(hs(id,h))) continue; let off=0; for(let x=dAdd(h,1);x<k;x=dAdd(x,1)) if(hs(id,x)==='folga') off++; if(3-off>0&&3-off>=8-i) return true; } return false; };
+    STATE.team.forEach(e=>{ if(sh[e.id]===null&&owedHol(e.id)){ sh[e.id]={type:'folga',time:null}; forcedOff.push(e.id); } });
     const need={abertura:comp.ab,intermediario:comp.int,fechamento:comp.fe};
     Object.values(sh).forEach(c=>{ if(c&&works(c.type)) need[c.type]=Math.max(0,need[c.type]-1); });
     // Semana curta (férias etc.): se as fixas não cobrem as vagas até domingo mantendo as folgas,
@@ -1233,21 +1693,13 @@ function dayLong(k){ const d=dD(k); return `${DOW_LABELS[dDow(k)]}, ${d.getUTCDa
 function weekLabel(m){ const a=dD(m), b=dD(dAdd(m,6)); return a.getUTCMonth()===b.getUTCMonth()?`${a.getUTCDate()} – ${b.getUTCDate()} de ${MES[b.getUTCMonth()]}`:`${a.getUTCDate()} ${MES[a.getUTCMonth()]} – ${b.getUTCDate()} ${MES[b.getUTCMonth()]}`; }
 
 // ---------- tema ----------
-const THEME_KEY='ank_escala_theme';
-function themePref(){ try{ return localStorage.getItem(THEME_KEY)||'dark'; }catch(e){ return 'dark'; } }
-function applyTheme(){
-  const p=themePref();
-  const t=p==='system'?(window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'):p;
-  document.documentElement.dataset.theme=t;
-  const mc=document.querySelector('meta[name="theme-color"]'); if(mc) mc.setAttribute('content',t==='light'?'#F2F2F7':'#000000');
-  document.querySelectorAll('#seg-theme button').forEach(b=>b.classList.toggle('on',b.dataset.t===p));
-}
-function setTheme(p){ try{ localStorage.setItem(THEME_KEY,p); }catch(e){} applyTheme(); }
+// Tema único claro (20/10/2026). Limpa a preferência antiga de modo noite.
+function applyTheme(){ try{ localStorage.removeItem('ank_escala_theme'); }catch(e){} delete document.documentElement.dataset.theme; }
 
 // ---------- abas e barra de navegação ----------
 let titleObs=null;
 function showTab(id){
-  UI.tab=id;
+  UI.tab=id; mqClose(); document.body.classList.toggle('wide',id==='tab-montar');
   document.querySelectorAll('.tabpage').forEach(p=>p.classList.toggle('on',p.id===id));
   document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('on',b.dataset.tab===id));
   const page=document.getElementById(id);
@@ -1566,12 +2018,11 @@ function saveConfig(){
 
 function renderAll(){
   const checks={}; sortedDays().forEach(k=>{ checks[k]=checkDay(k); }); lastChecks=checks;
-  renderEscala(); renderSundays(); renderPeople(); renderRules(); renderComp(); renderTeamTable(); renderActiveConstraints(); renderChatSub();
+  renderEscala(); renderMontar(); renderSundays(); renderPeople(); renderRules(); renderComp(); renderTeamTable(); renderActiveConstraints(); renderChatSub();
   if(UI.tab==='tab-imprimir') renderPrintView();
 }
 function initUI(){
   applyTheme();
-  if(window.matchMedia) matchMedia('(prefers-color-scheme: light)').addEventListener('change',()=>{ if(themePref()==='system') applyTheme(); });
   document.querySelectorAll('.sheet').forEach(wireSheetDrag);
   wireDaySwipe();
   observeTitle();

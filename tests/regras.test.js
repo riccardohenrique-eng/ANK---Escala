@@ -60,5 +60,6 @@ test('menos de 11h entre fechar e abrir no dia seguinte (art. 66)', () => {
 test('domingos alternados: 2º domingo seguido é bloqueado', () => {
   const dom = { maria: 'abertura', marta: 'intermediario', alana: 'fechamento' };
   const a = app({ '2026-10-11': dom, '2026-10-18': dom }, { '2026-10-11': [{ name: 'D1', t: 'ab' }, { name: 'D2', t: 'fe' }], '2026-10-18': [{ name: 'D1', t: 'ab' }, { name: 'D2', t: 'fe' }] });
+  a.__get().sunRule = 'alt';
   assert.ok(regras(a, '2026-10-18').includes('dom'));
 });

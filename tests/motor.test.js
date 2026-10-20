@@ -33,13 +33,13 @@ test('4 semanas normais: nenhum bloqueio e todas com pelo menos 2 folgas por sem
     Object.entries(p).forEach(([id, c]) => assert.ok(c.folga >= 2, `${id} com ${c.folga} folga(s) na semana de ${m}`)));
 });
 
-test('condições fixas: Maria nunca fecha, Maria José não fecha sáb/dom, Duda só fecha qua–sex', () => {
+test('condições fixas: Maria nunca fecha, Maria José não fecha sáb/dom, Duda não abre qua–sex', () => {
   const app = gerar('2026-10-12', '2026-11-08');
   dias(app).forEach((k) => {
     const w = app.dDow(k), sh = draft(app, k).sh;
     assert.notStrictEqual(sh.maria.type, 'fechamento', `Maria fechando em ${k}`);
     if (w >= 5) assert.notStrictEqual(sh.mjose.type, 'fechamento', `Maria José fechando no fim de semana ${k}`);
-    if (w >= 2 && w <= 4) assert.ok(['fechamento', 'folga', 'ferias'].includes(sh.duda.type), `Duda em ${sh.duda.type} em ${k}`);
+    if (w >= 2 && w <= 4) assert.notStrictEqual(sh.duda.type, 'abertura', `Duda abrindo em ${k}`);
   });
 });
 
