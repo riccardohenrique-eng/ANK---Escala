@@ -599,6 +599,36 @@ table.pdft td.day .tk{display:block;margin-top:5px;background:#FFF1C9;color:#3b3
 .cp-hist .hl{margin:6px 0;padding:6px 8px;background:var(--cell);border-radius:6px}
 .cp-hist .hl b{display:block;font-size:12px;color:var(--label-2);font-weight:600}
 .cp-hist .hl span{display:block} .cp-hist .hl em{display:block;font-style:normal;color:var(--label-2);font-size:12px}
+/* --- Início --- */
+.in-al{display:flex;flex-direction:column;gap:8px;margin:4px 0 16px}
+.ia{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-size:14.5px;background:var(--cell);border-left:3px solid var(--sep)}
+.ia span{flex:1}
+.ia.red{border-left-color:var(--red);background:var(--red-wash)} .ia.orange{border-left-color:var(--orange);background:var(--orange-wash)} .ia.tint{border-left-color:var(--tint);background:var(--tint-wash)} .ia.green{border-left-color:var(--green);background:var(--green-wash)}
+.ia button{border:1px solid var(--sep);background:var(--paper);color:var(--label);border-radius:8px;padding:6px 12px;font:500 14px var(--font);cursor:pointer;white-space:nowrap}
+.in-days{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:700px){ .in-days{grid-template-columns:1fr} }
+.in-card{background:var(--paper);border:1px solid var(--sep);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.ic-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.ic-h b{font-size:17px} .ic-h span{color:var(--label-2);font-size:14px}
+.ic-st{font-size:12px!important;font-weight:600}
+.ic-st.s-enviada{color:var(--green)!important} .ic-st.s-confirmada{color:var(--tint)!important} .ic-st.s-mudou{color:var(--red)!important} .ic-st.s-pendente,.ic-st.s-rascunho{color:var(--orange)!important}
+.ic-task{margin:0;font-size:13px;font-weight:600;background:#FFF1C9;color:#3b3b3b;border-radius:6px;padding:4px 8px;align-self:flex-start}
+.ic-row{display:grid;grid-template-columns:104px 1fr;gap:8px;align-items:start;font-size:14.5px}
+.ic-l{font-size:12px;font-weight:600;border-radius:5px;padding:2px 7px;align-self:start;justify-self:start}
+.ic-l.ab{background:var(--ab-bg);color:var(--ab-fg)} .ic-l.in{background:var(--in-bg);color:var(--in-fg)} .ic-l.fe{background:var(--fe-bg);color:var(--fe-fg)} .ic-l.off{background:var(--off-bg);color:var(--off-fg)}
+.ic-p small{color:var(--label-2);font-size:12.5px} .ic-p.muted{color:var(--label-2)}
+.ic-empty{margin:0;color:var(--label-2)}
+.ic-btn{align-self:flex-start;border:1px solid var(--sep);background:var(--paper);color:var(--tint);border-radius:8px;padding:7px 12px;font:500 14px var(--font);cursor:pointer;margin-top:2px}
+.in-week{margin-top:16px;background:var(--paper);border:1px solid var(--sep);border-radius:12px;padding:12px}
+.iw-h{display:flex;justify-content:space-between;align-items:baseline;margin:0 2px 8px} .iw-h span{font-size:12.5px;color:var(--label-2)}
+table.iw tr{cursor:pointer} table.iw tr.today td{background:var(--tint-wash)}
+.iw-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;background:var(--cell-3);vertical-align:1px}
+.iw-dot.s-enviada{background:var(--green)} .iw-dot.s-confirmada{background:var(--tint)} .iw-dot.s-pendente,.iw-dot.s-rascunho{background:var(--orange)} .iw-dot.s-mudou{background:var(--red)}
+.iw-leg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--label-2);margin:8px 2px 0}
+.in-act{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+@media (max-width:700px){ .in-act{grid-template-columns:1fr} }
+.in-act button{border:1px solid var(--sep);background:var(--paper);color:var(--label);border-radius:10px;padding:12px;font:500 15px var(--font);cursor:pointer}
+.in-act button:first-child{background:var(--tint-fill);border-color:var(--tint-fill);color:var(--on-tint)}
 </style>
 </head>
 <body>
@@ -609,8 +639,15 @@ table.pdft td.day .tk{display:block;margin-top:5px;background:#FFF1C9;color:#3b3
   </header>
 
   <main>
+    <!-- ===== INÍCIO: painel da escala valendo (20/10/2026) ===== -->
+    <section class="tabpage on" id="tab-inicio" data-title="Início">
+      <h1 class="lt">Escala</h1>
+      <p class="lt-sub" id="in-date"></p>
+      <div id="in-body"></div>
+    </section>
+
     <!-- ===== MONTAR (estilo Notion) ===== -->
-    <section class="tabpage on" id="tab-montar" data-title="Montar">
+    <section class="tabpage" id="tab-montar" data-title="Montar">
       <div class="mq-top">
         <button class="nb-btn" onclick="mqShift(-1)" aria-label="Quinzena anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
         <div class="mid"><div class="wt" id="mq-title"></div><div class="ws" id="mq-sub"></div></div>
@@ -742,7 +779,8 @@ table.pdft td.day .tk{display:block;margin-top:5px;background:#FFF1C9;color:#3b3
 
 <nav class="tabbar" aria-label="Seções">
   <div class="tabs">
-    <button class="on" data-tab="tab-montar" onclick="showTab('tab-montar')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M9 9.5V20M14.5 9.5V20"/></svg>Montar</button>
+    <button class="on" data-tab="tab-inicio" onclick="showTab('tab-inicio')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5L12 5l8 6.5V20H4z"/><path d="M9.5 20v-5h5v5"/></svg>Início</button>
+    <button data-tab="tab-montar" onclick="showTab('tab-montar')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M9 9.5V20M14.5 9.5V20"/></svg>Montar</button>
     <button data-tab="tab-imprimir" onclick="showTab('tab-imprimir')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h7l4 4v13H7z"/><path d="M14 3.5v4h4M10 12.5h5M10 16h5"/></svg>Enviar</button>
     <button data-tab="tab-relatorio" onclick="showTab('tab-relatorio')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 20V11M12 20V4M19 20v-6"/></svg>Relatórios</button>
     <button data-tab="tab-config" onclick="showTab('tab-config')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2.2"/><circle cx="8" cy="17" r="2.2"/></svg>Ajustes</button>
@@ -1125,6 +1163,7 @@ function shiftTime(dow,type){
   return null;
 }
 function diarTime(dow,t){ return t==='ab'?(dow===6?'11:30–16:30':'10:30–16:30'):'16:30–22:00'; }
+function diarHours(dow,x){ return (x&&x.time)||diarTime(dow,x&&x.t); }  // horário livre (ex.: 14:00–20:00) vence o padrão
 function rangeMin(r){ const m=String(r||'').match(/\d{1,2}:\d{2}/g)||['00:00','00:00']; return [timeToMin(m[0]),timeToMin(m[1]||m[0])]; }
 function timeToMin(t){ const [h,m]=t.split(':').map(Number); return h*60+m; }
 function minToTime(m){ return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'); }
@@ -1137,14 +1176,14 @@ function typeOn(k,id){ const v=view(k); return v&&v.sh[id]?v.sh[id].type:null; }
 function lastConfirmed(){ let l=null; sortedDays().forEach(k=>{ if(STATE.days[k].conf) l=k; }); return l; }
 // Envio ao grupo e histórico (20/10/2026). Moram DENTRO de conf porque o merge do servidor só guarda
 // {conf,draft} de cada dia. conf.sent={at,sig,snap}: o que a equipe recebeu; conf.log=[{at,ch,motivo}].
-function confSnap(c){ const sh={}; Object.keys(c.sh||{}).sort().forEach(id=>{ const x=c.sh[id]; sh[id]=x?[x.type,works(x.type)?(x.time||''):'']:['','']; }); return {sh,diar:(c.diar||[]).map(x=>[x.name||'',x.t])}; }
+function confSnap(c){ const sh={}; Object.keys(c.sh||{}).sort().forEach(id=>{ const x=c.sh[id]; sh[id]=x?[x.type,works(x.type)?(x.time||''):'']:['','']; }); return {sh,diar:(c.diar||[]).map(x=>x.time?[x.name||'',x.t,x.time]:[x.name||'',x.t])}; }
 function confSig(c){ return JSON.stringify(confSnap(c)); }
 function shiftLabel(x,w){ if(!x||!x[0]) return 'sem turno'; if(x[0]==='folga') return 'Folga'; if(x[0]==='ferias') return 'Férias'; return `${TYPE_LABEL[x[0]]} ${fmtH(x[1]||shiftTime(w,x[0]))}`; }
 function diffSnaps(a,b,w){
   // lista legível do que mudou entre duas versões do dia
   const out=[];
   STATE.team.forEach(e=>{ const x=a.sh[e.id]||['',''], y=b.sh[e.id]||['','']; if(x[0]!==y[0]||x[1]!==y[1]) out.push({id:e.id,txt:`${e.name}: ${shiftLabel(y,w)} (antes: ${shiftLabel(x,w)})`}); });
-  const dl=d=>d.length?d.map(([n,t])=>`${n||'diarista'} ${fmtH(diarTime(w,t))}`).join(', '):'nenhuma';
+  const dl=d=>d.length?d.map(([n,t,tm])=>`${n||'diarista'} ${fmtH(tm||diarTime(w,t))}`).join(', '):'nenhuma';
   if(JSON.stringify(a.diar)!==JSON.stringify(b.diar)) out.push({id:'diar',txt:`Diaristas: ${dl(b.diar)} (antes: ${dl(a.diar)})`});
   return out;
 }
@@ -1167,6 +1206,10 @@ function empName(id){ const e=empById(id); return e?e.name:id; }
 function canCaixa(id){ const e=empById(id); return !!(e&&e.podeOperarCaixa); }
 function allowed(id,type,dow){ const e=empById(id); return !e||!e.cond||!e.cond[type]||!!e.cond[type][dow]; }
 function cActive(c,k){ return c.dateStart&&c.dateEnd&&k>=c.dateStart&&k<=c.dateEnd&&(!c.allowedDows||!c.allowedDows.length||c.allowedDows.includes(dDow(k))); }
+// Data de saída (20/10/2026): team[i].saida = último dia de trabalho. Depois dela a pessoa some da
+// grade, do quadro e do PDF, e o gerador não a escala (fica 'folga' por baixo para o dia ficar completo).
+function isActive(id,k){ const e=empById(id); return !e||!e.saida||k<=e.saida; }
+function visibleTeam(ks){ return STATE.team.filter(e=>ks.some(k=>isActive(e.id,k))); }
 function absentOn(id,k){ return (STATE.constraints||[]).some(c=>c.type==='absence'&&c.empId===id&&cActive(c,k)); }
 // Pedido de até 3 dias é folga (conta nas folgas da semana); mais longo é férias/afastamento.
 function absenceType(id,k){ const c=(STATE.constraints||[]).find(c=>c.type==='absence'&&c.empId===id&&cActive(c,k)); return c&&(dD(c.dateEnd)-dD(c.dateStart))/864e5<3?'folga':'ferias'; }
@@ -1366,7 +1409,7 @@ function renderMontar(){
   document.getElementById('mq-title').textContent=`${a.getUTCDate()} ${MES[a.getUTCMonth()]} – ${b.getUTCDate()} ${MES[b.getUTCMonth()]}`;
   const empty=ks.filter(k=>!view(k)).length, drafts=ks.filter(k=>STATE.days[k]&&STATE.days[k].draft).length;
   document.getElementById('mq-sub').textContent=empty===14?'Quinzena vazia — monte à mão ou gere uma sugestão':(()=>{ const c=t=>ks.filter(k=>dayStatus(k)===t).length, parts=[]; if(c('rascunho')+c('pendente')) parts.push(`${c('rascunho')+c('pendente')} para confirmar`); if(c('confirmada')) parts.push(`${c('confirmada')} sem enviar`); if(c('mudou')) parts.push(`${c('mudou')} mudaram após o envio`); return `${14-empty} de 14 dias montados${parts.length?' · '+parts.join(' · '):''}`; })();
-  const team=STATE.team;
+  const team=visibleTeam(ks);
   let h=`<table class="mq"><thead><tr><th class="mq-day">Dia</th>${team.map(e=>`<th><span class="mq-hn"><span class="lg">${esc(e.name)}</span><span class="sm">${esc(shortName(e,team))}</span></span></th>`).join('')}<th class="mq-dih"><span class="lg">Diaristas</span><span class="sm">Diar.</span></th></tr></thead><tbody>`;
   ks.forEach((k,i)=>{
     const v=view(k), w=dDow(k), d=STATE.days[k];
@@ -1375,7 +1418,7 @@ function renderMontar(){
     h+=`<tr class="${w>=5?'we':''}${isHoliday(k)?' hol':''}" id="mq-r-${k}"><td class="mq-day"><button class="mq-dbtn" onclick="mqDayOpen(event,'${k}')" aria-label="Quantas pessoas em ${DOW_LABELS[w]}, ${br(k)}"><b><span class="dw">${DOW_SHORT[w].toLowerCase()}</span> <span class="dd">${br(k)}</span></b>${isHoliday(k)?`<span class="mq-hol">${esc(holidayName(k))}</span>`:''}${(STATE.compDay||{})[k]?`<span class="mq-cp" title="Número de pessoas mudado para este dia">${compTotal(STATE.compDay[k])} pessoas</span>`:''}${taskFor(k)?`<span class="mq-task" title="${esc(taskFor(k))}"><span class="lg">${esc(taskFor(k))}</span><span class="sm">tarefa</span></span>`:''}</button>${st}</td>`;
     team.forEach(e=>{ const c=v&&v.sh[e.id]; h+=`<td><button class="mq-cell" id="mq-c-${k}-${e.id}" onclick="mqOpen(event,'${k}','${e.id}')">${chipHTML(c&&c.type,c&&works(c.type)?c.time:null,iss[k+'|'+e.id],w)}</button></td>`; });
     const di=(v&&v.diar)||[];
-    h+=`<td class="mq-di">${di.map((x,j)=>`<button class="mq-chip dia" onclick="openDiar('${k}',${j})">${esc(x.name||'diarista')}<small>${diarTime(w,x.t).replace('–',' – ')}</small></button>`).join('')}<button class="mq-add" onclick="addDiarOpen('${k}')" aria-label="Adicionar diarista">+</button><button class="mq-dn${di.length?' has':''}" onclick="mqDiarMenu(event,'${k}')" aria-label="Diaristas">${di.length||'+'}</button></td></tr>`;
+    h+=`<td class="mq-di">${di.map((x,j)=>`<button class="mq-chip dia" onclick="openDiar('${k}',${j})">${esc(x.name||'diarista')}<small>${diarHours(w,x).replace('–',' – ')}</small></button>`).join('')}<button class="mq-add" onclick="addDiarOpen('${k}')" aria-label="Adicionar diarista">+</button><button class="mq-dn${di.length?' has':''}" onclick="mqDiarMenu(event,'${k}')" aria-label="Diaristas">${di.length||'+'}</button></td></tr>`;
   });
   // rodapé = placar (como o "calcular" do Notion)
   const known=ks.filter(k=>view(k));
@@ -1473,7 +1516,7 @@ function mqView(){ try{ return localStorage.getItem('ank_mq_view')||'grade'; }ca
 function mqSetView(v){ try{ localStorage.setItem('ank_mq_view',v); }catch(e){} mqClose(); renderMontar(); }
 const KB_SECS=[['abertura','Abertura'],['intermediario','Intermediário'],['fechamento','Fechamento'],['folga','Folga'],['ferias','Férias'],['','Sem turno']];
 function boardHTML(ks,iss){
-  const team=STATE.team, it=assess(ks);
+  const team=visibleTeam(ks), it=assess(ks);
   return `<div class="kb" id="kb">${ks.map(k=>{
     const v=view(k), w=dDow(k), di=(v&&v.diar)||[];
     const n=team.filter(e=>works(typeOn(k,e.id))).length+di.length;
@@ -1487,7 +1530,7 @@ function boardHTML(ks,iss){
       h+=`<div class="kb-sec"><div class="kb-st">${l}${tm?` <small>${tm.replace('–',' – ')}</small>`:''}</div><div class="kb-list ${TCLS[t]||'off'}" data-k="${k}" data-t="${t}">`;
       h+=ppl.map(e=>{ const c=v&&v.sh[e.id], odd=c&&c.time&&works(t)&&c.time!==shiftTime(w,t); const sv=iss[k+'|'+e.id];
         return `<div class="kb-card" data-id="${e.id}" onclick="mqOpen(event,'${k}','${e.id}')"><b>${esc(e.name)}</b>${odd?`<small>${esc(c.time.replace('–',' – '))}</small>`:''}${sv?`<i class="mq-dot ${sv}"></i>`:''}</div>`; }).join('');
-      h+=dz.map(x=>{ const j=di.indexOf(x); return `<div class="kb-card dia" onclick="openDiar('${k}',${j})"><b>${esc(x.name||'Diarista')}</b><small>diarista · ${diarTime(w,x.t).replace('–',' – ')}</small></div>`; }).join('');
+      h+=dz.map(x=>{ const j=di.indexOf(x); return `<div class="kb-card dia" onclick="openDiar('${k}',${j})"><b>${esc(x.name||'Diarista')}</b><small>diarista · ${diarHours(w,x).replace('–',' – ')}</small></div>`; }).join('');
       h+=`</div></div>`;
     });
     h+=`<button class="kb-add" onclick="addDiarOpen('${k}')">+ diarista</button></section>`;
@@ -1512,6 +1555,47 @@ function initBoard(){
   }).catch(e=>toast(e.message));
 }
 
+// ---------- Início: quem trabalha hoje e amanhã, semana valendo, o que está pendente ----------
+function mqGoto(k){ MQ.start=mqStartFor(k); showTab('tab-montar'); setTimeout(()=>{ const r=document.getElementById('mq-r-'+k)||document.getElementById('kb-'+k); if(r){ r.scrollIntoView({behavior:'smooth',block:'center',inline:'start'}); r.classList.remove('flash'); void r.offsetWidth; r.classList.add('flash'); } },80); }
+function goSend(from,to){ showTab('tab-imprimir'); document.getElementById('print-from').value=from; document.getElementById('print-to').value=to; renderPrintView(); }
+function dayCard(k,label){
+  const v=view(k), w=dDow(k), ds=dayStatus(k), team=visibleTeam([k]);
+  let h=`<div class="in-card"><div class="ic-h"><div><b>${label}</b> <span>${DOW_LABELS[w].toLowerCase()}, ${br(k)}${isHoliday(k)?' · feriado':''}</span></div>${ds?`<span class="ic-st s-${ds}">${STATUS_TXT[ds]}</span>`:''}</div>`;
+  if(!v){ return h+`<p class="ic-empty">Ainda sem escala.</p><button class="ic-btn" onclick="mqGoto('${k}')">Montar</button></div>`; }
+  if(taskFor(k)) h+=`<p class="ic-task">${esc(taskFor(k))}</p>`;
+  [['abertura','Abertura'],['intermediario','Intermediário'],['fechamento','Fechamento']].forEach(([t,l])=>{
+    const ppl=team.filter(e=>typeOn(k,e.id)===t).map(e=>{ const c=v.sh[e.id]; return `${esc(e.name)} <small>${fmtH(c.time||shiftTime(w,t))}</small>`; });
+    const dz=(v.diar||[]).filter(x=>t==='abertura'?x.t==='ab':t==='fechamento'?x.t!=='ab':false).map(x=>`${esc(x.name||'Diarista')} <small>diarista · ${fmtH(diarHours(w,x))}</small>`);
+    if(ppl.length||dz.length) h+=`<div class="ic-row"><span class="ic-l ${TCLS[t]}">${l}</span><span class="ic-p">${[...ppl,...dz].join('<br>')}</span></div>`;
+  });
+  const off=team.filter(e=>['folga','ferias'].includes(typeOn(k,e.id))).map(e=>esc(e.name)+(typeOn(k,e.id)==='ferias'?' (férias)':''));
+  if(off.length) h+=`<div class="ic-row"><span class="ic-l off">Folga</span><span class="ic-p muted">${off.join(', ')}</span></div>`;
+  return h+`<button class="ic-btn" onclick="mqGoto('${k}')">Fazer uma troca neste dia</button></div>`;
+}
+function renderInicio(){
+  const el=document.getElementById('in-body'); if(!el) return;
+  const t=todayISO(), d=document.getElementById('in-date'); if(d) d.textContent=dayLong(t);
+  const next14=dRange(t,dAdd(t,13)), al=[];
+  const by=st=>sortedDays().filter(k=>k>=dAdd(t,-7)&&dayStatus(k)===st);
+  const mud=by('mudou'), nao=by('confirmada'), pend=sortedDays().filter(k=>k>=dAdd(t,-7)&&['rascunho','pendente'].includes(dayStatus(k)));
+  if(mud.length) al.push(['red',`${mud.length} dia${mud.length>1?'s':''} mudou após o envio. Avise o grupo.`,'Avisar o grupo',`goSend('${mud[0]}','${mud[mud.length-1]}')`]);
+  if(pend.length) al.push(['orange',`${pend.length} dia${pend.length>1?'s':''} com mudança para revisar e confirmar.`,'Revisar',`mqGoto('${pend[0]}')`]);
+  if(nao.length) al.push(['tint',`${nao.length} dia${nao.length>1?'s':''} confirmado${nao.length>1?'s':''} e ainda não marcado${nao.length>1?'s':''} como enviado${nao.length>1?'s':''}.`,'Enviar',`goSend('${nao[0]}','${nao[nao.length-1]}')`]);
+  if(sugView()){ const [a,b]=sugRange(sugView()); al.push(['tint',`Há uma sugestão de escala para ${br(a)} – ${br(b)}.`,'Ver sugestão',`mqGoto('${a}');setTimeout(sugOpen,120)`]); }
+  const vazio=next14.find(k=>!view(k));
+  if(vazio) al.push(['orange',`A escala acaba em ${br(dAdd(vazio,-1))}. Monte a próxima quinzena.`,'Montar',`mqGoto('${vazio}')`]);
+  STATE.team.filter(e=>e.saida&&e.saida>=dAdd(t,-1)&&e.saida<=dAdd(t,20)).forEach(e=>al.push(['gray',`${e.name} trabalha até ${br(e.saida)}.`,'','']));
+  let h=al.length?`<div class="in-al">${al.map(([c,m,b,fn])=>`<div class="ia ${c}"><span>${esc(m)}</span>${b?`<button onclick="${fn}">${b}</button>`:''}</div>`).join('')}</div>`:`<div class="in-al"><div class="ia green"><span>Tudo em dia: escala confirmada e enviada.</span></div></div>`;
+  h+=`<div class="in-days">${dayCard(t,'Hoje')}${dayCard(dAdd(t,1),'Amanhã')}</div>`;
+  // semana valendo (somente leitura); tocar num dia abre o Montar nele
+  const wk=dRange(dMon(t),dAdd(dMon(t),6)), team=visibleTeam(wk);
+  h+=`<div class="in-week"><div class="iw-h"><b>Esta semana</b><span>toque num dia para trocar</span></div><div class="tablewrap"><table class="sg iw"><thead><tr><th></th>${team.map(e=>`<th>${esc(shortName(e,team))}</th>`).join('')}<th>Diar.</th></tr></thead><tbody>${wk.map(k=>{ const v=view(k), w=dDow(k), ds=dayStatus(k);
+    return `<tr class="${w>=5?'we':''}${k===t?' today':''}" onclick="mqGoto('${k}')"><td><span class="iw-dot s-${ds}"></span>${DOW_SHORT[w].toLowerCase()} ${br(k)}</td>${team.map(e=>{ const x=v&&v.sh[e.id], ty=x&&x.type; return `<td>${ty?`<span class="mq-chip ${TCLS[ty]||'off'}">${MQ_LET[ty]}</span>`:''}</td>`; }).join('')}<td>${(v&&v.diar||[]).length||''}</td></tr>`; }).join('')}</tbody></table></div>
+    <div class="iw-leg"><span><i class="iw-dot s-enviada"></i>enviada</span><span><i class="iw-dot s-confirmada"></i>confirmada</span><span><i class="iw-dot s-pendente"></i>a confirmar</span><span><i class="iw-dot s-mudou"></i>mudou após o envio</span></div></div>`;
+  h+=`<div class="in-act"><button onclick="mqGoto('${t}')">Fazer uma troca</button><button onclick="mqGoto('${vazio||dAdd(t,14)}')">Montar próxima quinzena</button><button onclick="goSend('${t}','${dAdd(t,13)}')">Enviar para o grupo</button></div>`;
+  el.innerHTML=h;
+}
+
 // ---------- Caixa de sugestões (escala montada no chat com o Claude) ----------
 // STATE.sugestao={from,to,at,nota,days:{k:rascunho}} chega por ferramentas/enviar-sugestao.js.
 // É configuração (sincroniza por _cfgAt); para apagar grava null — se a chave sumisse, o merge
@@ -1533,7 +1617,7 @@ function sugPreview(g){
 }
 function sugOpen(){
   const g=sugView(); if(!g) return;
-  const ks=Object.keys(g.days).sort(), team=STATE.team, conf=ks.filter(k=>STATE.days[k]&&STATE.days[k].conf), mine=ks.filter(k=>STATE.days[k]&&STATE.days[k].draft&&!STATE.days[k].conf);
+  const ks=Object.keys(g.days).sort(), team=visibleTeam(Object.keys(g.days)), conf=ks.filter(k=>STATE.days[k]&&STATE.days[k].conf), mine=ks.filter(k=>STATE.days[k]&&STATE.days[k].draft&&!STATE.days[k].conf);
   const it=sugPreview(g), c=s=>it.filter(i=>i.sev===s).length;
   let h=g.nota?`<p class="sg-nota">${esc(g.nota)}</p>`:'';
   h+=`<div class="sg-sum">${['lei','loja','just'].filter(c).map(s=>`<span class="adv-pill ${s}">${SEV_INFO[s].ic} ${c(s)}</span>`).join(' ')||'<span class="adv-pill ok">sem problemas</span>'}</div>`;
@@ -1557,7 +1641,7 @@ function mqDiarMenu(ev,k){
   ev.stopPropagation();
   const menu=document.getElementById('mq-menu'), v=view(k), w=dDow(k), di=(v&&v.diar)||[];
   let h=`<div class="mm-h"><b>Diaristas</b><span>${DOW_LABELS[w]}, ${br(k)}</span></div>`;
-  h+=di.map((x,j)=>`<button class="mm-o" onclick="mqClose();openDiar('${k}',${j})"><span class="mq-chip dia">${esc(x.name||'diarista')}</span><span class="mm-t">${diarTime(w,x.t).replace('–',' – ')}</span></button>`).join('');
+  h+=di.map((x,j)=>`<button class="mm-o" onclick="mqClose();openDiar('${k}',${j})"><span class="mq-chip dia">${esc(x.name||'diarista')}</span><span class="mm-t">${diarHours(w,x).replace('–',' – ')}</span></button>`).join('');
   h+=`<button class="mm-o" onclick="mqClose();addDiarOpen('${k}')"><span class="mq-chip empty">+</span><span class="mm-t">Adicionar diarista</span></button>`;
   menu.innerHTML=h; menu.hidden=false; menu.classList.add('bottom'); menu.style.left=menu.style.top='';
 }
@@ -1704,7 +1788,7 @@ function generateRange(from,to){
     const interOK=(id,t)=>{ const pk=dAdd(k,-1), p=hs(id,pk); if(!works(p)) return true; return 24*60-rangeMin(shiftTime(dDow(pk),p))[1]+rangeMin(shiftTime(w,t))[0]>=660; };
     const weekMin=id=>{ let m=0; for(let x=dMon(k);x<k;x=dAdd(x,1)){ const t=hs(id,x); if(works(t)){ const [a,b]=rangeMin(shiftTime(dDow(x),t)); m+=b-a; } } return m; };
     STATE.team.forEach(e=>{ sh[e.id]=null; });
-    STATE.team.forEach(e=>{ if(absentOn(e.id,k)) sh[e.id]={type:absenceType(e.id,k),time:null}; });
+    STATE.team.forEach(e=>{ if(!isActive(e.id,k)) sh[e.id]={type:'folga',time:null}; else if(absentOn(e.id,k)) sh[e.id]={type:absenceType(e.id,k),time:null}; });
     Object.entries(manual).forEach(([id,c])=>{ if(id in sh) sh[id]=c; });
     STATE.team.forEach(e=>{ const f=forcedOn(e.id,k); if(f&&sh[e.id]===null) sh[e.id]={type:f,time:shiftTime(w,f)}; });
     // Folgas da semana (2026-10-07): cada fixa fica com caps.folgaTarget folgas por semana seg–dom
@@ -1802,7 +1886,7 @@ function breakDurationNeeded(spanMin,cctReduced){ if(spanMin>360) return cctRedu
 function computeBreaks(v,k){
   const w=dDow(k), segs=[];
   STATE.team.forEach(e=>{ const c=v.sh[e.id]; if(c&&works(c.type)&&c.time){ const [s,en]=rangeMin(c.time); segs.push({id:e.id,start:s,end:en}); } });
-  (v.diar||[]).forEach((d,i)=>{ const [s,en]=rangeMin(diarTime(w,d.t)); segs.push({id:'__d'+i,start:s,end:en}); });
+  (v.diar||[]).forEach((d,i)=>{ const [s,en]=rangeMin(diarHours(w,d)); segs.push({id:'__d'+i,start:s,end:en}); });
   const conc=t=>segs.filter(s=>t>=s.start&&t<s.end).length;
   const reserved=[], res={};
   STATE.team.forEach(e=>{
@@ -1873,7 +1957,7 @@ function confirmRange(upto,motivo){
     const d=STATE.days[k], dr=d.draft, hasBlock=checkDay(k).flags.some(f=>f.l==='block');
     const brk=computeBreaks(dr,k), sh={};
     Object.entries(dr.sh).forEach(([id,c])=>{ sh[id]={type:c.type,time:works(c.type)?(c.time||shiftTime(dDow(k),c.type)):null,breakInfo:brk[id]||null}; });
-    const old=d.conf, nc={sh,diar:(dr.diar||[]).map(x=>({name:x.name,t:x.t})),holiday:!!dr.holiday,motivo:hasBlock?motivo:null,at:Date.now()};
+    const old=d.conf, nc={sh,diar:(dr.diar||[]).map(x=>({name:x.name,t:x.t,...(x.time?{time:x.time}:{})})),holiday:!!dr.holiday,motivo:hasBlock?motivo:null,at:Date.now()};
     if(old){
       const ch=diffSnaps(confSnap(old),confSnap(nc),dDow(k)).map(x=>x.txt);
       nc.log=[...(old.log||[]),...(ch.length?[{at:nc.at,ch,motivo:motivo||''}]:[])];
@@ -1932,17 +2016,17 @@ function renderPrintView(){
   if(!days.length){ box.innerHTML='<div class="emptybox">Nenhum dia confirmado nesse período.</div>'; return; }
   // uma folha por semana (seg–dom) no PDF (20/10/2026); a imagem do WhatsApp leva as semanas empilhadas
   const weeks=[]; days.forEach(k=>{ const m=dMon(k), last=weeks[weeks.length-1]; if(last&&last.m===m) last.ks.push(k); else weeks.push({m,ks:[k]}); });
-  const row=k=>{
+  const row=(k,team)=>{
     const c=STATE.days[k].conf, w=dDow(k);
-    const cells=STATE.team.map((e,i)=>{ const x=c.sh[e.id]; if(!x||x.type==='folga') return '<td class="off">Folga</td>'; if(x.type==='ferias') return '<td class="fer">FÉRIAS</td>'; return `<td class="p${i%6}"><b>${fmtH(x.time||shiftTime(w,x.type))}</b><small>(${TYPE_LABEL[x.type].toLowerCase()})</small></td>`; }).join('');
-    const di=(c.diar||[]).map(x=>fmtH(diarTime(w,x.t))); const dtxt=di.length?`<td class="dia"><b>${di.join(' / ')}</b></td>`:'<td></td>';
+    const cells=team.map((e,i)=>{ const x=c.sh[e.id]; if(!x||x.type==='folga') return '<td class="off">Folga</td>'; if(x.type==='ferias') return '<td class="fer">FÉRIAS</td>'; return `<td class="p${i%6}"><b>${fmtH(x.time||shiftTime(w,x.type))}</b><small>(${TYPE_LABEL[x.type].toLowerCase()})</small></td>`; }).join('');
+    const di=(c.diar||[]).map(x=>fmtH(diarHours(w,x))); const dtxt=di.length?`<td class="dia"><b>${di.join(' / ')}</b></td>`:'<td></td>';
     // tarefa dentro da célula do dia (20/10/2026): numa coluna solta ela parecia valer para vários dias
     const tk=taskFor(k);
     return `<tr><td class="day${w===0?' mon':''}">${DOW_LABELS[w].toLowerCase()} (${br(k)})${c.holiday?'<br>feriado':''}${tk?`<span class="tk">${esc(tk)}</span>`:''}</td>${cells}${dtxt}</tr>`;
   };
-  const head=`<tr><th></th>${STATE.team.map(e=>`<th>${esc(e.name)}</th>`).join('')}<th>Diaristas</th></tr>`;
-  box.innerHTML=`<div class="pdf pdf-block">${weeks.map(wk=>`<section class="pdf-week"><h3>ESCALA - Açaí NoKilo - Cruz das Almas (Semana: ${brY(wk.ks[0])} - ${brY(wk.ks[wk.ks.length-1])})</h3>
-    <table class="pdft">${head}${wk.ks.map(row).join('')}</table></section>`).join('')}</div>`;
+  const head=team=>`<tr><th></th>${team.map(e=>`<th>${esc(e.name)}</th>`).join('')}<th>Diaristas</th></tr>`;
+  box.innerHTML=`<div class="pdf pdf-block">${weeks.map(wk=>{ const team=visibleTeam(wk.ks); return `<section class="pdf-week"><h3>ESCALA - Açaí NoKilo - Cruz das Almas (Semana: ${brY(wk.ks[0])} - ${brY(wk.ks[wk.ks.length-1])})</h3>
+    <table class="pdft">${head(team)}${wk.ks.map(k=>row(k,team)).join('')}</table></section>`; }).join('')}</div>`;
   prepareShare(days[0],days[days.length-1]);
   renderSendBox(days);
 }
@@ -2013,7 +2097,7 @@ async function shareEscala(){
 // ================= INTERFACE (visual iOS, 2026-09-28) =================
 // Escala: uma semana por vez (setas ‹ ›), faixa de 7 dias, visão Dia (lista agrupada) ou
 // Semana (grade). Ações secundárias ficam no "+" da barra; confirmar fica no botão flutuante.
-const UI={day:null,mode:'dia',tab:'tab-montar'};
+const UI={day:null,mode:'dia',tab:'tab-inicio'};
 const MES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
 const MES_L=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 const CHEV='<svg class="chev" viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l6 6-6 6"/></svg>';
@@ -2206,6 +2290,7 @@ function openDiar(k,i){
   document.getElementById('sh-diar-b').innerHTML=`
     <div class="group-h">Período</div>
     <div class="seg"><button class="${x.t==='ab'?'on':''}" onclick="editDiar('${k}',${i},'t','ab'); openDiar('${k}',${i})">Manhã · ${diarTime(w,'ab')}</button><button class="${x.t==='fe'?'on':''}" onclick="editDiar('${k}',${i},'t','fe'); openDiar('${k}',${i})">Noite · ${diarTime(w,'fe')}</button></div>
+    <div class="group"><label class="cell"><span class="grow">Horário livre<span class="sub">Ex.: 14:00 às 20:00. Vazio = horário do período acima.</span></span><input type="time" id="dz-a" value="${x.time?x.time.split('–')[0]:''}"><span style="margin:0 6px;color:var(--label-2)">às</span><input type="time" id="dz-b" value="${x.time?x.time.split('–')[1]:''}" onchange="const a=document.getElementById('dz-a').value,b=this.value; if(a&&b){ editDiar('${k}',${i},'time',a+'–'+b); openDiar('${k}',${i}); }"></label>${x.time?`<button class="cell" style="color:var(--tint)" onclick="editDiar('${k}',${i},'time',null); openDiar('${k}',${i})">Voltar ao horário do período (${diarTime(w,x.t)})</button>`:''}</div>
     <div class="group-h">Quem</div>
     <div class="group">${pool.map((n,j)=>`<button class="cell opt-row${n===x.name?' on':''}" onclick="editDiar('${k}',${i},'name',STATE.diaristaPool.concat(['${esc(x.name)}'])[${j}]); openDiar('${k}',${i})"><span class="grow">${esc(n)}</span>${CHECK}</button>`).join('')||'<div class="cell" style="color:var(--label-2)">Cadastre nomes em Ajustes → Diaristas</div>'}</div>
     <div class="group" style="margin-top:22px"><button class="cell danger center" onclick="closeSheet(); editDiar('${k}',${i},'del')">Remover diarista</button></div>`;
@@ -2305,14 +2390,15 @@ function personSummary(e){
   return parts.join(' · ');
 }
 function renderPeople(){
-  document.getElementById('people').innerHTML='<div class="group">'+STATE.team.map((e,i)=>`<button class="cell" onclick="openPerson(${i})"><span class="grow">${esc(e.name)}<span class="sub">${esc(personSummary(e))}</span></span>${CHEV}</button>`).join('')+'</div>';
+  document.getElementById('people').innerHTML='<div class="group">'+STATE.team.map((e,i)=>`<button class="cell" onclick="openPerson(${i})"><span class="grow">${esc(e.name)}<span class="sub">${e.saida?`Último dia: ${br(e.saida)} · `:''}${esc(personSummary(e))}</span></span>${CHEV}</button>`).join('')+'</div>';
   if(openSheetEl&&openSheetEl.id==='sh-person') openPerson(+openSheetEl.dataset.i);
 }
 function openPerson(i){
   const e=STATE.team[i]; if(!e) return;
   const sh=document.getElementById('sh-person'); sh.dataset.i=i;
   document.getElementById('sh-person-t').textContent=e.name;
-  document.getElementById('sh-person-b').innerHTML=`<div class="group"><label class="cell"><span class="grow">Opera o caixa</span><span class="sw"><input type="checkbox" ${e.podeOperarCaixa?'checked':''} onchange="STATE.team[${i}].podeOperarCaixa=this.checked; saveState(); renderAll();"><span></span></span></label></div>
+  document.getElementById('sh-person-b').innerHTML=`<div class="group"><label class="cell"><span class="grow">Último dia de trabalho<span class="sub">Deixe vazio se continua na equipe. Depois dessa data a pessoa sai da escala.</span></span><input type="date" value="${e.saida||''}" onchange="STATE.team[${i}].saida=this.value||null; saveState(); renderAll();"></label></div>
+    <div class="group"><label class="cell"><span class="grow">Opera o caixa</span><span class="sw"><input type="checkbox" ${e.podeOperarCaixa?'checked':''} onchange="STATE.team[${i}].podeOperarCaixa=this.checked; saveState(); renderAll();"><span></span></span></label></div>
     <div class="group-h">Turnos permitidos</div>
     <div class="pcard"><table class="cond"><tr><th></th>${DOW_MIN.map(x=>`<th>${x}</th>`).join('')}</tr>
     ${SHIFTS.map(t=>`<tr><td>${TYPE_LABEL[t]}</td>${DOW_MIN.map((_,d)=>{ const on=!!e.cond[t][d]; return `<td><button class="tg" aria-pressed="${on}" aria-label="${esc(e.name)}, ${TYPE_LABEL[t]}, ${DOW_MIN[d]}" onclick="STATE.team[${i}].cond['${t}'][${d}]=${on?0:1}; saveState(); renderAll();">${on?'✓':'✕'}</button></td>`; }).join('')}</tr>`).join('')}
@@ -2372,7 +2458,7 @@ function saveConfig(){
 
 function renderAll(){
   const checks={}; sortedDays().forEach(k=>{ checks[k]=checkDay(k); }); lastChecks=checks;
-  renderEscala(); renderMontar(); renderSundays(); renderPeople(); renderRules(); renderComp(); renderTasksCfg(); renderTeamTable(); renderActiveConstraints(); renderChatSub();
+  renderEscala(); renderMontar(); renderInicio(); renderSundays(); renderPeople(); renderRules(); renderComp(); renderTasksCfg(); renderTeamTable(); renderActiveConstraints(); renderChatSub();
   if(UI.tab==='tab-imprimir') renderPrintView();
 }
 function initUI(){
@@ -2690,7 +2776,7 @@ function renderPeriodGrid(dateList){
   const rows=days.map(k=>{
     const c=STATE.days[k].conf, w=dDow(k);
     const cells=STATE.team.map(e=>{ const x=c.sh[e.id]; const txt=roleLabelTime(x&&works(x.type)?x:null); return txt?`<td>${txt}</td>`:`<td class="pv-off">${x&&x.type==='ferias'?'Férias':'Folga'}</td>`; }).join('');
-    const di=(c.diar||[]).map(x=>`${esc(x.name||'diarista')} <span class="pv-time">${diarTime(w,x.t)}</span>`).join('<br>')||'<span class="pv-off">—</span>';
+    const di=(c.diar||[]).map(x=>`${esc(x.name||'diarista')} <span class="pv-time">${diarHours(w,x)}</span>`).join('<br>')||'<span class="pv-off">—</span>';
     return `<tr><td class="pv-day"><b>${DOW_LABELS[w]}</b><br>${br(k)}${c.holiday?' · feriado':''}</td>${cells}<td>${di}</td></tr>`;
   }).join('');
   box.innerHTML=`<div class="tablewrap"><table class="print-table"><tr><th>Dia</th>${STATE.team.map(e=>`<th>${esc(e.name)}</th>`).join('')}<th>Diaristas</th></tr>${rows}</table></div>`;
