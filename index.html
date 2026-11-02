@@ -326,6 +326,28 @@ table.pdft td.dia{background:#FCE3CC}
   .navbar.scrolled,.tabbar{backdrop-filter:none;-webkit-backdrop-filter:none;background:var(--cell)}
 }
 
+/* ---------- escala enviada no visual do Montar (02/11/2026) ---------- */
+.mqp-block{background:var(--bg);color:var(--label);padding:16px}
+.mqp-block .pdf-week+.pdf-week{margin-top:22px}
+.mqp-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 2px 10px}
+.mqp-h b{font-size:20px;font-weight:700;letter-spacing:-.01em}
+.mqp-h span{font-size:13.5px;color:var(--label-2)}
+.mqp-box{border:1px solid var(--sep);border-radius:12px;overflow:hidden;background:var(--cell)}
+table.mqp{min-width:760px}
+.mq.mqp th,.mq.mqp td{padding:6px 8px}
+.mqp thead th{position:static;color:var(--label);font-size:13px}
+.mqp tbody tr:last-child td{border-bottom:0}
+.mqp th:last-child,.mqp td:last-child{border-right:0}
+.mq.mqp td.mqp-day,.mq.mqp th.mqp-day{white-space:nowrap;min-width:110px;padding-left:12px}
+.mqp-day b{font-weight:600;margin-right:5px}
+.mqp-day .dd{color:var(--label-2)}
+.mqp-tk{display:block;font-size:11px;color:var(--label-2);margin-top:2px}
+.mqp-block th,.mqp-block td,.mqp .mq-chip{text-align:left}
+.mqp-block .mqp-box{background:var(--bg)}
+.mqp .mq-chip.dia{cursor:default;min-width:0}
+.mqp-di{min-width:150px}
+.mqp tr.hol .mqp-day b{color:var(--orange)}
+
 /* ---------- impressão ---------- */
 @media print{
   @page{size:A4 landscape;margin:8mm}
@@ -338,6 +360,8 @@ table.pdft td.dia{background:#FCE3CC}
   .pdf-week:last-child{break-after:auto;page-break-after:auto}
   table.pdft{min-width:0}
   table.pdft td,table.pdft th,.pdf h3{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .mqp-block,.mqp-block *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  table.mqp{min-width:0} .mqp-block{padding:0}
 }
 
 
@@ -2016,17 +2040,19 @@ function renderPrintView(){
   if(!days.length){ box.innerHTML='<div class="emptybox">Nenhum dia confirmado nesse período.</div>'; return; }
   // uma folha por semana (seg–dom) no PDF (20/10/2026); a imagem do WhatsApp leva as semanas empilhadas
   const weeks=[]; days.forEach(k=>{ const m=dMon(k), last=weeks[weeks.length-1]; if(last&&last.m===m) last.ks.push(k); else weeks.push({m,ks:[k]}); });
+  // visual igual ao painel Montar (02/11/2026): tabela clara, etiquetas coloridas por turno, horário sempre escrito
+  const CHIP={abertura:'ab',intermediario:'in',fechamento:'fe',folga:'off',ferias:'fer'};
+  const hr=t=>esc(String(t).replace('–',' – '));
   const row=(k,team)=>{
-    const c=STATE.days[k].conf, w=dDow(k);
-    const cells=team.map((e,i)=>{ const x=c.sh[e.id]; if(!x||x.type==='folga') return '<td class="off">Folga</td>'; if(x.type==='ferias') return '<td class="fer">FÉRIAS</td>'; return `<td class="p${i%6}"><b>${fmtH(x.time||shiftTime(w,x.type))}</b><small>(${TYPE_LABEL[x.type].toLowerCase()})</small></td>`; }).join('');
-    const di=(c.diar||[]).map(x=>fmtH(diarHours(w,x))); const dtxt=di.length?`<td class="dia"><b>${di.join(' / ')}</b></td>`:'<td></td>';
-    // tarefa dentro da célula do dia (20/10/2026): numa coluna solta ela parecia valer para vários dias
-    const tk=taskFor(k);
-    return `<tr><td class="day${w===0?' mon':''}">${DOW_LABELS[w].toLowerCase()} (${br(k)})${c.holiday?'<br>feriado':''}${tk?`<span class="tk">${esc(tk)}</span>`:''}</td>${cells}${dtxt}</tr>`;
+    const c=STATE.days[k].conf, w=dDow(k), tk=taskFor(k), hol=c.holiday||isHoliday(k);
+    const cells=team.map(e=>{ const x=c.sh[e.id]; if(!x) return '<td></td>'; const t=works(x.type)?(x.time||shiftTime(w,x.type)):null;
+      return `<td><span class="mq-chip ${CHIP[x.type]||'off'}">${esc(TYPE_LABEL[x.type]||x.type)}${t?`<small>${hr(t)}</small>`:''}</span></td>`; }).join('');
+    const di=(c.diar||[]).map(x=>`<span class="mq-chip dia">${esc(x.name||'Diarista')}<small>${hr(diarHours(w,x))}</small></span>`).join('');
+    return `<tr class="${w>=5?'we':''}${hol?' hol':''}"><td class="mqp-day"><b>${DOW_LABELS[w].toLowerCase()}</b><span class="dd">${br(k)}</span>${hol?`<span class="mq-hol">${esc(holidayName(k)||'Feriado')}</span>`:''}${tk?`<span class="mqp-tk">${esc(tk)}</span>`:''}</td>${cells}<td class="mqp-di">${di}</td></tr>`;
   };
-  const head=team=>`<tr><th></th>${team.map(e=>`<th>${esc(e.name)}</th>`).join('')}<th>Diaristas</th></tr>`;
-  box.innerHTML=`<div class="pdf pdf-block">${weeks.map(wk=>{ const team=visibleTeam(wk.ks); return `<section class="pdf-week"><h3>ESCALA - Açaí NoKilo - Cruz das Almas (Semana: ${brY(wk.ks[0])} - ${brY(wk.ks[wk.ks.length-1])})</h3>
-    <table class="pdft">${head(team)}${wk.ks.map(k=>row(k,team)).join('')}</table></section>`; }).join('')}</div>`;
+  const head=team=>`<thead><tr><th class="mqp-day">Dia</th>${team.map(e=>`<th>${esc(e.name)}</th>`).join('')}<th>Diaristas</th></tr></thead>`;
+  box.innerHTML=`<div class="pdf pdf-block mqp-block">${weeks.map(wk=>{ const team=visibleTeam(wk.ks); return `<section class="pdf-week"><div class="mqp-h"><b>Escala da semana</b><span>${br(wk.ks[0])} a ${br(wk.ks[wk.ks.length-1])} · Açaí NoKilo · Cruz das Almas</span></div>
+    <div class="mqp-box"><table class="mq mqp">${head(team)}<tbody>${wk.ks.map(k=>row(k,team)).join('')}</tbody></table></div></section>`; }).join('')}</div>`;
   prepareShare(days[0],days[days.length-1]);
   renderSendBox(days);
 }
