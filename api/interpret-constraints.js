@@ -74,7 +74,7 @@ module.exports = async (req, res) => {
     res.status(400).json({ error: 'JSON inválido' });
     return;
   }
-  const { text, today, weekStart, team, diaristaPool, lastConfirmed, nextStart } = body || {};
+  const { text, today, weekStart, team, diaristaPool, lastConfirmed, nextStart, calendar } = body || {};
   if (!text || typeof text !== 'string' || !text.trim()) {
     res.status(400).json({ error: 'texto vazio' });
     return;
@@ -102,7 +102,12 @@ ${teamList}
 Diaristas já conhecidas (use o nome em diaristaName, mesmo se a pessoa mencionada não estiver nesta lista — pode ser uma diarista nova):
 ${diaristaList}
 
+Calendário (data AAAA-MM-DD e dia da semana) — consulte aqui, não calcule:
+${Array.isArray(calendar) ? calendar.slice(0, 60).join('\n') : '(não informado)'}
+
 Regras para interpretar datas:
+- Data escrita no texto (ex: "dia 14/11") vira exatamente essa data (2026-11-14). NUNCA some ou subtraia dias.
+- Em 'note', copie o trecho do texto original com as datas como o usuário escreveu.
 - Se o usuário disser um dia da semana sem data (ex: "segunda"), resolva para a data real mais próxima a partir de hoje/semana de referência.
 - Se disser um intervalo ("de 20 a 27/08"), dateStart e dateEnd cobrem o intervalo inteiro.
 - Se disser só um dia, dateStart = dateEnd.

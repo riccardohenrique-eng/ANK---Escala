@@ -2504,7 +2504,7 @@ function constraintDescribe(c){
   if(c.type==='diarista_limit') return `${c.diaristaName} só disponível ${(c.allowedDows||[]).map(d=>DOW_SHORT[d]).join('/')} — ${range}`;
   return c.note||'(restrição sem descrição)';
 }
-function fmtISO(s){ const d=new Date(s+'T00:00:00'); return fmt(d); }
+function fmtISO(s){ const k=isoPart(s); return k?DOW_MIN[dDow(k)]+' '+br(k):String(s); }
 function mondayOf(dateStr){
   const d=new Date(dateStr+'T00:00:00');
   const day=d.getDay();
@@ -2543,12 +2543,13 @@ async function interpretConstraints(){
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         text,
-        today: iso(new Date()),
+        today: todayISO(),
         weekStart: iso(monday),
         team: STATE.team.map(e=>({id:e.id,name:e.name})),
         diaristaPool: STATE.diaristaPool,
         lastConfirmed: lastConfirmed(),
-        nextStart: nextBuildStart()
+        nextStart: nextBuildStart(),
+        calendar: dRange(todayISO(),dAdd(todayISO(),45)).map(k=>`${k} ${DOW_MIN[dDow(k)]}`)
       })
     });
     if(!res.ok) throw new Error('http '+res.status);
@@ -2562,7 +2563,7 @@ async function interpretConstraints(){
 // Mostra o que a IA entendeu. Se ela não achou o pedido de montagem, tenta ler as datas aqui mesmo.
 function showParsed(text, list, quiet, dropped){
   const status=document.getElementById('constraint-parse-status');
-  const items=list.slice();
+  const items=list.map(fixConstraintDates).filter(Boolean);
   if(!items.some(c=>c.type==='build_range')){ const b=localBuildRange(text); if(b) items.unshift(b); }
   if(!items.length){
     if(quiet) return false;
@@ -2577,6 +2578,31 @@ function showParsed(text, list, quiet, dropped){
 
 // ---------- pedido de montagem ("monta de 10 a 16/11") ----------
 // Não vira restrição guardada: só diz qual período gerar como rascunho.
+// A IA já devolveu datas com 1 dia a mais (07/11: "Alana abre dia 14" virou 15). Quando o trecho
+// original (note) tem datas escritas (14/11, "dias 15 e 16/11"), elas mandam; a IA só vale sem datas no texto.
+function datesInText(t){
+  t=String(t||'').toLowerCase();
+  const today=todayISO(), y=+today.slice(0,4), out=[];
+  const mk=(d,mo)=>{ if(d<1||d>31||mo<1||mo>12) return; let k=`${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`; if(k<dAdd(today,-120)) k=(y+1)+k.slice(4); out.push(k); };
+  t.replace(/((?:\d{1,2}\s*(?:,|e|a|ate|até|-|–)\s*)+)(\d{1,2})\/(\d{1,2})/g,(m,list,d,mo)=>{ (list.match(/\d{1,2}/g)||[]).forEach(x=>mk(+x,+mo)); return m; });
+  t.replace(/(\d{1,2})\/(\d{1,2})/g,(m,d,mo)=>{ mk(+d,+mo); return m; });
+  return [...new Set(out)].sort();
+}
+function isoPart(v){ const m=String(v||'').match(/(\d{4})-(\d{2})-(\d{2})/); return m?m[0]:null; }
+function fixConstraintDates(c){
+  if(!c) return null;
+  const x={...c, dateStart:isoPart(c.dateStart), dateEnd:isoPart(c.dateEnd)};
+  const ds=String(c.note||'').length<=90?datesInText(c.note):[];   // trecho curto = um pedido só
+  if(ds.length&&ds.length<=3&&c.type!=='diarista_limit'){ x.dateStart=ds[0]; x.dateEnd=ds[ds.length-1]; }
+  if(!x.dateStart||!x.dateEnd) return null;
+  if(x.dateEnd<x.dateStart) [x.dateStart,x.dateEnd]=[x.dateEnd,x.dateStart];
+  // dia da semana só faz sentido em período; se não cair em nenhum dia do período, ignora
+  if(x.allowedDows&&x.allowedDows.length&&x.type!=='diarista_limit'){
+    const dows=new Set(dRange(x.dateStart,x.dateEnd).slice(0,7).map(dDow));
+    if(x.dateStart===x.dateEnd||!x.allowedDows.some(d=>dows.has(d))) delete x.allowedDows;
+  }
+  return x;
+}
 function nextBuildStart(){ const lc=lastConfirmed(); return lc?dAdd(lc,1):todayISO(); }
 function localBuildRange(text){
   const t=String(text||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');

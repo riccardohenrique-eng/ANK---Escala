@@ -56,3 +56,35 @@ test('próximo início = dia seguinte ao último confirmado', () => {
   a.__get().days['2026-11-09'] = confirmado(a, '2026-11-09');
   assert.strictEqual(a.nextBuildStart(), '2026-11-10');
 });
+
+test('datas da IA erradas em 1 dia são corrigidas pelo trecho original (caso real 07/11)', () => {
+  const a = loadApp(freshState(loadApp()));
+  a.showTab = () => {};
+  const st = a.__get();
+  st.team.find((e) => e.id === 'marta').saida = '2026-10-31';
+  const mais1 = [
+    { type: 'build_range', dateStart: '2026-11-11', dateEnd: '2026-11-17', note: 'Monta de 10 a 16/11' },
+    { type: 'forced_shift', empId: 'alana', shiftType: 'abertura', dateStart: '2026-11-15', dateEnd: '2026-11-15', note: 'Alana abre dia 14/11' },
+    { type: 'absence', empId: 'alana', dateStart: '2026-11-16', dateEnd: '2026-11-17', note: 'Alana de folga dias 15 e 16/11' },
+    { type: 'absence', empId: 'joeli', dateStart: '2026-11-12T03:00:00Z', dateEnd: '2026-11-12', note: 'Joeli de folga dia 11/11' },
+    { type: 'absence', empId: 'joeli', dateStart: '2026-11-16', dateEnd: '2026-11-16', note: 'Joeli de folga dia 15/11', allowedDows: [0] },
+  ];
+  a.showParsed('x', mais1);
+  a.applyParsedConstraints();
+  const t = (k, id) => st.days[k].draft.sh[id].type;
+  assert.strictEqual(t('2026-11-14', 'alana'), 'abertura');
+  assert.strictEqual(t('2026-11-15', 'alana'), 'folga');
+  assert.strictEqual(t('2026-11-16', 'alana'), 'folga');
+  assert.strictEqual(t('2026-11-11', 'joeli'), 'folga');
+  assert.strictEqual(t('2026-11-15', 'joeli'), 'folga');
+  assert.ok(st.days['2026-11-10'].draft);
+  assert.ok(!st.days['2026-11-17']);
+});
+
+test('lê datas escritas: "dias 15 e 16/11", "de 17 a 30/11", "dia 14/11"', () => {
+  const a = loadApp(freshState(loadApp()));
+  assert.deepStrictEqual([...a.datesInText('folga dias 15 e 16/11')].map((k) => k.slice(5)), ['11-15', '11-16']);
+  assert.deepStrictEqual([...a.datesInText('férias de 17 a 30/11')].map((k) => k.slice(5)), ['11-17', '11-30']);
+  assert.deepStrictEqual([...a.datesInText('abre dia 14/11')].map((k) => k.slice(5)), ['11-14']);
+  assert.strictEqual(a.datesInText('folga toda sexta').length, 0);
+});
