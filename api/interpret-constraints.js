@@ -8,6 +8,15 @@ const checkAccess = require('./_auth');
 
 const GEMINI_MODEL = 'gemini-3.6-flash';
 
+// Mesmas regras de data do app (validISODate em index.html, P0.3 07/11/2026): só AAAA-MM-DD de um dia
+// que existe no calendário, e fim não pode vir antes do início. Nada é corrigido aqui — o que não
+// passa vai para "dropped" e o app mostra ao usuário.
+function validISODate(s) {
+  if (typeof s !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const [y, m, d] = s.split('-').map(Number), t = new Date(Date.UTC(y, m - 1, d));
+  return t.getUTCFullYear() === y && t.getUTCMonth() === m - 1 && t.getUTCDate() === d;
+}
+
 const TOOL_SCHEMA = {
   name: 'return_constraints',
   description: 'Devolve a lista de restrições estruturadas extraídas do texto do usuário.',
@@ -154,7 +163,6 @@ Se o texto tiver várias condições diferentes, gere um item por condição. Se
     }
 
     const validIds = new Set(team.map((e) => e.id));
-    const ISO = /^\d{4}-\d{2}-\d{2}$/;
     // A IA às vezes devolve o nome ("Alana", "Maria José") no lugar do id — aceita os dois.
     const norm = (v) => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
     const byKey = new Map();
@@ -174,11 +182,12 @@ Se o texto tiver várias condições diferentes, gere um item por condição. Se
       return ok;
     });
     function keep(c) {
-      if (!c || !c.dateStart || !c.dateEnd) return false;
-      if (c.type === 'absence' || c.type === 'forced_shift') return validIds.has(c.empId);
-      if (c.type === 'no_pair') return Array.isArray(c.empIds) && c.empIds.length === 2 && c.empIds.every((id) => validIds.has(id));
-      if (c.type === 'diarista_limit') return !!c.diaristaName;
-      if (c.type === 'build_range') return ISO.test(c.dateStart) && ISO.test(c.dateEnd);
+      if (!c || !validISODate(c.dateStart) || !validISODate(c.dateEnd) || c.dateEnd < c.dateStart) return false;
+      if (c.type === 'absence') return validIds.has(c.empId);
+      if (c.type === 'forced_shift') return validIds.has(c.empId) && ['abertura', 'intermediario', 'fechamento'].includes(c.shiftType);
+      if (c.type === 'no_pair') return Array.isArray(c.empIds) && c.empIds.length === 2 && c.empIds.every((id) => validIds.has(id)) && c.empIds[0] !== c.empIds[1];
+      if (c.type === 'diarista_limit') return typeof c.diaristaName === 'string' && !!c.diaristaName.trim();
+      if (c.type === 'build_range') return true;
       return false;
     }
 

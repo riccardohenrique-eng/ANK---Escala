@@ -253,6 +253,17 @@ details.subsec .subsec-body{padding:0 12px 12px}
 .grp .row+.row::before{content:"";position:absolute;top:0;left:16px;right:0;border-top:.5px solid var(--sep)}
 .rlabel{flex:1;min-width:0}
 .flabel{display:block;font-size:13px;color:var(--label-2);text-transform:uppercase;letter-spacing:.02em;margin:22px 16px 7px}
+.prow{align-items:flex-start!important}
+.prow .pt{font-weight:600}
+.prow .pd{color:var(--label-2);font-size:14px;margin-top:2px}
+.prow.need{background:var(--orange-wash)}
+.prow .palert{font-size:14px;margin-top:6px;color:#5B3A0A}
+.prow .perr{font-size:14px;margin-top:6px;color:var(--danger)}
+.prow .pedit{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
+.prow .pedit label{display:flex;gap:6px;align-items:center;font-size:14px}
+.prow .pedit input[type=date]{font:inherit;font-size:15px;padding:6px 8px;border:1px solid var(--sep);border-radius:8px;background:#fff;min-height:36px}
+.prow .plink{border:0;background:none;color:var(--tint);font:inherit;font-size:14px;padding:6px 0;margin-top:2px;cursor:pointer}
+.prow .pok{font:inherit;font-size:14px;padding:7px 12px;border-radius:8px;border:1px solid var(--sep);background:#fff;cursor:pointer;min-height:36px}
 .chatpreview{background:var(--cell);border-radius:12px;padding:12px 14px;margin-top:12px;font-size:15px}
 table.sun th,table.sun td{text-align:center;padding:10px 6px}
 table.sun th:first-child,table.sun td:first-child{text-align:left;padding-left:16px}
@@ -795,6 +806,7 @@ table.iw tr{cursor:pointer} table.iw tr.today td{background:var(--tint-wash)}
       <div class="tablewrap"><table class="team-cfg" id="team-table"></table></div>
       <button class="btn block" style="margin-top:10px" onclick="addEmployee()">Adicionar funcionária</button>
       <p class="foot">Sincronizado entre aparelhos · Açaí No Kilo — Cruz das Almas/BA</p>
+      <div class="group-f" id="app-version" style="text-align:center;margin-top:28px"></div>
     </section>
   </main>
 </div>
@@ -869,8 +881,9 @@ table.iw tr{cursor:pointer} table.iw tr.today td{background:var(--tint-wash)}
     <div id="constraint-review" style="display:none">
       <div class="group-h">Confira antes de aplicar</div>
       <div class="grp" id="constraint-review-list"></div>
+      <div class="group-f" id="constraint-review-hint" style="margin:8px 4px 0"></div>
       <div class="btn-row">
-        <button class="btn fill" onclick="applyParsedConstraints()">Aplicar</button>
+        <button class="btn fill" id="constraint-apply-btn" onclick="applyParsedConstraints()">Aplicar</button>
         <button class="btn plain" onclick="discardParsedConstraints()">Descartar</button>
       </div>
     </div>
@@ -966,6 +979,8 @@ if('serviceWorker' in navigator){ navigator.serviceWorker.register('/sw.js').cat
 // e o servidor recusa gravação que diminua o número de dias confirmados (api/state.js).
 const STORE_KEY='ank_escala_v1';
 const SCHEMA=2;
+// Versão do código (sobe a cada mudança publicada). Em Ajustes; fora do endereço oficial aparece "cópia local".
+const APP_VERSION='2026.11.07-p03';
 const DOW_LABELS=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
 const DOW_SHORT=['SEG','TER','QUA','QUI','SEX','SÁB','DOM'];
 const DOW_MIN=['seg','ter','qua','qui','sex','sáb','dom'];
@@ -2487,22 +2502,32 @@ function renderAll(){
   renderEscala(); renderMontar(); renderInicio(); renderSundays(); renderPeople(); renderRules(); renderComp(); renderTasksCfg(); renderTeamTable(); renderActiveConstraints(); renderChatSub();
   if(UI.tab==='tab-imprimir') renderPrintView();
 }
+function renderVersion(){
+  const el=document.getElementById('app-version'); if(!el) return;
+  const oficial=location.hostname==='ank-escala.vercel.app';
+  el.textContent=`Versão ${APP_VERSION}${oficial?'':' · cópia local, não publicada'}`;
+}
 function initUI(){
   applyTheme();
+  renderVersion();
   document.querySelectorAll('.sheet').forEach(wireSheetDrag);
   wireDaySwipe();
   observeTitle();
 }
 
 function constraintDescribe(c){
+  // Saída vai para innerHTML: tudo que vem da IA ou do usuário passa por esc().
   const range = c.dateStart===c.dateEnd? fmtISO(c.dateStart) : fmtISO(c.dateStart)+'–'+fmtISO(c.dateEnd);
-  const dowSuffix = (c.allowedDows&&c.allowedDows.length) ? ` (só ${c.allowedDows.map(d=>DOW_SHORT[d]).join('/')})` : '';
-  if(c.type==='absence') return `${empName(c.empId)} ausente ${range}${dowSuffix}`;
-  if(c.type==='forced_shift') return `${empName(c.empId)} precisa estar em ${TYPE_LABEL[c.shiftType]||c.shiftType} — ${range}${dowSuffix}`;
-  if(c.type==='no_pair') return `${empName(c.empIds[0])} e ${empName(c.empIds[1])} não podem trabalhar juntas — ${range}`;
-  if(c.type==='build_range') return `Montar rascunho de ${br(c.dateStart)} a ${br(c.dateEnd)} (${dRange(...buildRangeClamp(c.dateStart,c.dateEnd)).length} dias)`;
-  if(c.type==='diarista_limit') return `${c.diaristaName} só disponível ${(c.allowedDows||[]).map(d=>DOW_SHORT[d]).join('/')} — ${range}`;
-  return c.note||'(restrição sem descrição)';
+  const dowSuffix = (Array.isArray(c.allowedDows)&&c.allowedDows.length) ? ` (só ${c.allowedDows.map(d=>DOW_SHORT[d]||'?').join('/')})` : '';
+  const pair = Array.isArray(c.empIds)?c.empIds:[];
+  let t;
+  if(c.type==='absence') t=`${empName(c.empId)} ausente ${range}${dowSuffix}`;
+  else if(c.type==='forced_shift') t=`${empName(c.empId)} precisa estar em ${TYPE_LABEL[c.shiftType]||c.shiftType} — ${range}${dowSuffix}`;
+  else if(c.type==='no_pair') t=`${empName(pair[0])} e ${empName(pair[1])} não podem trabalhar juntas — ${range}`;
+  else if(c.type==='build_range') t=`Montar rascunho de ${br(c.dateStart)} a ${br(c.dateEnd)}`;
+  else if(c.type==='diarista_limit') t=`${c.diaristaName} só disponível ${(c.allowedDows||[]).map(d=>DOW_SHORT[d]||'?').join('/')} — ${range}`;
+  else t=c.note||'(restrição sem descrição)';
+  return esc(t);
 }
 function fmtISO(s){ const k=isoPart(s); return k?DOW_MIN[dDow(k)]+' '+br(k):String(s); }
 function mondayOf(dateStr){
@@ -2554,54 +2579,90 @@ async function interpretConstraints(){
     });
     if(!res.ok) throw new Error('http '+res.status);
     const data = await res.json();
-    showParsed(text, data.constraints||[], false, data.dropped||[]);
+    try{ showParsed(text, data.constraints||[], false, data.dropped||[]); }
+    catch(e){ pendingParsed=[]; renderParsedReview(); status.innerHTML=`<div class="banner danger"><span class="ic">${ICON_ALERT}</span>A IA respondeu, mas não consegui montar a conferência deste texto. Seu texto continua na caixa: tente escrever um pedido por frase.</div>`; }
   }catch(err){
     if(showParsed(text, [], true)) return;
     status.innerHTML = `<div class="banner danger"><span class="ic">${ICON_ALERT}</span>Não consegui falar com a IA agora. Confira a internet e tente de novo.</div>${buildOfferHTML()}`;
   }
 }
 // Mostra o que a IA entendeu. Se ela não achou o pedido de montagem, tenta ler as datas aqui mesmo.
+let parseHadRejects=false;   // se algo do texto foi recusado, o texto fica na caixa depois de aplicar
 function showParsed(text, list, quiet, dropped){
   const status=document.getElementById('constraint-parse-status');
-  const items=list.map(fixConstraintDates).filter(Boolean);
-  if(!items.some(c=>c.type==='build_range')){ const b=localBuildRange(text); if(b) items.unshift(b); }
+  const rejected=(dropped||[]).map(String), items=[];
+  (list||[]).forEach(c=>{ const r=checkConstraint(c); if(r.ok) items.push({...r.item,_alerts:r.alerts}); else rejected.push(r.why); });
+  if(!items.some(c=>c.type==='build_range')){ const b=localBuildRange(text); if(b){ const r=checkConstraint(b); if(r.ok) items.unshift({...r.item,_alerts:r.alerts}); } }
+  parseHadRejects=rejected.length>0;
+  const rejHTML=rejected.length?'<div class="banner danger"><span class="ic">'+ICON_ALERT+'</span><div>Não consegui usar com segurança:<ul style="margin:4px 0 0;padding-left:18px">'+rejected.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>O seu texto continua na caixa: corrija essa parte e toque em Interpretar de novo.</div></div>':'';
   if(!items.length){
-    if(quiet) return false;
-    status.innerHTML='<p class="hint">Não entendi nenhum pedido nesse texto. Escreva nome + o que muda + data (ex.: "Joeli de folga dia 12/11"), ou peça "monta de 10 a 16/11".</p>'+buildOfferHTML();
+    if(quiet&&!rejected.length) return false;
+    pendingParsed=[]; renderParsedReview();
+    status.innerHTML=rejHTML+(rejected.length?'':'<p class="hint">Não entendi nenhum pedido nesse texto. Escreva nome + o que muda + data (ex.: "Joeli de folga dia 12/11"), ou peça "monta de 10 a 16/11".</p>')+buildOfferHTML();
     return true;
   }
   pendingParsed = items.map(c=>({...c, id:'c'+Date.now()+Math.floor(Math.random()*100000)}));
   renderParsedReview();
-  status.innerHTML = (dropped&&dropped.length) ? '<div class="banner danger"><span class="ic">'+ICON_ALERT+'</span>Não entendi: '+dropped.map(esc).join(' · ')+'. Escreva de novo só essa parte.</div>' : '';
+  status.innerHTML = rejHTML;
   return true;
 }
 
 // ---------- pedido de montagem ("monta de 10 a 16/11") ----------
 // Não vira restrição guardada: só diz qual período gerar como rascunho.
-// A IA já devolveu datas com 1 dia a mais (07/11: "Alana abre dia 14" virou 15). Quando o trecho
-// original (note) tem datas escritas (14/11, "dias 15 e 16/11"), elas mandam; a IA só vale sem datas no texto.
+// Datas escritas num trecho de texto (14/11, "dias 15 e 16/11", "de 17 a 30/11"). Só servem para AVISAR
+// divergência na conferência — nunca trocam nem ampliam o período do pedido (P0.3, 07/11/2026: o trecho
+// real de um pedido continha datas de outro pedido; trocar automaticamente transformaria folga em férias).
 function datesInText(t){
   t=String(t||'').toLowerCase();
   const today=todayISO(), y=+today.slice(0,4), out=[];
   const mk=(d,mo)=>{ if(d<1||d>31||mo<1||mo>12) return; let k=`${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`; if(k<dAdd(today,-120)) k=(y+1)+k.slice(4); out.push(k); };
-  t.replace(/((?:\d{1,2}\s*(?:,|e|a|ate|até|-|–)\s*)+)(\d{1,2})\/(\d{1,2})/g,(m,list,d,mo)=>{ (list.match(/\d{1,2}/g)||[]).forEach(x=>mk(+x,+mo)); return m; });
+  t.replace(/(^|[^\d\/])((?:\d{1,2}\s*(?:,|e|a|ate|até|-|–)\s*)+)(\d{1,2})\/(\d{1,2})/g,(m,pre,list,d,mo)=>{ (list.match(/\d{1,2}/g)||[]).forEach(x=>mk(+x,+mo)); return m; });
   t.replace(/(\d{1,2})\/(\d{1,2})/g,(m,d,mo)=>{ mk(+d,+mo); return m; });
   return [...new Set(out)].sort();
 }
 function isoPart(v){ const m=String(v||'').match(/(\d{4})-(\d{2})-(\d{2})/); return m?m[0]:null; }
-function fixConstraintDates(c){
-  if(!c) return null;
-  const x={...c, dateStart:isoPart(c.dateStart), dateEnd:isoPart(c.dateEnd)};
-  const ds=String(c.note||'').length<=90?datesInText(c.note):[];   // trecho curto = um pedido só
-  if(ds.length&&ds.length<=3&&c.type!=='diarista_limit'){ x.dateStart=ds[0]; x.dateEnd=ds[ds.length-1]; }
-  if(!x.dateStart||!x.dateEnd) return null;
-  if(x.dateEnd<x.dateStart) [x.dateStart,x.dateEnd]=[x.dateEnd,x.dateStart];
-  // dia da semana só faz sentido em período; se não cair em nenhum dia do período, ignora
-  if(x.allowedDows&&x.allowedDows.length&&x.type!=='diarista_limit'){
-    const dows=new Set(dRange(x.dateStart,x.dateEnd).slice(0,7).map(dDow));
-    if(x.dateStart===x.dateEnd||!x.allowedDows.some(d=>dows.has(d))) delete x.allowedDows;
+// ---------- conferência dos pedidos (P0.3, 07/11/2026) ----------
+// A data que a IA devolve é a data do pedido. Nada é trocado ou ampliado automaticamente: data inválida
+// ou fim antes do início é recusado; divergência com as datas do texto vira alerta que exige conferência.
+// Mesmas regras de data em api/interpret-constraints.js (validISODate).
+const REQ_TYPES=['absence','forced_shift','no_pair','diarista_limit','build_range'];
+function validISODate(s){
+  if(typeof s!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const [y,m,d]=s.split('-').map(Number), t=new Date(Date.UTC(y,m-1,d));
+  return t.getUTCFullYear()===y&&t.getUTCMonth()===m-1&&t.getUTCDate()===d;
+}
+function spanDays(a,b){ return Math.round((dD(b)-dD(a))/864e5)+1; }
+// Mesma regra do gerador (absenceType): até 3 dias é folga; mais longo é férias/afastamento.
+function absenceKind(c){ return (dD(c.dateEnd)-dD(c.dateStart))/864e5<3?'folga':'ferias'; }
+function checkConstraint(c){
+  if(!c||typeof c!=='object') return {ok:false,why:'pedido vazio'};
+  const quem=c.note?`"${String(c.note).slice(0,60)}"`:'Um pedido';
+  if(!REQ_TYPES.includes(c.type)) return {ok:false,why:`${quem}: tipo de pedido desconhecido`};
+  if(!validISODate(c.dateStart)||!validISODate(c.dateEnd)) return {ok:false,why:`${quem}: data inválida ou incompleta`};
+  if(c.dateEnd<c.dateStart) return {ok:false,why:`${quem}: a data final vem antes da inicial`};
+  const isEmp=id=>typeof id==='string'&&!!empById(id);
+  if((c.type==='absence'||c.type==='forced_shift')&&!isEmp(c.empId)) return {ok:false,why:`${quem}: não deu para saber de qual pessoa é o pedido`};
+  if(c.type==='forced_shift'&&!SHIFTS.includes(c.shiftType)) return {ok:false,why:`${quem}: turno não reconhecido`};
+  if(c.type==='no_pair'&&!(Array.isArray(c.empIds)&&c.empIds.length===2&&c.empIds.every(isEmp)&&c.empIds[0]!==c.empIds[1])) return {ok:false,why:`${quem}: não deu para saber quais duas pessoas`};
+  if(c.type==='diarista_limit'&&!(typeof c.diaristaName==='string'&&c.diaristaName.trim())) return {ok:false,why:`${quem}: não deu para saber qual diarista`};
+  const x={...c}, alerts=[];
+  if(x.allowedDows!=null){
+    x.allowedDows=Array.isArray(x.allowedDows)?x.allowedDows.filter(d=>Number.isInteger(d)&&d>=0&&d<=6):[];
+    if(x.allowedDows.length&&x.type!=='diarista_limit'){
+      const dows=new Set(); for(let k=x.dateStart,i=0;k<=x.dateEnd&&i<7;k=dAdd(k,1),i++) dows.add(dDow(k));
+      if(!x.allowedDows.some(d=>dows.has(d))) alerts.push(`Os dias da semana do pedido (${x.allowedDows.map(d=>DOW_MIN[d]).join('/')}) não caem nesse período.`);
+    }
   }
-  return x;
+  const nd=datesInText(x.note);
+  if(nd.length&&(nd.some(k=>k<x.dateStart||k>x.dateEnd)||!nd.includes(x.dateStart)||!nd.includes(x.dateEnd)))
+    alerts.push(`O texto cita ${nd.map(fmtISO).join(', ')}, mas o pedido ficou ${x.dateStart===x.dateEnd?'em '+fmtISO(x.dateStart):'de '+fmtISO(x.dateStart)+' a '+fmtISO(x.dateEnd)}. Confira as datas.`);
+  // Ausência: a categoria é automática (regra do gerador: 4 dias ou mais = Férias). Sempre pede confirmação.
+  if(x.type==='absence'){
+    const n=spanDays(x.dateStart,x.dateEnd);
+    if(absenceKind(x)==='ferias') alerts.push({k:'cat',t:`Pela regra atual, ausência de 4 dias ou mais vira Férias na escala: aqui são ${n} dias (${fmtISO(x.dateStart)} a ${fmtISO(x.dateEnd)}). Confirme se é isso mesmo.`});
+    if(n>14) alerts.push({k:'longo',t:`Período longo: ${n} dias${x.allowedDows&&x.allowedDows.length?` (vale só ${x.allowedDows.map(d=>DOW_MIN[d]).join('/')} dentro dele)`:''}. Confira o primeiro e o último dia antes de aplicar.`});
+  }
+  return {ok:true,item:x,alerts:alerts.map(a=>typeof a==='string'?{k:'texto',t:a}:a)};
 }
 function nextBuildStart(){ const lc=lastConfirmed(); return lc?dAdd(lc,1):todayISO(); }
 function localBuildRange(text){
@@ -2623,16 +2684,57 @@ function buildFrom(f,t){
   generateRange(f,t); saveState(); closeSheet(); mqGoto(f); if(dAdd(MQ.start,13)<t){ MQ.start=dMon(f); renderAll(); }
   toast(free?`Rascunho de ${br(f)} a ${br(t)} pronto. Confira o assessor e confirme.`:`De ${br(f)} a ${br(t)} já está tudo confirmado. Para mudar, toque no dia.`);
 }
+// Quem, o quê (Folga/Férias com duração), de quando a quando — sem confiar cegamente na IA.
+function reviewTitle(c){
+  const n=spanDays(c.dateStart,c.dateEnd), dias=`${n} dia${n>1?'s':''}`;
+  const dw=(c.allowedDows&&c.allowedDows.length)?` · só ${c.allowedDows.map(d=>DOW_MIN[d]).join('/')}`:'';
+  if(c.type==='absence') return `${empName(c.empId)} — ${absenceKind(c)==='folga'?'Folga':'Férias'} (${dias})${dw}`;
+  if(c.type==='forced_shift') return `${empName(c.empId)} — precisa estar em ${TYPE_LABEL[c.shiftType]||c.shiftType}${dw}`;
+  if(c.type==='no_pair') return `${empName(c.empIds[0])} e ${empName(c.empIds[1])} — não podem trabalhar juntas`;
+  if(c.type==='diarista_limit') return `${c.diaristaName} — só ${(c.allowedDows||[]).map(d=>DOW_MIN[d]).join('/')}`;
+  if(c.type==='build_range') return `Montar rascunho (${dias})`;
+  return c.note||'Pedido';
+}
+function pendingNeedsCheck(c){ return !!(c._err||((c._alerts||[]).length&&!c._ok)); }
 function renderParsedReview(){
   const wrap=document.getElementById('constraint-review');
   const list=document.getElementById('constraint-review-list');
   if(!pendingParsed.length){ wrap.style.display='none'; return; }
   wrap.style.display='';
-  list.innerHTML = pendingParsed.map(c=>`
-    <div class="row">
-      <span class="rlabel">${constraintDescribe(c)}</span>
-      <button class="iconbtn" title="Remover desta leva" onclick="removePending('${c.id}')">&times;</button>
-    </div>`).join('');
+  list.innerHTML = pendingParsed.map(c=>{
+    const need=pendingNeedsCheck(c), open=need||c._edit, id=esc(c.id);
+    const dates=c.dateStart===c.dateEnd?fmtISO(c.dateStart):`${fmtISO(c.dateStart)} a ${fmtISO(c.dateEnd)}`;
+    return `<div class="row prow${need?' need':''}">
+      <div class="rlabel">
+        <div class="pt">${esc(reviewTitle(c))}</div>
+        <div class="pd">${dates}${c._manual?' · ajustado por você':(c._ok?' · conferido por você':'')}</div>
+        ${(c._alerts||[]).map(a=>`<div class="palert">${esc(a.t)}</div>`).join('')}
+        ${c._err?`<div class="perr">${esc(c._err)}</div>`:''}
+        ${open?`<div class="pedit">
+          <label>De <input type="date" value="${esc(c.dateStart)}" aria-label="Data inicial" onchange="editPendingDate('${id}','dateStart',this.value)"></label>
+          <label>Até <input type="date" value="${esc(c.dateEnd)}" aria-label="Data final" onchange="editPendingDate('${id}','dateEnd',this.value)"></label>
+          ${need&&!c._err?`<button class="pok" onclick="okPending('${id}')">Está certo</button>`:''}
+        </div>`:`<button class="plink" onclick="openPendingEdit('${id}')">Editar datas</button>`}
+      </div>
+      <button class="iconbtn" title="Remover desta leva" aria-label="Remover este pedido" onclick="removePending('${id}')">&times;</button>
+    </div>`;
+  }).join('');
+  const pend=pendingParsed.filter(pendingNeedsCheck).length;
+  const btn=document.getElementById('constraint-apply-btn'); if(btn) btn.disabled=pend>0;
+  const hint=document.getElementById('constraint-review-hint');
+  if(hint) hint.textContent=pend?`Confira ${pend===1?'o item marcado':'os '+pend+' itens marcados'}: corrija as datas, toque em "Está certo" ou remova. Depois, Aplicar.`:'';
+}
+function findPending(id){ return pendingParsed.find(c=>c.id===id); }
+function openPendingEdit(id){ const c=findPending(id); if(c){ c._edit=true; renderParsedReview(); } }
+function okPending(id){ const c=findPending(id); if(c&&!c._err){ c._ok=true; renderParsedReview(); } }
+// Correção manual: a data digitada vale; se ficar inválida, o item segue bloqueado até corrigir.
+function editPendingDate(id,field,val){
+  const c=findPending(id); if(!c) return;
+  c[field]=val; c._edit=true;
+  const r=checkConstraint(c);
+  if(!r.ok){ c._err=r.why.replace(/^.*?: /,'Datas: '); }
+  else { delete c._err; c.allowedDows=r.item.allowedDows; c._alerts=r.alerts; c._manual=true; c._ok=!r.alerts.some(a=>a.k==='cat'||a.k==='longo'); }
+  renderParsedReview();
 }
 function removePending(id){ pendingParsed=pendingParsed.filter(c=>c.id!==id); renderParsedReview(); }
 function discardParsedConstraints(){
@@ -2643,11 +2745,14 @@ function discardParsedConstraints(){
 }
 function applyParsedConstraints(){
   if(!pendingParsed.length) return;
-  const builds=pendingParsed.filter(c=>c.type==='build_range');
-  const reqs=pendingParsed.filter(c=>c.type!=='build_range');
+  if(pendingParsed.some(pendingNeedsCheck)){ renderParsedReview(); toast('Confira os itens marcados antes de aplicar.'); return; }
+  const clean=pendingParsed.map(({_alerts,_ok,_edit,_err,_manual,...c})=>c);   // campos de tela não vão para os dados
+  const builds=clean.filter(c=>c.type==='build_range');
+  const reqs=clean.filter(c=>c.type!=='build_range');
   STATE.constraints = (STATE.constraints||[]).concat(reqs);
   pendingParsed=[];
-  document.getElementById('constraint-input').value='';
+  if(!parseHadRejects) document.getElementById('constraint-input').value='';
+  parseHadRejects=false;
   const p=pendingDays();
   if(reqs.length&&p.length) generateRange(p[0],p[p.length-1]);   // pedidos novos refazem o rascunho que já existe
   saveState();

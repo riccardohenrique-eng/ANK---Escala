@@ -19,7 +19,7 @@ function loadApp(state) {
   const html = fs.readFileSync(appFile(), 'utf8');
   let code = html.match(/<script>([\s\S]*?)<\/script>/)[1];
   code = code.replace(/\ninit\(\);\s*$/, '\n') +
-    '\nthis.__get=()=>STATE; this.__set=s=>{STATE=normalizeState(s);};';
+    '\nthis.__get=()=>STATE; this.__set=s=>{STATE=normalizeState(s);}; this.__pending=()=>pendingParsed; this.parseHadRejectsNow=()=>parseHadRejects;';
   const store = {};
   const sb = {
     console, Date, Math, JSON, Object, Array, String, Number, Set, Map, Promise,
