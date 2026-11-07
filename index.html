@@ -863,7 +863,7 @@ table.iw tr{cursor:pointer} table.iw tr.today td{background:var(--tint-wash)}
   <div class="grab"></div>
   <div class="sh"><h2 id="sh-pedidos-t">Férias e pedidos</h2><button class="close" onclick="closeSheet()">OK</button></div>
   <div class="sb">
-    <textarea id="constraint-input" rows="3" placeholder="Ex.: Joeli de férias de 10 a 20/11. Alana não pode na sexta 17/10."></textarea>
+    <textarea id="constraint-input" rows="3" placeholder="Ex.: Monta de 10 a 16/11. Joeli de folga dia 12. Alana não pode na sexta."></textarea>
     <div class="btn-row"><button class="btn fill" onclick="interpretConstraints()">Interpretar com IA</button></div>
     <div id="constraint-parse-status"></div>
     <div id="constraint-review" style="display:none">
@@ -2500,6 +2500,7 @@ function constraintDescribe(c){
   if(c.type==='absence') return `${empName(c.empId)} ausente ${range}${dowSuffix}`;
   if(c.type==='forced_shift') return `${empName(c.empId)} precisa estar em ${TYPE_LABEL[c.shiftType]||c.shiftType} — ${range}${dowSuffix}`;
   if(c.type==='no_pair') return `${empName(c.empIds[0])} e ${empName(c.empIds[1])} não podem trabalhar juntas — ${range}`;
+  if(c.type==='build_range') return `Montar rascunho de ${br(c.dateStart)} a ${br(c.dateEnd)} (${dRange(...buildRangeClamp(c.dateStart,c.dateEnd)).length} dias)`;
   if(c.type==='diarista_limit') return `${c.diaristaName} só disponível ${(c.allowedDows||[]).map(d=>DOW_SHORT[d]).join('/')} — ${range}`;
   return c.note||'(restrição sem descrição)';
 }
@@ -2545,21 +2546,56 @@ async function interpretConstraints(){
         today: iso(new Date()),
         weekStart: iso(monday),
         team: STATE.team.map(e=>({id:e.id,name:e.name})),
-        diaristaPool: STATE.diaristaPool
+        diaristaPool: STATE.diaristaPool,
+        lastConfirmed: lastConfirmed(),
+        nextStart: nextBuildStart()
       })
     });
     if(!res.ok) throw new Error('http '+res.status);
     const data = await res.json();
-    if(!data.constraints || !data.constraints.length){
-      status.innerHTML='<p class="hint">A IA não encontrou nenhuma restrição clara nesse texto. Tente ser mais específico (nome + o que muda + data).</p>';
-      return;
-    }
-    pendingParsed = data.constraints.map(c=>({...c, id:'c'+Date.now()+Math.floor(Math.random()*1000)}));
-    renderParsedReview();
-    status.innerHTML='';
+    showParsed(text, data.constraints||[]);
   }catch(err){
-    status.innerHTML = `<div class="banner danger"><span class="ic">${ICON_ALERT}</span>Não consegui interpretar agora — esse recurso só funciona publicado em ank-escala.vercel.app (precisa da função de servidor com a chave da IA configurada). Você pode remover essa seção do relato e tentar de novo lá.</div>`;
+    if(showParsed(text, [], true)) return;
+    status.innerHTML = `<div class="banner danger"><span class="ic">${ICON_ALERT}</span>Não consegui falar com a IA agora. Confira a internet e tente de novo.</div>${buildOfferHTML()}`;
   }
+}
+// Mostra o que a IA entendeu. Se ela não achou o pedido de montagem, tenta ler as datas aqui mesmo.
+function showParsed(text, list, quiet){
+  const status=document.getElementById('constraint-parse-status');
+  const items=list.slice();
+  if(!items.some(c=>c.type==='build_range')){ const b=localBuildRange(text); if(b) items.unshift(b); }
+  if(!items.length){
+    if(quiet) return false;
+    status.innerHTML='<p class="hint">Não entendi nenhum pedido nesse texto. Escreva nome + o que muda + data (ex.: "Joeli de folga dia 12/11"), ou peça "monta de 10 a 16/11".</p>'+buildOfferHTML();
+    return true;
+  }
+  pendingParsed = items.map(c=>({...c, id:'c'+Date.now()+Math.floor(Math.random()*100000)}));
+  renderParsedReview();
+  status.innerHTML='';
+  return true;
+}
+
+// ---------- pedido de montagem ("monta de 10 a 16/11") ----------
+// Não vira restrição guardada: só diz qual período gerar como rascunho.
+function nextBuildStart(){ const lc=lastConfirmed(); return lc?dAdd(lc,1):todayISO(); }
+function localBuildRange(text){
+  const t=String(text||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  if(!/\b(mont|ger[ae]|sugest)/.test(t)) return null;
+  const m=t.match(/(\d{1,2})(?:\/(\d{1,2}))?\s*(?:a|ate|-|–)\s*(?:o\s+)?(?:dia\s+)?(\d{1,2})\/(\d{1,2})/);
+  if(!m) return null;
+  const today=todayISO(), y=+today.slice(0,4);
+  const mk=(d,mo)=>{ let k=`${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`; if(k<dAdd(today,-120)) k=(y+1)+k.slice(4); return k; };
+  const f=mk(+m[1],+(m[2]||m[4])), to=mk(+m[3],+m[4]);
+  if(isNaN(Date.parse(f))||isNaN(Date.parse(to))) return null;
+  return {type:'build_range',dateStart:f<=to?f:to,dateEnd:f<=to?to:f,note:m[0]};
+}
+function buildRangeClamp(a,b){ if(b<a) [a,b]=[b,a]; if(dRange(a,b).length>62) b=dAdd(a,61); return [a,b]; }
+function buildOfferHTML(){ const s=nextBuildStart(); return `<div class="btn-row"><button class="btn" onclick="buildFrom('${s}','${dAdd(s,6)}')">Montar ${br(s)} a ${br(dAdd(s,6))}</button></div>`; }
+function buildFrom(f,t){
+  [f,t]=buildRangeClamp(f,t);
+  const free=dRange(f,t).filter(k=>!(STATE.days[k]&&STATE.days[k].conf)).length;
+  generateRange(f,t); saveState(); closeSheet(); renderAll(); mqGoto(f);
+  toast(free?`Rascunho de ${br(f)} a ${br(t)} pronto. Confira o assessor e confirme.`:`De ${br(f)} a ${br(t)} já está tudo confirmado. Para mudar, toque no dia.`);
 }
 function renderParsedReview(){
   const wrap=document.getElementById('constraint-review');
@@ -2581,14 +2617,24 @@ function discardParsedConstraints(){
 }
 function applyParsedConstraints(){
   if(!pendingParsed.length) return;
-  STATE.constraints = (STATE.constraints||[]).concat(pendingParsed);
+  const builds=pendingParsed.filter(c=>c.type==='build_range');
+  const reqs=pendingParsed.filter(c=>c.type!=='build_range');
+  STATE.constraints = (STATE.constraints||[]).concat(reqs);
   pendingParsed=[];
+  document.getElementById('constraint-input').value='';
+  const p=pendingDays();
+  if(reqs.length&&p.length) generateRange(p[0],p[p.length-1]);   // pedidos novos refazem o rascunho que já existe
   saveState();
+  if(builds.length){                                                // e o período pedido é montado por cima
+    const f=builds.map(b=>b.dateStart).sort()[0], t=builds.map(b=>b.dateEnd).sort().slice(-1)[0];
+    buildFrom(f,t); return;
+  }
   renderActiveConstraints();
   renderParsedReview();
-  document.getElementById('constraint-input').value='';
-  document.getElementById('constraint-parse-status').innerHTML='<div class="banner ok"><span class="ic">'+ICON_CHECK+'</span>Pedido aplicado. O rascunho foi refeito com ele; dias confirmados não mudam.</div>';
-  const p=pendingDays(); if(p.length){ generateRange(p[0],p[p.length-1]); saveState(); }
+  const st=document.getElementById('constraint-parse-status');
+  st.innerHTML = p.length
+    ? '<div class="banner ok"><span class="ic">'+ICON_CHECK+'</span>Pedido aplicado. O rascunho de '+br(p[0])+' a '+br(p[p.length-1])+' foi refeito com ele; dias confirmados não mudam.</div>'
+    : '<div class="banner ok"><span class="ic">'+ICON_CHECK+'</span>Pedido guardado. Ainda não há rascunho para refazer: ele vai valer quando você montar o período.</div>'+buildOfferHTML();
   renderAll();
 }
 

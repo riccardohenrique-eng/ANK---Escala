@@ -21,12 +21,13 @@ const TOOL_SCHEMA = {
           properties: {
             type: {
               type: 'STRING',
-              enum: ['absence', 'forced_shift', 'no_pair', 'diarista_limit'],
+              enum: ['absence', 'forced_shift', 'no_pair', 'diarista_limit', 'build_range'],
               description:
                 "'absence': funcionária fixa ausente (férias/folga pedida/falta) por um período — todo dia do período, ou só em certos dias da semana se allowedDows for usado (ex: 'de folga toda sexta até o fim do mês'). " +
                 "'forced_shift': funcionária fixa precisa estar num turno específico (abertura/fechamento/intermediario) em cada dia do período, ou só em certos dias da semana se allowedDows for usado (ex: 'sempre em abertura às segundas até dezembro'). " +
                 "'no_pair': duas funcionárias fixas não podem trabalhar juntas (mesma abertura ou mesmo fechamento) no período. " +
-                "'diarista_limit': uma diarista só pode ser escalada em certos dias da semana dentro do período."
+                "'diarista_limit': uma diarista só pode ser escalada em certos dias da semana dentro do período. " +
+                "'build_range': o usuário pede para MONTAR/GERAR/FAZER a escala (rascunho) de um período — não é restrição sobre pessoa; use só dateStart/dateEnd."
             },
             empId: { type: 'STRING', description: "usar para 'absence' e 'forced_shift' — id exato de uma das funcionárias fixas fornecidas" },
             empIds: {
@@ -73,7 +74,7 @@ module.exports = async (req, res) => {
     res.status(400).json({ error: 'JSON inválido' });
     return;
   }
-  const { text, today, weekStart, team, diaristaPool } = body || {};
+  const { text, today, weekStart, team, diaristaPool, lastConfirmed, nextStart } = body || {};
   if (!text || typeof text !== 'string' || !text.trim()) {
     res.status(400).json({ error: 'texto vazio' });
     return;
@@ -91,6 +92,8 @@ O usuário (dono/gestor) escreve em português coloquial condições sobre a equ
 
 Data de hoje: ${today || '(não informada)'}
 Segunda-feira da semana que o usuário está editando agora: ${weekStart || '(não informada)'}
+Último dia com escala já confirmada: ${lastConfirmed || '(nenhum)'}
+Primeiro dia ainda sem escala: ${nextStart || '(não informado)'}
 Convenção de dia da semana (dow): 0=segunda, 1=terça, 2=quarta, 3=quinta, 4=sexta, 5=sábado, 6=domingo.
 
 Funcionárias fixas (use o id exato em empId/empIds):
@@ -107,6 +110,12 @@ Regras para interpretar datas:
 - Nunca invente ano — use o ano da data de hoje, a menos que o texto diga outro.
 - Ausência/falta/férias/folga pedida → sempre type 'absence' (não diferenciamos o motivo na estrutura, mas pode citar o motivo em note).
 - Se o pedido for recorrente por dia da semana dentro de um período (ex: "de folga toda sexta até o fim do mês", "sempre em abertura às segundas até dezembro"), use dateStart/dateEnd cobrindo o período inteiro E preencha allowedDows só com o(s) dia(s) da semana mencionado(s) — não gere um item separado por ocorrência.
+
+Pedido para montar a escala:
+- "monta de 10 a 16/11", "montagem a partir de 10/11 até 16/11", "gera a escala da semana que vem", "faz a próxima quinzena" → type 'build_range' com dateStart/dateEnd do período pedido (note = trecho do texto).
+- "próxima semana"/"semana que vem" sem datas → 7 dias a partir do primeiro dia ainda sem escala; "próxima quinzena" → 14 dias a partir dele.
+- O mesmo texto pode ter um 'build_range' E restrições (ex: "monta 10 a 16/11, Joeli de folga dia 12") — devolva os dois.
+- Frases que só explicam contexto (ex: "a última escala enviada foi de 02 a 09/11") não geram item.
 
 Se o texto tiver várias condições diferentes, gere um item por condição. Se alguma frase for ambígua demais para virar uma restrição confiável, ignore-a (não invente id ou nome que não bate com a lista acima).`;
 
@@ -140,11 +149,13 @@ Se o texto tiver várias condições diferentes, gere um item por condição. Se
     }
 
     const validIds = new Set(team.map((e) => e.id));
+    const ISO = /^\d{4}-\d{2}-\d{2}$/;
     const constraints = ((call.functionCall.args && call.functionCall.args.constraints) || []).filter((c) => {
       if (!c || !c.dateStart || !c.dateEnd) return false;
       if (c.type === 'absence' || c.type === 'forced_shift') return validIds.has(c.empId);
       if (c.type === 'no_pair') return Array.isArray(c.empIds) && c.empIds.length === 2 && c.empIds.every((id) => validIds.has(id));
       if (c.type === 'diarista_limit') return !!c.diaristaName;
+      if (c.type === 'build_range') return ISO.test(c.dateStart) && ISO.test(c.dateEnd);
       return false;
     });
 
