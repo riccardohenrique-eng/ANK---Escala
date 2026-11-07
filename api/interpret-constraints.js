@@ -150,16 +150,34 @@ Se o texto tiver várias condições diferentes, gere um item por condição. Se
 
     const validIds = new Set(team.map((e) => e.id));
     const ISO = /^\d{4}-\d{2}-\d{2}$/;
-    const constraints = ((call.functionCall.args && call.functionCall.args.constraints) || []).filter((c) => {
+    // A IA às vezes devolve o nome ("Alana", "Maria José") no lugar do id — aceita os dois.
+    const norm = (v) => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+    const byKey = new Map();
+    team.forEach((e) => { byKey.set(norm(e.id), e.id); byKey.set(norm(e.name), e.id); });
+    const toId = (v) => byKey.get(norm(v)) || v;
+    const raw = ((call.functionCall.args && call.functionCall.args.constraints) || []).map((c) => {
+      if (!c) return c;
+      const x = { ...c };
+      if (x.empId) x.empId = toId(x.empId);
+      if (Array.isArray(x.empIds)) x.empIds = x.empIds.map(toId);
+      return x;
+    });
+    const dropped = [];
+    const constraints = raw.filter((c) => {
+      const ok = keep(c);
+      if (!ok && c) dropped.push(c.note || c.type || '?');
+      return ok;
+    });
+    function keep(c) {
       if (!c || !c.dateStart || !c.dateEnd) return false;
       if (c.type === 'absence' || c.type === 'forced_shift') return validIds.has(c.empId);
       if (c.type === 'no_pair') return Array.isArray(c.empIds) && c.empIds.length === 2 && c.empIds.every((id) => validIds.has(id));
       if (c.type === 'diarista_limit') return !!c.diaristaName;
       if (c.type === 'build_range') return ISO.test(c.dateStart) && ISO.test(c.dateEnd);
       return false;
-    });
+    }
 
-    res.status(200).json({ constraints });
+    res.status(200).json({ constraints, dropped });
   } catch (err) {
     res.status(500).json({ error: 'erro interno', detail: String(err && err.message || err) });
   }

@@ -2553,14 +2553,14 @@ async function interpretConstraints(){
     });
     if(!res.ok) throw new Error('http '+res.status);
     const data = await res.json();
-    showParsed(text, data.constraints||[]);
+    showParsed(text, data.constraints||[], false, data.dropped||[]);
   }catch(err){
     if(showParsed(text, [], true)) return;
     status.innerHTML = `<div class="banner danger"><span class="ic">${ICON_ALERT}</span>Não consegui falar com a IA agora. Confira a internet e tente de novo.</div>${buildOfferHTML()}`;
   }
 }
 // Mostra o que a IA entendeu. Se ela não achou o pedido de montagem, tenta ler as datas aqui mesmo.
-function showParsed(text, list, quiet){
+function showParsed(text, list, quiet, dropped){
   const status=document.getElementById('constraint-parse-status');
   const items=list.slice();
   if(!items.some(c=>c.type==='build_range')){ const b=localBuildRange(text); if(b) items.unshift(b); }
@@ -2571,7 +2571,7 @@ function showParsed(text, list, quiet){
   }
   pendingParsed = items.map(c=>({...c, id:'c'+Date.now()+Math.floor(Math.random()*100000)}));
   renderParsedReview();
-  status.innerHTML='';
+  status.innerHTML = (dropped&&dropped.length) ? '<div class="banner danger"><span class="ic">'+ICON_ALERT+'</span>Não entendi: '+dropped.map(esc).join(' · ')+'. Escreva de novo só essa parte.</div>' : '';
   return true;
 }
 
@@ -2594,7 +2594,7 @@ function buildOfferHTML(){ const s=nextBuildStart(); return `<div class="btn-row
 function buildFrom(f,t){
   [f,t]=buildRangeClamp(f,t);
   const free=dRange(f,t).filter(k=>!(STATE.days[k]&&STATE.days[k].conf)).length;
-  generateRange(f,t); saveState(); closeSheet(); renderAll(); mqGoto(f);
+  generateRange(f,t); saveState(); closeSheet(); mqGoto(f); if(dAdd(MQ.start,13)<t){ MQ.start=dMon(f); renderAll(); }
   toast(free?`Rascunho de ${br(f)} a ${br(t)} pronto. Confira o assessor e confirme.`:`De ${br(f)} a ${br(t)} já está tudo confirmado. Para mudar, toque no dia.`);
 }
 function renderParsedReview(){
