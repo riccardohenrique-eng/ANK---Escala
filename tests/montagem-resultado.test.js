@@ -115,7 +115,7 @@ test('pedido em dia confirmado: buildFrom avisa "sem efeito" e não diz completo
   const reqs = [{ type: 'absence', empId: 'p3', dateStart: '2026-11-12', dateEnd: '2026-11-12' }];
   a.__get().constraints = reqs.slice();
   const txt = a.buildFrom('2026-11-10', '2026-11-16', reqs);
-  assert.match(txt, /Pedido sem efeito em 1 dia já confirmado \(12\/11\): para mudar, toque no dia\./, txt);
+  assert.match(txt, /Pedido ainda sem efeito em 1 dia já confirmado \(12\/11\): escolha abaixo se abre alteração\./, txt);   // P0.1: texto aponta para a escolha
   assert.strictEqual(JSON.stringify(a.__get().days['2026-11-12']), antes, 'dia confirmado não mudou');
 });
 

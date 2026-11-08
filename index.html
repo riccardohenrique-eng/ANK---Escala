@@ -242,6 +242,15 @@ table tr:last-child td{border-bottom:0}
 .banner.danger{background:var(--red-wash)} .banner.ok{background:var(--green-wash)} .banner.warn{background:var(--orange-wash)}
 .mq-res .banner{align-items:flex-start;margin:8px 0}.mq-res .banner .grow{flex:1;min-width:0}.mq-res .x{border:0;background:none;font-size:20px;line-height:1;color:var(--label-2);padding:0 4px;cursor:pointer;min-width:32px;min-height:32px}
 .banner .ic svg{width:16px;height:16px}
+.p01{background:var(--orange-wash);border-radius:12px;padding:12px 14px;margin:8px 0;font-size:15px;line-height:1.4}
+.p01-h{font-weight:600}.p01-sub{color:var(--label-2);font-size:14px;margin:2px 0 8px}
+.p01-day{display:flex;gap:10px;align-items:flex-start;background:var(--paper);border-radius:10px;padding:10px 12px;margin:6px 0;cursor:pointer}
+.p01-day input{width:20px;height:20px;margin:2px 0 0;flex:none}.p01-day .grow{flex:1;min-width:0}
+.p01-cons{color:var(--label-2);font-size:14px;margin-top:4px}
+.p01-tag{display:inline-block;font-size:12px;color:var(--label-2);border:1px solid var(--sep);border-radius:6px;padding:0 6px;margin-left:4px;vertical-align:1px}
+.p01-man,.p01-at{font-size:14px;margin:6px 2px}.p01-at{color:var(--label-2)}
+.p01-note{font-size:13px;color:var(--label-2);margin-top:8px}
+.p01 .btn-row{flex-direction:row;flex-wrap:wrap}.p01 .btn-row .btn{flex:1;min-width:140px}
 .emptybox{text-align:center;color:var(--label-2);font-size:15px;padding:28px 12px}
 details.subsec{background:var(--cell);border-radius:12px;margin-top:10px;overflow:hidden}
 details.subsec summary{list-style:none;padding:14px 16px;font-size:17px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
@@ -698,6 +707,7 @@ table.iw tr{cursor:pointer} table.iw tr.today td{background:var(--tint-wash)}
       </div>
       <div class="mq-sug" id="mq-sug" hidden></div>
       <div class="mq-res" id="mq-res" aria-live="polite" hidden></div>
+      <div id="p01-mq" hidden></div>
       <div class="mq-legend"><span class="mq-chip ab">A</span>abertura <span class="mq-chip in">I</span>interm. <span class="mq-chip fe">F</span>fecham. <span class="mq-chip off">–</span>folga <span class="mq-chip fer">Fé</span>férias</div>
       <div class="mq-wrap">
         <div class="mq-scroll" id="mq-body"></div>
@@ -880,6 +890,7 @@ table.iw tr{cursor:pointer} table.iw tr.today td{background:var(--tint-wash)}
     <textarea id="constraint-input" rows="3" placeholder="Ex.: Monta de 10 a 16/11. Joeli de folga dia 12. Alana não pode na sexta."></textarea>
     <div class="btn-row"><button class="btn fill" onclick="interpretConstraints()">Interpretar com IA</button></div>
     <div id="constraint-parse-status"></div>
+    <div id="p01-ped" hidden></div>
     <div id="constraint-review" style="display:none">
       <div class="group-h">Confira antes de aplicar</div>
       <div class="grp" id="constraint-review-list"></div>
@@ -982,7 +993,7 @@ if('serviceWorker' in navigator){ navigator.serviceWorker.register('/sw.js').cat
 const STORE_KEY='ank_escala_v1';
 const SCHEMA=2;
 // Versão do código (sobe a cada mudança publicada). Em Ajustes; fora do endereço oficial aparece "cópia local".
-const APP_VERSION='2026.11.08-p02';
+const APP_VERSION='2026.11.08.2-p01';
 const DOW_LABELS=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
 const DOW_SHORT=['SEG','TER','QUA','QUI','SEX','SÁB','DOM'];
 const DOW_MIN=['seg','ter','qua','qui','sex','sáb','dom'];
@@ -1738,17 +1749,156 @@ function confirmedHit(reqs){
   });
   return [...s].sort();
 }
+// ---------- P0.1 (08/11/2026): pedido que cai em dia confirmado ----------
+// Compara cada pedido com o dia confirmado (ou com a alteração pendente dele) e separa:
+// mudar = precisa trocar a célula; atendidos = a escala já cumpre; manual = não dá para decidir sozinho.
+// Só LÊ: nada muda até o dono tocar em "Abrir alteração".
+function confirmedImpact(reqs){
+  const want={}, atend=[], manual=[];
+  (reqs||[]).forEach(c=>{
+    if(!HIT_TYPES.includes(c.type)||!validISODate(c.dateStart)||!validISODate(c.dateEnd)||c.dateEnd<c.dateStart) return;
+    dRange(c.dateStart,c.dateEnd).forEach(k=>{
+      const d=STATE.days[k]; if(!cActive(c,k)||!d||!d.conf) return;
+      const base=d.draft||d.conf, cur=id=>base.sh[id]?base.sh[id].type:null;
+      if(c.type==='no_pair'){
+        const [a,b]=c.empIds;
+        if(isActive(a,k)&&isActive(b,k)&&works(cur(a))&&works(cur(b))) manual.push({k,txt:`${empName(a)} e ${empName(b)} estão escaladas juntas: ajuste à mão.`});
+        else atend.push({k,empId:a});
+        return;
+      }
+      if(!isActive(c.empId,k)) return;
+      const para=c.type==='absence'?absenceKind(c):c.shiftType, de=cur(c.empId);
+      const ok=c.type==='absence'?!works(de):de===para;
+      const key=k+'|'+c.empId, w=want[key];
+      if(w){ if(w.para!==para&&(works(w.para)||works(para))) w.conflito=true; w.notes.push(c.note||''); return; }   // duas ausências não brigam; turno × outra coisa sim
+      want[key]={k,empId:c.empId,de,para,ok,notes:[c.note||''],conflito:false};
+    });
+  });
+  const mudar=[];
+  Object.values(want).forEach(w=>{
+    if(w.conflito) manual.push({k:w.k,txt:`${empName(w.empId)} tem pedidos que se contradizem neste dia: ajuste à mão.`});
+    else if(w.ok) atend.push({k:w.k,empId:w.empId});
+    else mudar.push(w);
+  });
+  const byK=(a,b)=>a.k<b.k?-1:a.k>b.k?1:0;
+  return {mudar:mudar.sort(byK),atendidos:atend.sort(byK),manual:manual.sort(byK)};
+}
+function uniqK(xs){ return [...new Set(xs.map(x=>x.k))].sort(); }
+// Aplica as trocas num dia de mentira só para ler o assessor; o dia real volta exatamente como estava.
+function impactConsequence(k,items){
+  const d=STATE.days[k], saved=d.draft, before=new Set(checkDay(k).flags.map(f=>f.msg));
+  const tmp=JSON.parse(JSON.stringify(d.draft||d.conf));
+  items.forEach(w=>{ tmp.sh[w.empId]={type:w.para,time:shiftTime(dDow(k),w.para),manual:true}; });
+  d.draft=tmp; let novos;
+  try{ novos=checkDay(k).flags.filter(f=>!before.has(f.msg)); } finally { d.draft=saved; }
+  return novos;
+}
+let P01=null;   // oferta aberta: {mudar,manual,atendidos,report,where}
+function p01State(){ return P01; }
+function p01Prepare(reqs,report,where){
+  const imp=confirmedImpact(reqs);
+  P01=(imp.mudar.length||imp.manual.length)?{...imp,report:report||null,where}:null;
+  renderP01();
+  return P01;
+}
+function p01OfferHTML(){
+  if(!P01) return '';
+  const dias=uniqK(P01.mudar);
+  const linhas=dias.map(k=>{
+    const its=P01.mudar.filter(w=>w.k===k), novos=impactConsequence(k,its), st=dayStatus(k);
+    const cons=novos.length?novos.map(f=>esc(f.msg)).join('; '):'O assessor não aponta problema novo.';
+    const env=(st==='enviada'||st==='mudou')?' <span class="p01-tag">já enviado ao grupo</span>':(st==='pendente'?' <span class="p01-tag">já tem alteração pendente</span>':'');
+    return `<label class="p01-day"><input type="checkbox" class="p01-ck" value="${k}" checked aria-label="Abrir alteração em ${br(k)}"><div class="grow">
+      <b>${esc(dayLong(k))}</b>${env}
+      ${its.map(w=>`<div>${esc(empName(w.empId))}: hoje <b>${esc(TYPE_LABEL[w.de]||'sem turno')}</b>, o pedido pede <b>${esc(TYPE_LABEL[w.para]||w.para)}</b></div>`).join('')}
+      <div class="p01-cons">Consequência: ${cons}</div></div></label>`;
+  }).join('');
+  const man=P01.manual.map(m=>`<div class="p01-man"><b>${br(m.k)}</b>: ${esc(m.txt)} Toque no dia no Montar.</div>`).join('');
+  const at=P01.atendidos.length?`<div class="p01-at">Já atendido na escala confirmada: ${nd(uniqK(P01.atendidos).length)} (${daysText(uniqK(P01.atendidos))}). Nada a mudar.</div>`:'';
+  const btns=dias.length
+    ?`<div class="btn-row"><button class="btn fill" onclick="p01Open()">Abrir alteração</button><button class="btn plain" onclick="p01Dismiss()">Agora não</button></div>
+      <div class="p01-note">Abrir alteração muda só essas células e deixa o dia como alteração pendente. Nada é confirmado nem enviado: para valer, confirme de novo.</div>`
+    :`<div class="btn-row"><button class="btn plain" onclick="p01Dismiss()">Entendi</button></div>`;
+  return `<div class="p01" role="region" aria-label="Pedidos em dias confirmados"><div class="p01-h">Estes dias já estão confirmados</div>
+    <div class="p01-sub">O pedido muda a escala confirmada. Nada muda sem você escolher.</div>${linhas}${man}${at}${btns}</div>`;
+}
+function renderP01(){
+  const h=p01OfferHTML();
+  ['p01-mq','p01-ped'].forEach(id=>{ const el=document.getElementById(id); if(el){ el.innerHTML=h; el.hidden=!h; } });
+}
+// Reescreve o resumo que estava na tela, para nenhum aviso antigo ficar dizendo outra coisa.
+function p01Finish(abertos,mantidos){
+  const o=P01; P01=null; renderP01();
+  if(!o) return;
+  const r=o.report;
+  if(r){
+    r.reqConf=[]; r.abertos=abertos; r.mantidos=mantidos; r.manual=uniqK(o.manual);
+    r.conf=r.conf.filter(k=>!abertos.includes(k)); r.pend=r.pend.filter(k=>!abertos.includes(k));   // cada dia contado uma vez só
+    r.completo=false;
+    if(o.where==='mq') showBuildReport(r,{quiet:true});
+    else { const st=document.getElementById('constraint-parse-status'); if(st) st.innerHTML=`<div class="banner warn"><span class="ic">${ICON_ALERT}</span><div>Pedido guardado e rascunho refeito. ${esc(reportText(r))}</div></div>`; }
+  } else {
+    const st=document.getElementById('constraint-parse-status');
+    if(st) st.innerHTML=`<div class="banner warn"><span class="ic">${ICON_ALERT}</span><div>${esc(p01ResultText(abertos,mantidos,uniqK(o.manual)))}</div></div>`;
+  }
+}
+function p01ResultText(abertos,mantidos,manual){
+  const t=[];
+  if(abertos.length) t.push(`Alteração aberta: ${nd(abertos.length)} (${daysText(abertos)}). Falta confirmar para valer.`);
+  if(mantidos.length) t.push(`Mantidos como confirmados, sem o pedido: ${nd(mantidos.length)} (${daysText(mantidos)}).`);
+  if(manual&&manual.length) t.push(`Ajuste à mão: ${nd(manual.length)} (${daysText(manual)}).`);
+  return t.join(' ');
+}
+// ks = dias escolhidos (sem ks, lê as caixas marcadas na tela)
+function p01Open(ks){
+  if(!P01) return [];
+  const todos=uniqK(P01.mudar);
+  if(!ks){ ks=[]; document.querySelectorAll('.p01-ck').forEach(x=>{ if(x.checked) ks.push(x.value); }); }
+  ks=todos.filter(k=>ks.includes(k));
+  if(!ks.length){ toast('Marque pelo menos um dia, ou toque em Agora não.'); return []; }
+  const snapshot=ks.map(k=>[k,JSON.parse(JSON.stringify(STATE.days[k]))]);
+  ks.forEach(k=>{
+    const dr=ensureDraft(k), its=P01.mudar.filter(w=>w.k===k);
+    its.forEach(w=>{
+      dr.sh[w.empId]={type:w.para,time:shiftTime(dDow(k),w.para),manual:true};
+      const nota=w.notes.filter(Boolean)[0];
+      dr.pedido=[...(dr.pedido||[]),`Pedido: ${empName(w.empId)} ${(TYPE_LABEL[w.para]||w.para).toLowerCase()}${nota?` ("${String(nota).slice(0,60)}")`:''}`];
+    });
+  });
+  const mantidos=todos.filter(k=>!ks.includes(k));
+  saveState(); renderAll();
+  p01Finish(ks,mantidos);
+  // usa o mesmo "Desfazer" da confirmação: qualquer gravação depois (editar, confirmar, abrir outra) derruba este
+  dropUndo();
+  const after=Object.fromEntries(ks.map(k=>[k,JSON.stringify(STATE.days[k])]));
+  p01Undo=()=>{
+    // só volta o dia que continua exatamente como esta operação deixou; nunca passa por cima de mudança posterior
+    let n=0, pulados=0;
+    snapshot.forEach(([k,v])=>{ if(JSON.stringify(STATE.days[k])===after[k]){ STATE.days[k]=v; n++; } else pulados++; });
+    p01Undo=null; undoToastEl=null;
+    if(n){ saveState(); renderAll(); }
+    toast(pulados?`Desfeito em ${nd(n)}. ${nd(pulados)} já tinha${pulados===1?'':'m'} mudado depois e ficou como está.`:'Alteração desfeita. Os dias voltaram ao confirmado.');
+    return {n,pulados};
+  };
+  undoToastEl=toast(`Alteração aberta em ${nd(ks.length)}. Confira e confirme.`,{label:'Desfazer',ms:10000,fn:()=>p01UndoNow()});
+  return ks;
+}
+let p01Undo=null;
+function p01UndoNow(){ return p01Undo?p01Undo():null; }
+function p01Dismiss(){ if(!P01) return; p01Finish([],uniqK(P01.mudar)); }
+
 function buildReport(res,reqs){
   const r=res||{pedidos:[],gerados:[],preservados:[],semBase:[]};
-  const reqConf=confirmedHit(reqs);
+  const imp=confirmedImpact(reqs);
+  const reqConf=uniqK(imp.mudar), manual=uniqK(imp.manual);
   const conf=r.preservados.filter(k=>!(STATE.days[k]&&STATE.days[k].draft));
   const pend=r.preservados.filter(k=>STATE.days[k]&&STATE.days[k].draft);
   const need=r.gerados.filter(k=>{
     const d=STATE.days[k]; if(!d||!d.draft) return false;
     return checkDay(k).flags.some(f=>f.l==='block')||(d.draft.why||[]).some(w=>NEED_WHY.test(w));
   });
-  return {pedidos:r.pedidos,gerados:r.gerados,conf,pend,semBase:r.semBase||[],need,reqConf,
-    completo:r.gerados.length===r.pedidos.length&&!need.length&&!reqConf.length};
+  return {pedidos:r.pedidos,gerados:r.gerados,conf,pend,semBase:r.semBase||[],need,reqConf,manual,abertos:[],mantidos:[],
+    completo:r.gerados.length===r.pedidos.length&&!need.length&&!reqConf.length&&!manual.length};
 }
 // "10 a 15/11", "30/11 a 02/12", "11/11, 13/11"
 function daysText(ks){
@@ -1764,19 +1914,22 @@ function reportText(r){
   if(r.semBase.length) t.push(`Sem escala para copiar: ${r.semBase.length} (${daysText(r.semBase)}).`);
   if(r.need.length) t.push(`Precisam de você: ${r.need.length} (${daysText(r.need)}): veja o assessor.`);
   if(r.reqConf&&r.reqConf.length) t.push(reqConfText(r.reqConf));
+  const fim=p01ResultText(r.abertos||[],r.mantidos||[],r.manual||[]); if(fim) t.push(fim);
   return t.join(' ');
 }
-function reqConfText(ks){ return `Pedido sem efeito em ${nd(ks.length)} já confirmado${ks.length===1?'':'s'} (${daysText(ks)}): para mudar, toque no dia.`; }
+// P0.1: enquanto o dono não escolheu, o pedido ainda não vale nesses dias — e a tela mostra a escolha logo abaixo.
+function reqConfText(ks){ return `Pedido ainda sem efeito em ${nd(ks.length)} já confirmado${ks.length===1?'':'s'} (${daysText(ks)}): escolha abaixo se abre alteração.`; }
 function reportTitle(r){ return r.completo?'Montagem completa':(r.gerados.length===r.pedidos.length?'Montados, com pendências':'Montagem parcial'); }
-function showBuildReport(r){
+function showBuildReport(r,opt){
   const el=document.getElementById('mq-res');
   const txt=reportText(r);
   if(el){
     const cls=r.completo?'ok':'warn', ic=r.completo?ICON_CHECK:ICON_ALERT;
-    const extra=(!r.completo&&r.conf.length&&!(r.reqConf&&r.reqConf.length))?'<div style="margin-top:4px;font-size:14px">Dias confirmados não mudam ao montar. Para mudar um deles, toque no dia.</div>':'';
+    const extra=(!r.completo&&r.conf.length&&!(r.reqConf&&r.reqConf.length)&&!(r.abertos&&r.abertos.length)&&!(r.mantidos&&r.mantidos.length))?'<div style="margin-top:4px;font-size:14px">Dias confirmados não mudam ao montar. Para mudar um deles, toque no dia.</div>':'';
     el.innerHTML=`<div class="banner ${cls}"><span class="ic">${ic}</span><div class="grow"><b>${reportTitle(r)}</b><div>${esc(txt)}</div>${extra}</div><button class="x" aria-label="Fechar resumo" onclick="document.getElementById('mq-res').hidden=true">&times;</button></div>`;
     el.hidden=false;
   }
+  if(opt&&opt.quiet) return txt;
   toast(r.completo?`Montados ${nd(r.gerados.length)}. Confira o assessor.`:(r.gerados.length===r.pedidos.length?`Montados ${nd(r.gerados.length)}, ${r.need.length} com pendência. Veja o assessor.`:r.gerados.length?`Montagem parcial: ${r.gerados.length} de ${nd(r.pedidos.length)}. Veja o resumo no Montar.`:`Nenhum dia montado. Veja o resumo no Montar.`));
   return txt;
 }
@@ -2045,7 +2198,7 @@ function confirmSeq(){
   return seq;
 }
 let undoToastEl=null;
-function dropUndo(){ if(undoToastEl){ undoToastEl.remove(); undoToastEl=null; } }
+function dropUndo(){ if(undoToastEl){ undoToastEl.remove(); undoToastEl=null; } p01Undo=null; }   // P0.1: o Desfazer da alteração some junto
 // Confirma em sequência do 1º pendente até `upto`. Com bloqueio, exige motivo.
 function confirmBlocks(upto){
   const ks=confirmSeq().filter(k=>k<=upto&&STATE.days[k].draft), blocks=[];
@@ -2064,7 +2217,8 @@ function confirmRange(upto,motivo){
     const old=d.conf, nc={sh,diar:(dr.diar||[]).map(x=>({name:x.name,t:x.t,...(x.time?{time:x.time}:{})})),holiday:!!dr.holiday,motivo:hasBlock?motivo:null,at:Date.now()};
     if(old){
       const ch=diffSnaps(confSnap(old),confSnap(nc),dDow(k)).map(x=>x.txt);
-      nc.log=[...(old.log||[]),...(ch.length?[{at:nc.at,ch,motivo:motivo||''}]:[])];
+      const why=[hasBlock?motivo:'',...(dr.pedido||[])].filter(Boolean).join('; ');   // P0.1: o pedido que abriu a alteração fica no histórico
+      nc.log=[...(old.log||[]),...(ch.length?[{at:nc.at,ch,motivo:why||motivo||''}]:[])];
       if(old.sent) nc.sent=old.sent; else if(old.motivo==='importado da planilha') nc.sent={at:old.at||0,sig:confSig(old),snap:confSnap(old)};
     }
     d.conf=nc;
@@ -2746,7 +2900,9 @@ function buildOfferHTML(){ const s=nextBuildStart(); return `<div class="btn-row
 function buildFrom(f,t,reqs){
   [f,t]=buildRangeClamp(f,t);
   const r=buildReport(generateRange(f,t),reqs); saveState(); closeSheet(); mqGoto(f); if(dAdd(MQ.start,13)<t){ MQ.start=dMon(f); renderAll(); }
-  return showBuildReport(r);
+  const txt=showBuildReport(r);
+  if(reqs) p01Prepare(reqs,r,'mq');
+  return txt;
 }
 // Quem, o quê (Folga/Férias com duração), de quando a quando — sem confiar cegamente na IA.
 function reviewTitle(c){
@@ -2809,7 +2965,7 @@ function discardParsedConstraints(){
 }
 // Sem rascunho para refazer: não promete "vai valer" para dias já confirmados.
 function pedidoGuardadoHTML(reqs){
-  const hit=confirmedHit(reqs);
+  const imp=confirmedImpact(reqs), hit=uniqK(imp.mudar.concat(imp.manual));
   if(!hit.length) return '<div class="banner ok"><span class="ic">'+ICON_CHECK+'</span>Pedido guardado. Ainda não há rascunho para refazer: ele vai valer quando você montar o período.</div>'+buildOfferHTML();
   const resto=reqs.some(c=>HIT_TYPES.includes(c.type)&&validISODate(c.dateStart)&&validISODate(c.dateEnd)&&dRange(c.dateStart,c.dateEnd).some(k=>cActive(c,k)&&!(STATE.days[k]&&STATE.days[k].conf)));
   return '<div class="banner warn"><span class="ic">'+ICON_ALERT+'</span><div>Pedido guardado, com pendência. '+esc(reqConfText(hit))+(resto?' Nos outros dias, vale quando você montar o período.':'')+'</div></div>'+(resto?buildOfferHTML():'');
@@ -2831,6 +2987,7 @@ function applyParsedConstraints(){
     const f=builds.map(b=>b.dateStart).sort()[0], t=builds.map(b=>b.dateEnd).sort().slice(-1)[0];
     buildFrom(f,t,reqs); return;
   }
+  p01Prepare(reqs,regen,'ped');
   renderActiveConstraints();
   renderParsedReview();
   const st=document.getElementById('constraint-parse-status');
