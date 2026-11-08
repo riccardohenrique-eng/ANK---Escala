@@ -839,39 +839,72 @@ table.iw tr{cursor:pointer} table.iw tr.today td{background:var(--tint-wash)}
 
     <!-- ===== AJUSTES ===== -->
     <section class="tabpage" id="tab-config" data-title="Ajustes">
-      <h1 class="lt">Ajustes</h1>
-      <div class="group">
+      <!-- UX Fase C (08/11/2026): página de categorias + subpáginas. Os blocos são os mesmos de antes (mesmos ids),
+           só agrupados; tudo continua gravando na hora (onchange). -->
+      <div class="cfg-sub" data-sub="" data-title="Ajustes">
+        <h1 class="lt">Ajustes</h1>
+        <div class="group-h">Escala</div>
+        <div class="group">
+        <button class="cell" onclick="cfgGo('pessoas')"><span class="grow">Condições de cada pessoa<span class="sub">Caixa, turnos que cada uma pode fazer e saída</span></span>›</button>
         <button class="cell" onclick="showTab('tab-domingos')"><span class="grow">Domingos<span class="sub">Quem trabalhou, quem folga no próximo e a regra (2×1)</span></span>›</button>
+        <button class="cell" onclick="cfgGo('tarefas')"><span class="grow">Tarefas da loja<span class="sub">Tarefa padrão de cada dia da semana</span></span>›</button>
+        <button class="cell" onclick="cfgGo('pordia')"><span class="grow">Pessoas por dia<span class="sub">Quantas pessoas em cada turno, por dia</span></span>›</button>
+        <button class="cell" onclick="cfgGo('diaristas')"><span class="grow">Diaristas<span class="sub">Nomes e valor da diária</span></span>›</button>
+        </div>
+        <div class="group-h">Regras e equipe</div>
+        <div class="group">
+        <button class="cell" onclick="cfgGo('regras')"><span class="grow">Regras e metas<span class="sub">Livro de regras, metas por semana e pausa</span></span>›</button>
+        <button class="cell" onclick="cfgGo('equipe')"><span class="grow">Equipe e valores<span class="sub">Vínculo, valor da hora ou salário e teto de horas</span></span>›</button>
+        </div>
+      <p class="foot">Sincronizado entre aparelhos · Açaí No Kilo — Cruz das Almas/BA</p>
+      <div class="group-f" id="app-version" style="text-align:center;margin-top:28px"></div>
       </div>
-      <div class="group-h">Condições de cada pessoa</div>
+      <div class="cfg-sub" data-sub="pessoas" data-title="Condições de cada pessoa" hidden>
+        <button class="back-link" onclick="cfgGo('')">‹ Ajustes</button>
+        <h1 class="lt">Condições de cada pessoa</h1>
       <div class="people" id="people"></div>
       <div class="group-f">Quem opera o caixa e quais turnos cada pessoa pode fazer.</div>
-      <div class="group-h">Livro de regras</div>
-      <div class="group" id="rules"></div>
-      <div class="group-f">“Bloqueia” pede motivo para confirmar. “Avisa” só mostra.</div>
-      <div class="group-h">Tarefas da loja</div>
+      </div>
+      <div class="cfg-sub" data-sub="tarefas" data-title="Tarefas da loja" hidden>
+        <button class="back-link" onclick="cfgGo('')">‹ Ajustes</button>
+        <h1 class="lt">Tarefas da loja</h1>
       <div class="group" id="task-cfg"></div>
       <div class="group-f">Padrão de cada dia da semana. Aparece no Montar e no PDF da equipe. Para mudar só uma data, toque no dia no Montar.</div>
-      <div class="group-h">Pessoas por dia</div>
+      </div>
+      <div class="cfg-sub" data-sub="pordia" data-title="Pessoas por dia" hidden>
+        <button class="back-link" onclick="cfgGo('')">‹ Ajustes</button>
+        <h1 class="lt">Pessoas por dia</h1>
       <div class="tablewrap"><table class="comp" id="comp-table"></table></div>
       <div class="group-f">Base do gerador. Feriado usa a linha de sábado.</div>
-      <div class="group-h">Diaristas</div>
+      </div>
+      <div class="cfg-sub" data-sub="diaristas" data-title="Diaristas" hidden>
+        <button class="back-link" onclick="cfgGo('')">‹ Ajustes</button>
+        <h1 class="lt">Diaristas</h1>
       <div class="group">
         <label class="cell"><span class="grow">Nomes</span><input type="text" id="cfg-diar" onchange="saveConfig()" aria-label="Nomes das diaristas, separados por vírgula"></label>
         <label class="cell"><span class="grow">Diária — semana</span><input type="number" id="cfg-rateWeekday" onchange="saveConfig()"></label>
         <label class="cell"><span class="grow">Diária — fim de semana</span><input type="number" id="cfg-rateWeekend" onchange="saveConfig()"></label>
       </div>
+      </div>
+      <div class="cfg-sub" data-sub="regras" data-title="Regras e metas" hidden>
+        <button class="back-link" onclick="cfgGo('')">‹ Ajustes</button>
+        <h1 class="lt">Regras e metas</h1>
+      <div class="group-h">Livro de regras</div>
+      <div class="group" id="rules"></div>
+      <div class="group-f">“Bloqueia” pede motivo para confirmar. “Avisa” só mostra.</div>
       <div class="group-h">Metas e pausa</div>
       <div class="group">
         <label class="cell"><span class="grow">Máx. fechamentos / semana</span><input type="number" id="cfg-maxFe" min="0" max="7" onchange="saveConfig()"></label>
         <label class="cell"><span class="grow">Máx. aberturas / semana</span><input type="number" id="cfg-maxAb" min="0" max="7" onchange="saveConfig()"></label>
         <label class="cell"><span class="grow">Pausa de 30 min (convenção)<span class="sub">Deixe desligado até confirmar com o sindicato</span></span><span class="sw"><input type="checkbox" id="cfg-cct" onchange="saveConfig()"><span></span></span></label>
       </div>
-      <div class="group-h">Equipe e valores</div>
+      </div>
+      <div class="cfg-sub" data-sub="equipe" data-title="Equipe e valores" hidden>
+        <button class="back-link" onclick="cfgGo('')">‹ Ajustes</button>
+        <h1 class="lt">Equipe e valores</h1>
       <div class="tablewrap"><table class="team-cfg" id="team-table"></table></div>
       <button class="btn block" style="margin-top:10px" onclick="addEmployee()">Adicionar funcionária</button>
-      <p class="foot">Sincronizado entre aparelhos · Açaí No Kilo — Cruz das Almas/BA</p>
-      <div class="group-f" id="app-version" style="text-align:center;margin-top:28px"></div>
+      </div>
     </section>
   </main>
 </div>
@@ -1046,7 +1079,7 @@ if('serviceWorker' in navigator){ navigator.serviceWorker.register('/sw.js').cat
 const STORE_KEY='ank_escala_v1';
 const SCHEMA=2;
 // Versão do código (sobe a cada mudança publicada). Em Ajustes; fora do endereço oficial aparece "cópia local".
-const APP_VERSION='2026.11.08.5-ux-b';
+const APP_VERSION='2026.11.08.6-ux-c';
 const DOW_LABELS=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
 const DOW_SHORT=['SEG','TER','QUA','QUI','SEX','SÁB','DOM'];
 const DOW_MIN=['seg','ter','qua','qui','sex','sáb','dom'];
@@ -2555,7 +2588,20 @@ function applyTheme(){ try{ localStorage.removeItem('ank_escala_theme'); }catch(
 
 // ---------- abas e barra de navegação ----------
 let titleObs=null;
-function showTab(id){
+// UX Fase C: subpáginas de Ajustes. Antes de trocar, tira o foco do campo em edição para o onchange gravar
+// (nada digitado some ao navegar). Toda abertura de Ajustes pela barra começa na lista de categorias.
+function cfgGo(key,opt){
+  const a=document.activeElement; if(a&&a!==document.body&&a.blur) a.blur();
+  if(UI.tab!=='tab-config') showTab('tab-config',{keepSub:true});
+  UI.cfgSub=key||'';
+  let title='Ajustes';
+  document.querySelectorAll('#tab-config .cfg-sub').forEach(el=>{ const on=el.dataset.sub===UI.cfgSub; el.hidden=!on; if(on) title=el.dataset.title; });
+  const nb=document.getElementById('nb-title'); if(nb) nb.textContent=title;
+  if(!(opt&&opt.noScroll)) window.scrollTo(0,0);
+  if(typeof observeTitle==='function') observeTitle();
+}
+function showTab(id,opt){
+  const a=document.activeElement; if(a&&a!==document.body&&a.blur) a.blur();   // UX Fase C: grava o campo em edição antes de sair
   UI.tab=id; mqClose(); document.body.classList.toggle('wide',id==='tab-montar');
   document.querySelectorAll('.tabpage').forEach(p=>p.classList.toggle('on',p.id===id));
   const bar=id==='tab-domingos'?'tab-config':id;  // Domingos mora dentro de Ajustes
@@ -2565,12 +2611,13 @@ function showTab(id){
   document.getElementById('nb-action').style.visibility=id==='tab-escala'?'visible':'hidden';
   if(id==='tab-relatorio'){ populateReportEmployees(); renderReport(); }
   if(id==='tab-imprimir') renderPrintView();
+  if(id==='tab-config'&&!(opt&&opt.keepSub)) cfgGo('',{noScroll:true});
   renderFab();
   window.scrollTo(0,0);
   observeTitle();
 }
 function observeTitle(){
-  const nav=document.getElementById('navbar'), lt=document.querySelector('.tabpage.on .lt');
+  const nav=document.getElementById('navbar'), lt=document.querySelector('.tabpage.on .cfg-sub:not([hidden]) .lt')||document.querySelector('.tabpage.on .lt');   // UX Fase C: título da subpágina visível
   if(titleObs) titleObs.disconnect();
   if(!lt||!('IntersectionObserver' in window)){ nav.classList.add('scrolled'); return; }
   titleObs=new IntersectionObserver(([e])=>nav.classList.toggle('scrolled',!e.isIntersecting),{rootMargin:'-52px 0px 0px 0px'});
@@ -3518,7 +3565,7 @@ function renderPeriodSummary(dateList){
 }
 function renderReport(){
   const zero=STATE.team.filter(e=>e.employmentType!=='mensalista'&&!(+e.hourlyRate>0)), rw=document.getElementById('rep-warn');
-  if(rw){ rw.hidden=!zero.length; rw.innerHTML=zero.length?`<b>Falta o valor da hora</b> de ${zero.map(e=>esc(e.name)).join(', ')}. Sem ele, a folha dessas pessoas sai R$ 0. <button onclick="showTab('tab-config');setTimeout(()=>document.getElementById('team-table').scrollIntoView({block:'center'}),50)">Preencher em Ajustes</button>`:''; }
+  if(rw){ rw.hidden=!zero.length; rw.innerHTML=zero.length?`<b>Falta o valor da hora</b> de ${zero.map(e=>esc(e.name)).join(', ')}. Sem ele, a folha dessas pessoas sai R$ 0. <button onclick="cfgGo('equipe');setTimeout(()=>document.getElementById('team-table').scrollIntoView({block:'center'}),50)">Preencher em Ajustes</button>`:''; }
   const empSel=document.getElementById('rep-emp').value;
   const period=document.getElementById('rep-period').value;
   const dateList = period==='month' ? dateRangeForMonth(document.getElementById('rep-month').value)
