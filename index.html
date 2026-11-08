@@ -269,6 +269,9 @@ details.subsec .subsec-body{padding:0 12px 12px}
 .prow.need{background:var(--orange-wash)}
 .prow .palert{font-size:14px;margin-top:6px;color:#5B3A0A}
 .prow .perr{font-size:14px;margin-top:6px;color:var(--danger)}
+.prow .pinfo{font-size:14px;margin-top:6px;color:var(--label-2)}
+.prow.dup{opacity:.75}.prow .pacts{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.cold summary{cursor:pointer;color:var(--label-2);font-size:14px;padding:10px 16px}.cold .row{opacity:.7}
 .prow .pedit{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
 .prow .pedit label{display:flex;gap:6px;align-items:center;font-size:14px}
 .prow .pedit input[type=date]{font:inherit;font-size:15px;padding:6px 8px;border:1px solid var(--sep);border-radius:8px;background:#fff;min-height:36px}
@@ -993,7 +996,7 @@ if('serviceWorker' in navigator){ navigator.serviceWorker.register('/sw.js').cat
 const STORE_KEY='ank_escala_v1';
 const SCHEMA=2;
 // Versão do código (sobe a cada mudança publicada). Em Ajustes; fora do endereço oficial aparece "cópia local".
-const APP_VERSION='2026.11.08.2-p01';
+const APP_VERSION='2026.11.08.3-p04';
 const DOW_LABELS=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
 const DOW_SHORT=['SEG','TER','QUA','QUI','SEX','SÁB','DOM'];
 const DOW_MIN=['seg','ter','qua','qui','sex','sáb','dom'];
@@ -2760,17 +2763,24 @@ function addDays(date,n){ const d=new Date(date); d.setDate(d.getDate()+n); retu
 function fmt(d){ return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0'); }
 function iso(d){ return d.toISOString().slice(0,10); }
 function parseRange(rangeStr){ const [a,b]=rangeStr.split('–'); return [timeToMin(a.trim()), timeToMin(b.trim())]; }
+// P0.4: "Em vigor" só mostra o que ainda não terminou; terminados, substituídos e removidos ficam em
+// "Encerrados" (recolhido), sem apagar nada.
 function renderActiveConstraints(){
   const box=document.getElementById('constraint-active-list');
-  if(!STATE.constraints||!STATE.constraints.length){ box.innerHTML='<div class="emptybox">Nenhum pedido em vigor.</div>'; return; }
-  const sorted=[...STATE.constraints].sort((a,b)=> a.dateStart<b.dateStart?-1:(a.dateStart>b.dateStart?1:0));
-  box.innerHTML = sorted.map(c=>`
+  const t=todayISO(), all=STATE.constraints||[], byStart=(a,b)=> a.dateStart<b.dateStart?-1:(a.dateStart>b.dateStart?1:0);
+  const vig=all.filter(c=>c.dateEnd>=t).sort(byStart), fim=all.filter(c=>!(c.dateEnd>=t)).sort(byStart).reverse();
+  const old=(STATE.constraintsOld||[]).slice().reverse();
+  let h=vig.length?vig.map(c=>`
     <div class="row">
       <span class="rlabel">${constraintDescribe(c)}</span>
-      <button class="iconbtn" title="Remover" onclick="removeConstraint('${c.id}')">&times;</button>
-    </div>`).join('');
+      <button class="iconbtn" title="Remover" aria-label="Remover este pedido" onclick="removeConstraint('${esc(c.id)}')">&times;</button>
+    </div>`).join(''):'<div class="emptybox">Nenhum pedido em vigor.</div>';
+  const n=fim.length+old.length;
+  if(n) h+=`<details class="cold"><summary>Encerrados (${n})</summary>${fim.map(c=>`<div class="row"><span class="rlabel">${constraintDescribe(c)} · terminou</span></div>`).join('')}${old.map(c=>`<div class="row"><span class="rlabel">${constraintDescribe(c)} · ${esc(c.endedWhy||'encerrado')}</span></div>`).join('')}</details>`;
+  box.innerHTML=h;
 }
 function removeConstraint(id){
+  (STATE.constraints||[]).filter(c=>c.id===id).forEach(c=>archiveReq(c,'removido por você'));
   STATE.constraints = STATE.constraints.filter(c=>c.id!==id);
   saveState(); renderAll();
 }
@@ -2915,25 +2925,111 @@ function reviewTitle(c){
   if(c.type==='build_range') return `Montar rascunho (${dias})`;
   return c.note||'Pedido';
 }
-function pendingNeedsCheck(c){ return !!(c._err||((c._alerts||[]).length&&!c._ok)); }
+// ---------- P0.4 (08/11/2026): pedidos repetidos, sobrepostos e incompatíveis ----------
+// Igual = mesmo tipo, pessoa(s), turno, datas e dias da semana. Conflito = mesma pessoa, dias em comum e
+// o que se pede não cabe junto (ausência × turno obrigatório; dois turnos obrigatórios diferentes).
+// Sobreposição compatível (duas ausências, mesmo turno, mesma dupla) só informa. Nada é apagado sem ação.
+const P04_PEOPLE=['absence','forced_shift'];
+function reqKey(c){
+  const dows=(Array.isArray(c.allowedDows)?c.allowedDows.slice().sort():[]).join(',');
+  const who=c.type==='no_pair'?(c.empIds||[]).slice().sort().join('+'):c.type==='diarista_limit'?normName(c.diaristaName):(c.empId||'');
+  return [c.type,who,c.shiftType||'',c.dateStart,c.dateEnd,dows].join('|');
+}
+function reqDays(c){
+  if(!validISODate(c.dateStart)||!validISODate(c.dateEnd)||c.dateEnd<c.dateStart) return [];
+  const b=dRange(c.dateStart,c.dateEnd).length>400?dAdd(c.dateStart,399):c.dateEnd;
+  return dRange(c.dateStart,b).filter(k=>cActive(c,k));
+}
+function sameWho(a,b){
+  if(P04_PEOPLE.includes(a.type)&&P04_PEOPLE.includes(b.type)) return a.empId===b.empId;
+  if(a.type!==b.type) return false;
+  if(a.type==='no_pair') return (a.empIds||[]).slice().sort().join()===(b.empIds||[]).slice().sort().join();
+  if(a.type==='diarista_limit') return normName(a.diaristaName)===normName(b.diaristaName);
+  return false;
+}
+// 'igual' | 'conflito' | 'sobrepoe' | null, com os dias em comum
+function reqRelation(a,b){
+  if(a.type==='build_range'||b.type==='build_range'||!sameWho(a,b)) return null;
+  if(reqKey(a)===reqKey(b)) return {rel:'igual',dias:reqDays(a)};
+  const db=new Set(reqDays(b)), dias=reqDays(a).filter(k=>db.has(k));
+  if(!dias.length) return null;
+  const bad=(a.type!==b.type&&P04_PEOPLE.includes(a.type)&&P04_PEOPLE.includes(b.type))||(a.type==='forced_shift'&&b.type==='forced_shift'&&a.shiftType!==b.shiftType);
+  return {rel:bad?'conflito':'sobrepoe',dias};
+}
+// Pedidos em vigor = ainda não terminaram. Encerrados não geram aviso.
+function activeReqs(){ const t=todayISO(); return (STATE.constraints||[]).filter(c=>c.dateEnd>=t); }
+function p04Annotate(){
+  const vig=activeReqs();
+  pendingParsed.forEach((c,i)=>{
+    c._dup=null; c._conf=[]; c._over=[];
+    if(c.type==='build_range') return;
+    vig.forEach(o=>{ const r=reqRelation(c,o); if(!r) return;
+      if(r.rel==='igual') c._dup=c._dup||'vigor';
+      else { const em=new Set(r.dias); (r.rel==='conflito'?c._conf:c._over).push({where:'vigor',id:o.id,desc:constraintDescribe(o),dias:r.dias,fora:reqDays(o).filter(k=>!em.has(k))}); } });
+    pendingParsed.slice(0,i).forEach(o=>{ const r=reqRelation(c,o); if(r&&r.rel==='igual'&&!c._dup) c._dup='leva'; });
+    if(c._dup) return;   // repetido não entra, então não briga com ninguém
+    pendingParsed.forEach((o,j)=>{ if(j===i||o.type==='build_range'||o._dup) return; const r=reqRelation(c,o); if(r&&r.rel==='conflito') c._conf.push({where:'leva',id:o.id,desc:esc(reviewTitle(o)),dias:r.dias}); });
+    // 08C: a autorização de substituir só vale para a mesma situação em que foi dada; se mudou, cai e o antigo fica
+    const ok=p04ValidReplace(c);
+    (c._replace||[]).filter(x=>!ok.includes(x)).forEach(x=>{ const o=(STATE.constraints||[]).find(v=>v.id===x.id); c._lost=[...(c._lost||[]),o?constraintDescribe(o):'pedido antigo']; });
+    c._replace=ok;
+  });
+}
+// Assinatura da situação autorizada: pedido novo + antigo + tipo da relação + dias em comum.
+// Mudou qualquer um (datas, pessoa, tipo, turno, alcance) → assinatura diferente → autorização inválida.
+function p04Sig(c,o){ const r=o&&reqRelation(c,o); return (r&&r.rel!=='igual')?[reqKey(c),reqKey(o),r.rel,r.dias.join(',')].join('#'):null; }
+// Recalcula contra os pedidos em vigor AGORA (não usa o que a tela anotou).
+function p04ValidReplace(c){ const vig=activeReqs(); return (c._replace||[]).filter(x=>x&&typeof x==='object'&&x.sig&&p04Sig(c,vig.find(v=>v.id===x.id))===x.sig); }
+function isRep(c,id){ return (c._replace||[]).some(x=>x.id===id); }
+function p04Open(c){ return (c._conf||[]).filter(x=>!(x.where==='vigor'&&isRep(c,x.id))); }
+function p04Replace(id,oldId){
+  const c=findPending(id); if(!c) return;
+  const sig=p04Sig(c,activeReqs().find(v=>v.id===oldId)); if(!sig) return renderParsedReview();
+  c._replace=[...(c._replace||[]).filter(x=>x.id!==oldId),{id:oldId,sig}]; c._lost=[]; renderParsedReview();
+}
+function p04KeepOld(id,oldId){ const c=findPending(id); if(!c) return; c._replace=(c._replace||[]).filter(x=>x.id!==oldId); c._lost=[]; renderParsedReview(); }
+function p04KeepThis(id,otherId){ pendingParsed=pendingParsed.filter(c=>c.id!==otherId); renderParsedReview(); }
+function foraTxt(x){ return x.fora&&x.fora.length?` Os outros dias dele (${daysText(x.fora)}) deixam de valer.`:''; }
+function p04ItemHTML(c){
+  const id=esc(c.id), q=x=>esc(x.id);
+  const lost=(c._lost||[]).map(d=>`<div class="palert">A escolha de substituir "${d}" foi desfeita porque o pedido mudou. O antigo continua em vigor: se ainda quiser trocar, escolha de novo.</div>`).join('');
+  if(c._dup) return lost+ `<div class="pinfo">${c._dup==='vigor'?'Este pedido já existe em vigor: não será adicionado de novo.':'Repetido nesta leva: entra uma vez só.'}</div>`;
+  let h='';
+  (c._conf||[]).forEach(x=>{
+    const dias=` (${daysText(x.dias)})`;
+    if(x.where==='leva') h+=`<div class="perr">Não combina com outro item desta leva: ${x.desc}${dias}.</div><div class="pacts"><button class="pok" onclick="p04KeepThis('${id}','${q(x)}')">Ficar com este</button></div>`;
+    else if(isRep(c,x.id)) h+=`<div class="pinfo">Vai substituir o pedido em vigor: ${x.desc}.${foraTxt(x)} O antigo vai para o histórico.</div><button class="plink" onclick="p04KeepOld('${id}','${q(x)}')">Desfazer substituição</button>`;
+    else h+=`<div class="perr">Não combina com pedido em vigor: ${x.desc}${dias}.</div><div class="pacts"><button class="pok" onclick="p04Replace('${id}','${q(x)}')">Substituir o antigo</button><button class="pok" onclick="removePending('${id}')">Manter o antigo</button></div>`;
+  });
+  (c._over||[]).forEach(x=>{
+    if(isRep(c,x.id)) h+=`<div class="pinfo">Vai substituir: ${x.desc}.${foraTxt(x)} O antigo vai para o histórico.</div><button class="plink" onclick="p04KeepOld('${id}','${q(x)}')">Manter os dois</button>`;
+    else h+=`<div class="pinfo">Coincide em ${daysText(x.dias)} com pedido em vigor: ${x.desc}. Os dois valem.</div><button class="plink" onclick="p04Replace('${id}','${q(x)}')">Substituir o antigo</button>`;
+  });
+  return lost+h;
+}
+// Pedido tirado de "Em vigor" (substituído ou removido) não some: vai para o histórico.
+function archiveReq(c,why){ STATE.constraintsOld=[...(STATE.constraintsOld||[]),{...c,endedAt:Date.now(),endedWhy:why}]; }
+function pendingNeedsCheck(c){ return !!(c._err||((c._alerts||[]).length&&!c._ok)||(!c._dup&&p04Open(c).length)); }
 function renderParsedReview(){
   const wrap=document.getElementById('constraint-review');
   const list=document.getElementById('constraint-review-list');
   if(!pendingParsed.length){ wrap.style.display='none'; return; }
   wrap.style.display='';
+  p04Annotate();
   list.innerHTML = pendingParsed.map(c=>{
     const need=pendingNeedsCheck(c), open=need||c._edit, id=esc(c.id);
     const dates=c.dateStart===c.dateEnd?fmtISO(c.dateStart):`${fmtISO(c.dateStart)} a ${fmtISO(c.dateEnd)}`;
-    return `<div class="row prow${need?' need':''}">
+    return `<div class="row prow${need?' need':''}${c._dup?' dup':''}">
       <div class="rlabel">
         <div class="pt">${esc(reviewTitle(c))}</div>
         <div class="pd">${dates}${c._manual?' · ajustado por você':(c._ok?' · conferido por você':'')}</div>
         ${(c._alerts||[]).map(a=>`<div class="palert">${esc(a.t)}</div>`).join('')}
         ${c._err?`<div class="perr">${esc(c._err)}</div>`:''}
+        ${p04ItemHTML(c)}
         ${open?`<div class="pedit">
           <label>De <input type="date" value="${esc(c.dateStart)}" aria-label="Data inicial" onchange="editPendingDate('${id}','dateStart',this.value)"></label>
           <label>Até <input type="date" value="${esc(c.dateEnd)}" aria-label="Data final" onchange="editPendingDate('${id}','dateEnd',this.value)"></label>
-          ${need&&!c._err?`<button class="pok" onclick="okPending('${id}')">Está certo</button>`:''}
+          ${(need&&!c._err&&(c._alerts||[]).length>0&&!c._ok)?`<button class="pok" onclick="okPending('${id}')">Está certo</button>`:''}
         </div>`:`<button class="plink" onclick="openPendingEdit('${id}')">Editar datas</button>`}
       </div>
       <button class="iconbtn" title="Remover desta leva" aria-label="Remover este pedido" onclick="removePending('${id}')">&times;</button>
@@ -2942,7 +3038,8 @@ function renderParsedReview(){
   const pend=pendingParsed.filter(pendingNeedsCheck).length;
   const btn=document.getElementById('constraint-apply-btn'); if(btn) btn.disabled=pend>0;
   const hint=document.getElementById('constraint-review-hint');
-  if(hint) hint.textContent=pend?`Confira ${pend===1?'o item marcado':'os '+pend+' itens marcados'}: corrija as datas, toque em "Está certo" ou remova. Depois, Aplicar.`:'';
+  const nconf=pendingParsed.filter(c=>!c._dup&&p04Open(c).length).length;
+  if(hint) hint.textContent=pend?`Confira ${pend===1?'o item marcado':'os '+pend+' itens marcados'}: ${nconf?'escolha qual pedido fica, ':''}corrija as datas, toque em "Está certo" ou remova. Depois, Aplicar.`:'';
 }
 function findPending(id){ return pendingParsed.find(c=>c.id===id); }
 function openPendingEdit(id){ const c=findPending(id); if(c){ c._edit=true; renderParsedReview(); } }
@@ -2973,10 +3070,19 @@ function pedidoGuardadoHTML(reqs){
 function applyParsedConstraints(){
   if(!pendingParsed.length) return;
   if(pendingParsed.some(pendingNeedsCheck)){ renderParsedReview(); toast('Confira os itens marcados antes de aplicar.'); return; }
-  const clean=pendingParsed.map(({_alerts,_ok,_edit,_err,_manual,...c})=>c);   // campos de tela não vão para os dados
+  p04Annotate();
+  const dups=pendingParsed.filter(c=>c._dup).length;
+  // 08C: só substitui o que ainda tem autorização válida neste instante (revalida contra "Em vigor")
+  const troca=new Set(pendingParsed.filter(c=>!c._dup).flatMap(c=>p04ValidReplace(c).map(x=>x.id)));
+  if(pendingParsed.some(c=>!c._dup&&p04Open(c).some(x=>x.where==='vigor'&&!troca.has(x.id)))){ renderParsedReview(); toast('Escolha o que fazer com os pedidos que não combinam.'); return; }
+  const clean=pendingParsed.filter(c=>!c._dup).map(({_alerts,_ok,_edit,_err,_manual,_dup,_conf,_over,_replace,_lost,...c})=>c);   // campos de tela não vão para os dados
   const builds=clean.filter(c=>c.type==='build_range');
   const reqs=clean.filter(c=>c.type!=='build_range');
-  STATE.constraints = (STATE.constraints||[]).concat(reqs);
+  // P0.4: repetido não é gravado de novo; substituído sai de "Em vigor" e vai para o histórico (escolha do dono)
+  (STATE.constraints||[]).filter(c=>troca.has(c.id)).forEach(c=>archiveReq(c,'substituído por pedido novo'));
+  STATE.constraints = (STATE.constraints||[]).filter(c=>!troca.has(c.id)).concat(reqs);
+  const nota04=[dups?`${dups===1?'1 pedido já existia e não foi':dups+' pedidos já existiam e não foram'} duplicado${dups===1?'':'s'}.`:'',troca.size?`${troca.size===1?'1 pedido antigo foi substituído':troca.size+' pedidos antigos foram substituídos'} (estão no histórico, em "Encerrados").`:''].filter(Boolean).join(' ');
+  const nota04HTML=nota04?`<div class="banner"><span class="ic">${ICON_CHECK}</span><div>${esc(nota04)}</div></div>`:'';
   pendingParsed=[];
   if(!parseHadRejects) document.getElementById('constraint-input').value='';
   parseHadRejects=false;
@@ -2985,15 +3091,16 @@ function applyParsedConstraints(){
   saveState();
   if(builds.length){                                                // e o período pedido é montado por cima
     const f=builds.map(b=>b.dateStart).sort()[0], t=builds.map(b=>b.dateEnd).sort().slice(-1)[0];
+    document.getElementById('constraint-parse-status').innerHTML=nota04HTML;
     buildFrom(f,t,reqs); return;
   }
   p01Prepare(reqs,regen,'ped');
   renderActiveConstraints();
   renderParsedReview();
   const st=document.getElementById('constraint-parse-status');
-  st.innerHTML = regen
+  st.innerHTML = nota04HTML + (regen
     ? `<div class="banner ${regen.completo?'ok':'warn'}"><span class="ic">${regen.completo?ICON_CHECK:ICON_ALERT}</span><div>Pedido guardado e rascunho refeito. ${esc(reportText(regen))}</div></div>`
-    : (reqs.length?pedidoGuardadoHTML(reqs):'');
+    : (reqs.length?pedidoGuardadoHTML(reqs):''));
   renderAll();
 }
 
