@@ -239,7 +239,8 @@ table tr:last-child td{border-bottom:0}
 .costbar b{font-size:20px;font-variant-numeric:tabular-nums}
 .costbar+.costbar{margin-top:8px}
 .banner{display:flex;gap:10px;padding:12px 14px;border-radius:12px;background:var(--cell);font-size:15px;margin:10px 0}
-.banner.danger{background:var(--red-wash)} .banner.ok{background:var(--green-wash)}
+.banner.danger{background:var(--red-wash)} .banner.ok{background:var(--green-wash)} .banner.warn{background:var(--orange-wash)}
+.mq-res .banner{align-items:flex-start;margin:8px 0}.mq-res .banner .grow{flex:1;min-width:0}.mq-res .x{border:0;background:none;font-size:20px;line-height:1;color:var(--label-2);padding:0 4px;cursor:pointer;min-width:32px;min-height:32px}
 .banner .ic svg{width:16px;height:16px}
 .emptybox{text-align:center;color:var(--label-2);font-size:15px;padding:28px 12px}
 details.subsec{background:var(--cell);border-radius:12px;margin-top:10px;overflow:hidden}
@@ -696,6 +697,7 @@ table.iw tr{cursor:pointer} table.iw tr.today td{background:var(--tint-wash)}
         </div>
       </div>
       <div class="mq-sug" id="mq-sug" hidden></div>
+      <div class="mq-res" id="mq-res" aria-live="polite" hidden></div>
       <div class="mq-legend"><span class="mq-chip ab">A</span>abertura <span class="mq-chip in">I</span>interm. <span class="mq-chip fe">F</span>fecham. <span class="mq-chip off">–</span>folga <span class="mq-chip fer">Fé</span>férias</div>
       <div class="mq-wrap">
         <div class="mq-scroll" id="mq-body"></div>
@@ -980,7 +982,7 @@ if('serviceWorker' in navigator){ navigator.serviceWorker.register('/sw.js').cat
 const STORE_KEY='ank_escala_v1';
 const SCHEMA=2;
 // Versão do código (sobe a cada mudança publicada). Em Ajustes; fora do endereço oficial aparece "cópia local".
-const APP_VERSION='2026.11.07-p03';
+const APP_VERSION='2026.11.08-p02';
 const DOW_LABELS=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
 const DOW_SHORT=['SEG','TER','QUA','QUI','SEX','SÁB','DOM'];
 const DOW_MIN=['seg','ter','qua','qui','sex','sáb','dom'];
@@ -1723,7 +1725,62 @@ function mqTime(k,id){
   const a=document.getElementById('mm-a').value, b=document.getElementById('mm-b').value; if(!a||!b) return;
   const dr=ensureDraft(k); dr.sh[id]={...dr.sh[id],time:`${a}–${b}`,manual:true}; mqClose(); saveState(); renderAll();
 }
-function mqGenerate(){ const ks=mqDays(); generateRange(ks[0],ks[13]); saveState(); renderAll(); toast('Sugestão pronta. Suas edições foram mantidas; confira o assessor.'); }
+// ---------- resultado real da montagem (P0.2, 07/11/2026) ----------
+// Nunca diz "pronto" quando parte do período não foi montada.
+const NEED_WHY=/^(Faltou gente|Ninguém do caixa|Sem intermediário)/;
+// Dias confirmados que um pedido atinge: lá o pedido NÃO vale (montar não mexe em confirmado; P0.1 vai tratar).
+const HIT_TYPES=['absence','forced_shift','no_pair'];
+function confirmedHit(reqs){
+  const s=new Set();
+  (reqs||[]).forEach(c=>{
+    if(!HIT_TYPES.includes(c.type)||!validISODate(c.dateStart)||!validISODate(c.dateEnd)||c.dateEnd<c.dateStart) return;
+    dRange(c.dateStart,c.dateEnd).forEach(k=>{ if(cActive(c,k)&&STATE.days[k]&&STATE.days[k].conf) s.add(k); });
+  });
+  return [...s].sort();
+}
+function buildReport(res,reqs){
+  const r=res||{pedidos:[],gerados:[],preservados:[],semBase:[]};
+  const reqConf=confirmedHit(reqs);
+  const conf=r.preservados.filter(k=>!(STATE.days[k]&&STATE.days[k].draft));
+  const pend=r.preservados.filter(k=>STATE.days[k]&&STATE.days[k].draft);
+  const need=r.gerados.filter(k=>{
+    const d=STATE.days[k]; if(!d||!d.draft) return false;
+    return checkDay(k).flags.some(f=>f.l==='block')||(d.draft.why||[]).some(w=>NEED_WHY.test(w));
+  });
+  return {pedidos:r.pedidos,gerados:r.gerados,conf,pend,semBase:r.semBase||[],need,reqConf,
+    completo:r.gerados.length===r.pedidos.length&&!need.length&&!reqConf.length};
+}
+// "10 a 15/11", "30/11 a 02/12", "11/11, 13/11"
+function daysText(ks){
+  const runs=[]; ks.slice().sort().forEach(k=>{ const l=runs[runs.length-1]; if(l&&dAdd(l[1],1)===k) l[1]=k; else runs.push([k,k]); });
+  return runs.map(([a,b])=>a===b?br(a):(a.slice(5,7)===b.slice(5,7)?`${a.slice(8,10)} a ${br(b)}`:`${br(a)} a ${br(b)}`)).join(', ');
+}
+const nd=n=>`${n} dia${n===1?'':'s'}`;
+function reportText(r){
+  const t=[`Solicitados: ${nd(r.pedidos.length)}.`];
+  t.push(`Montados: ${r.gerados.length}${r.gerados.length?` (${daysText(r.gerados)})`:''}.`);
+  const nao=[]; if(r.conf.length) nao.push(`${daysText(r.conf)}, já confirmados`); if(r.pend.length) nao.push(`${daysText(r.pend)}, com alteração pendente`);
+  if(nao.length) t.push(`Não alterados: ${r.conf.length+r.pend.length} (${nao.join('; ')}).`);
+  if(r.semBase.length) t.push(`Sem escala para copiar: ${r.semBase.length} (${daysText(r.semBase)}).`);
+  if(r.need.length) t.push(`Precisam de você: ${r.need.length} (${daysText(r.need)}): veja o assessor.`);
+  if(r.reqConf&&r.reqConf.length) t.push(reqConfText(r.reqConf));
+  return t.join(' ');
+}
+function reqConfText(ks){ return `Pedido sem efeito em ${nd(ks.length)} já confirmado${ks.length===1?'':'s'} (${daysText(ks)}): para mudar, toque no dia.`; }
+function reportTitle(r){ return r.completo?'Montagem completa':(r.gerados.length===r.pedidos.length?'Montados, com pendências':'Montagem parcial'); }
+function showBuildReport(r){
+  const el=document.getElementById('mq-res');
+  const txt=reportText(r);
+  if(el){
+    const cls=r.completo?'ok':'warn', ic=r.completo?ICON_CHECK:ICON_ALERT;
+    const extra=(!r.completo&&r.conf.length&&!(r.reqConf&&r.reqConf.length))?'<div style="margin-top:4px;font-size:14px">Dias confirmados não mudam ao montar. Para mudar um deles, toque no dia.</div>':'';
+    el.innerHTML=`<div class="banner ${cls}"><span class="ic">${ic}</span><div class="grow"><b>${reportTitle(r)}</b><div>${esc(txt)}</div>${extra}</div><button class="x" aria-label="Fechar resumo" onclick="document.getElementById('mq-res').hidden=true">&times;</button></div>`;
+    el.hidden=false;
+  }
+  toast(r.completo?`Montados ${nd(r.gerados.length)}. Confira o assessor.`:(r.gerados.length===r.pedidos.length?`Montados ${nd(r.gerados.length)}, ${r.need.length} com pendência. Veja o assessor.`:r.gerados.length?`Montagem parcial: ${r.gerados.length} de ${nd(r.pedidos.length)}. Veja o resumo no Montar.`:`Nenhum dia montado. Veja o resumo no Montar.`));
+  return txt;
+}
+function mqGenerate(){ const ks=mqDays(); const r=buildReport(generateRange(ks[0],ks[13])); saveState(); renderAll(); showBuildReport(r); }
 document.addEventListener('click',e=>{ const m=document.getElementById('mq-menu'); if(m&&!m.hidden&&e.target.isConnected&&!m.contains(e.target)) mqClose(); }); // isConnected: botão do próprio menu que acabou de ser redesenhado
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') mqClose(); });
 
@@ -1810,11 +1867,15 @@ function doImport(){
 // ================= GERADOR =================
 // Lê como base só dias CONFIRMADOS (e os do próprio lote). Rascunhos soltos fora do lote não influenciam.
 function compFor(k,holiday){ if(STATE.compDay&&STATE.compDay[k]) return STATE.compDay[k]; const w=dDow(k); return (holiday&&w<5)?STATE.comp[5]:STATE.comp[w]; }
+// Devolve o que fez (P0.2, 07/11/2026): {pedidos, gerados, preservados}. Dia confirmado (ou confirmado com
+// alteração pendente) nunca é tocado — entra em "preservados" para a mensagem contar a verdade.
 function generateRange(from,to){
   let diarRot=0;
+  const out={pedidos:dRange(from,to),gerados:[],preservados:[],semBase:[]};
   dRange(from,to).forEach(k=>{
     const cur=STATE.days[k];
-    if(cur&&cur.conf) return;                        // confirmado (ou alteração de confirmado) fica como está
+    if(cur&&cur.conf){ out.preservados.push(k); return; }   // confirmado (ou alteração de confirmado) fica como está
+    out.gerados.push(k);
     const holiday=!!(cur&&cur.draft&&cur.draft.holiday);
     const manual={}; if(cur&&cur.draft) Object.entries(cur.draft.sh).forEach(([id,c])=>{ if(c.manual) manual[id]=c; });
     const w=dDow(k), comp=compFor(k,holiday), sh={}, why=[];
@@ -1904,11 +1965,14 @@ function generateRange(from,to){
     });
     STATE.days[k]={conf:null,draft:{sh,diar,holiday,why}};
   });
+  return out;
 }
 function copyPrevRange(from,to){
+  const out={pedidos:dRange(from,to),gerados:[],preservados:[],semBase:[]};
   dRange(from,to).forEach(k=>{
-    const cur=STATE.days[k]; if(cur&&cur.conf) return;
-    const src=view(dAdd(k,-14)); if(!src){ delete STATE.days[k]; return; }
+    const cur=STATE.days[k]; if(cur&&cur.conf){ out.preservados.push(k); return; }
+    const src=view(dAdd(k,-14)); if(!src){ delete STATE.days[k]; out.semBase.push(k); return; }
+    out.gerados.push(k);
     const w=dDow(k), sh={};
     STATE.team.forEach(e=>{
       let t=src.sh[e.id]?src.sh[e.id].type:'folga';
@@ -1918,6 +1982,7 @@ function copyPrevRange(from,to){
     });
     STATE.days[k]={conf:null,draft:{sh,diar:(src.diar||[]).map(d=>({...d})),holiday:false,why:[]}};
   });
+  return out;
 }
 
 // ---------- pausas (mesma regra de antes: pausa real quando há 3+ pessoas na loja) ----------
@@ -1967,8 +2032,8 @@ function readGenPeriod(){
   if(dRange(f,t).length>62){ toast('Escolha no máximo 2 meses por vez.'); return null; }
   return [f,t];
 }
-function uiGenerate(){ const p=readGenPeriod(); if(!p) return; generateRange(p[0],p[1]); UI.day=p[0]; closeSheet(); saveState(); renderAll(); toast(`Rascunho de ${br(p[0])} a ${br(p[1])} pronto. Suas edições manuais foram mantidas.`); }
-function uiCopyPrev(){ const p=readGenPeriod(); if(!p) return; copyPrevRange(p[0],p[1]); UI.day=p[0]; closeSheet(); saveState(); renderAll(); toast(`Copiado de ${br(dAdd(p[0],-14))}–${br(dAdd(p[1],-14))}. Confira os alertas.`); }
+function uiGenerate(){ const p=readGenPeriod(); if(!p) return; const r=buildReport(generateRange(p[0],p[1])); UI.day=p[0]; closeSheet(); saveState(); renderAll(); showBuildReport(r); }
+function uiCopyPrev(){ const p=readGenPeriod(); if(!p) return; const r=buildReport(copyPrevRange(p[0],p[1])); UI.day=p[0]; closeSheet(); saveState(); renderAll(); showBuildReport(r); }
 function uiDiscardDrafts(){
   const p=pendingDays(); if(!p.length){ toast('Não há rascunho para descartar.'); return; }
   p.forEach(k=>{ const d=STATE.days[k]; if(d.conf) d.draft=null; else delete STATE.days[k]; });
@@ -2291,7 +2356,7 @@ function weekView(m,checks){
   const diar='<tr><td class="nm" style="color:var(--label-2)">Diaristas</td>'+days.map(k=>{ const v=view(k); const n=v?(v.diar||[]).length:0; return `<td style="color:var(--label-2);font-size:14px">${v?(n||'–'):''}</td>`; }).join('')+'</tr>';
   return `<div class="wgrid-wrap"><table class="wgrid">${head}${rows}${diar}</table><div class="wlegend"><span>A abertura</span><span>I intermediário</span><span>F fechamento</span><span>· folga</span><span>contorno vermelho = regra quebrada</span><span>data em laranja = rascunho</span></div></div>`;
 }
-function generateWeek(){ const m=dMon(UI.day); generateRange(m,dAdd(m,6)); const p=dRange(m,dAdd(m,6)).find(k=>STATE.days[k]&&STATE.days[k].draft); if(p) UI.day=p; saveState(); renderAll(); toast('Rascunho da semana pronto.'); }
+function generateWeek(){ const m=dMon(UI.day); const r=buildReport(generateRange(m,dAdd(m,6))); const p=dRange(m,dAdd(m,6)).find(k=>STATE.days[k]&&STATE.days[k].draft); if(p) UI.day=p; saveState(); renderAll(); showBuildReport(r); }
 
 // arrastar para os lados troca de dia (acompanha o dedo)
 function wireDaySwipe(){
@@ -2678,11 +2743,10 @@ function localBuildRange(text){
 }
 function buildRangeClamp(a,b){ if(b<a) [a,b]=[b,a]; if(dRange(a,b).length>62) b=dAdd(a,61); return [a,b]; }
 function buildOfferHTML(){ const s=nextBuildStart(); return `<div class="btn-row"><button class="btn" onclick="buildFrom('${s}','${dAdd(s,6)}')">Montar ${br(s)} a ${br(dAdd(s,6))}</button></div>`; }
-function buildFrom(f,t){
+function buildFrom(f,t,reqs){
   [f,t]=buildRangeClamp(f,t);
-  const free=dRange(f,t).filter(k=>!(STATE.days[k]&&STATE.days[k].conf)).length;
-  generateRange(f,t); saveState(); closeSheet(); mqGoto(f); if(dAdd(MQ.start,13)<t){ MQ.start=dMon(f); renderAll(); }
-  toast(free?`Rascunho de ${br(f)} a ${br(t)} pronto. Confira o assessor e confirme.`:`De ${br(f)} a ${br(t)} já está tudo confirmado. Para mudar, toque no dia.`);
+  const r=buildReport(generateRange(f,t),reqs); saveState(); closeSheet(); mqGoto(f); if(dAdd(MQ.start,13)<t){ MQ.start=dMon(f); renderAll(); }
+  return showBuildReport(r);
 }
 // Quem, o quê (Folga/Férias com duração), de quando a quando — sem confiar cegamente na IA.
 function reviewTitle(c){
@@ -2743,6 +2807,13 @@ function discardParsedConstraints(){
   document.getElementById('constraint-input').value='';
   document.getElementById('constraint-parse-status').innerHTML='';
 }
+// Sem rascunho para refazer: não promete "vai valer" para dias já confirmados.
+function pedidoGuardadoHTML(reqs){
+  const hit=confirmedHit(reqs);
+  if(!hit.length) return '<div class="banner ok"><span class="ic">'+ICON_CHECK+'</span>Pedido guardado. Ainda não há rascunho para refazer: ele vai valer quando você montar o período.</div>'+buildOfferHTML();
+  const resto=reqs.some(c=>HIT_TYPES.includes(c.type)&&validISODate(c.dateStart)&&validISODate(c.dateEnd)&&dRange(c.dateStart,c.dateEnd).some(k=>cActive(c,k)&&!(STATE.days[k]&&STATE.days[k].conf)));
+  return '<div class="banner warn"><span class="ic">'+ICON_ALERT+'</span><div>Pedido guardado, com pendência. '+esc(reqConfText(hit))+(resto?' Nos outros dias, vale quando você montar o período.':'')+'</div></div>'+(resto?buildOfferHTML():'');
+}
 function applyParsedConstraints(){
   if(!pendingParsed.length) return;
   if(pendingParsed.some(pendingNeedsCheck)){ renderParsedReview(); toast('Confira os itens marcados antes de aplicar.'); return; }
@@ -2754,18 +2825,18 @@ function applyParsedConstraints(){
   if(!parseHadRejects) document.getElementById('constraint-input').value='';
   parseHadRejects=false;
   const p=pendingDays();
-  if(reqs.length&&p.length) generateRange(p[0],p[p.length-1]);   // pedidos novos refazem o rascunho que já existe
+  const regen=(reqs.length&&p.length)?buildReport(generateRange(p[0],p[p.length-1]),reqs):null;   // pedidos novos refazem o rascunho que já existe
   saveState();
   if(builds.length){                                                // e o período pedido é montado por cima
     const f=builds.map(b=>b.dateStart).sort()[0], t=builds.map(b=>b.dateEnd).sort().slice(-1)[0];
-    buildFrom(f,t); return;
+    buildFrom(f,t,reqs); return;
   }
   renderActiveConstraints();
   renderParsedReview();
   const st=document.getElementById('constraint-parse-status');
-  st.innerHTML = p.length
-    ? '<div class="banner ok"><span class="ic">'+ICON_CHECK+'</span>Pedido aplicado. O rascunho de '+br(p[0])+' a '+br(p[p.length-1])+' foi refeito com ele; dias confirmados não mudam.</div>'
-    : '<div class="banner ok"><span class="ic">'+ICON_CHECK+'</span>Pedido guardado. Ainda não há rascunho para refazer: ele vai valer quando você montar o período.</div>'+buildOfferHTML();
+  st.innerHTML = regen
+    ? `<div class="banner ${regen.completo?'ok':'warn'}"><span class="ic">${regen.completo?ICON_CHECK:ICON_ALERT}</span><div>Pedido guardado e rascunho refeito. ${esc(reportText(regen))}</div></div>`
+    : (reqs.length?pedidoGuardadoHTML(reqs):'');
   renderAll();
 }
 
