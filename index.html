@@ -627,6 +627,30 @@ table.sg .mq-chip{min-width:22px;padding:1px 4px;font-size:12px;justify-content:
 .cp-task span{font-size:12.5px;color:var(--label-2)}
 .cp-task span button{border:0;background:transparent;color:var(--tint);font:500 12.5px var(--font);padding:0;cursor:pointer}
 @media (max-width:700px){ .mq-task{font-size:9.5px;max-width:44px;color:var(--label-3)} .mq-cp{display:block} }
+/* --- UX Fase A (08/11/2026): grade legível e sem sobreposição no celular; vale só para .mq (não para a imagem enviada) --- */
+.nw{white-space:nowrap}
+/* só nas telas do app: nada aqui alcança a imagem/PDF enviados (#print-weeks), que ficam como estão (Fase B) */
+.lt,.lt-sub,.mq-top .ws,.mq-top .wt{text-wrap:balance}
+.app .banner,.app .hint,.app .group-f,.lt-sub,.in-al .ia span,.ic-card,.cp-note{text-wrap:pretty}
+#print-weeks *{text-wrap:wrap}
+.mq-leg2{display:none}
+@media (max-width:700px){
+  .mq-scroll{overflow:hidden;overflow:clip}
+  .mq:not(.mqp) thead th,.mq:not(.mqp) thead .mq-day{position:static}
+  .mq:not(.mqp) .mq-day{width:56px}
+  .mq-day .dw{font-size:11px}
+  .mq:not(.mqp) .mq-task{font-size:11px;max-width:none;color:var(--label-2)}
+  .mq:not(.mqp) .mq-hol{font-size:11px;max-width:none;overflow:visible;white-space:nowrap}
+  .mq-st{width:auto;height:auto;background:none!important;top:3px;right:3px;font-size:11px;font-weight:700;line-height:1}
+  .mq-st .sm{display:inline}
+  .mq-st.s-confirmada .sm,.mq-leg2 .s-confirmada b{font-size:8.5px;vertical-align:1px}
+  .mq:not(.mqp) .mq-chip small{font-size:10.5px}
+  .mq-legend{font-size:11px}
+  .mq-legend .mq-chip{font-size:11px}
+  .mq-leg2{display:flex;flex-wrap:wrap;gap:2px 10px;font-size:11px;color:var(--label-2);margin:-4px 2px 8px}
+  .mq-leg2 b{font-weight:700;margin-right:3px}
+  .mq-leg2 .s-enviada{color:var(--green)} .mq-leg2 .s-confirmada{color:var(--tint)} .mq-leg2 .s-pendente,.mq-leg2 .s-rascunho{color:var(--orange)} .mq-leg2 .s-mudou{color:var(--red)}
+}
 .cp-lab{font-size:11.5px;font-weight:600;color:var(--label-2);text-transform:uppercase;letter-spacing:.03em;padding:2px 10px 0}
 table.pdft td.day{min-width:112px;max-width:150px}
 table.pdft td.day .tk{display:block;margin-top:5px;background:#FFF1C9;color:#3b3b3b;font-size:10.5px;font-weight:700;line-height:1.25;padding:4px 6px;border-radius:4px;white-space:normal;text-align:center}
@@ -712,6 +736,7 @@ table.iw tr{cursor:pointer} table.iw tr.today td{background:var(--tint-wash)}
       <div class="mq-res" id="mq-res" aria-live="polite" hidden></div>
       <div id="p01-mq" hidden></div>
       <div class="mq-legend"><span class="mq-chip ab">A</span>abertura <span class="mq-chip in">I</span>interm. <span class="mq-chip fe">F</span>fecham. <span class="mq-chip off">–</span>folga <span class="mq-chip fer">Fé</span>férias</div>
+      <div class="mq-leg2" aria-hidden="true"><span class="s-enviada"><b>&#x2713;&#xFE0E;</b>enviada</span><span class="s-confirmada"><b>&#x25CF;</b>confirmada</span><span class="s-pendente"><b>&#x25D0;</b>alteração pendente</span><span class="s-rascunho"><b>&#x25CB;</b>rascunho</span><span class="s-mudou"><b>!</b>mudou após o envio</span></div>
       <div class="mq-wrap">
         <div class="mq-scroll" id="mq-body"></div>
         <aside class="mq-adv" id="mq-adv" aria-live="polite"></aside>
@@ -996,7 +1021,7 @@ if('serviceWorker' in navigator){ navigator.serviceWorker.register('/sw.js').cat
 const STORE_KEY='ank_escala_v1';
 const SCHEMA=2;
 // Versão do código (sobe a cada mudança publicada). Em Ajustes; fora do endereço oficial aparece "cópia local".
-const APP_VERSION='2026.11.08.3-p04';
+const APP_VERSION='2026.11.08.4-ux-a';
 const DOW_LABELS=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
 const DOW_SHORT=['SEG','TER','QUA','QUI','SEX','SÁB','DOM'];
 const DOW_MIN=['seg','ter','qua','qui','sex','sáb','dom'];
@@ -1250,6 +1275,8 @@ function dayStatus(k){
   return c.motivo==='importado da planilha'?'enviada':'confirmada';
 }
 const STATUS_TXT={rascunho:'rascunho',pendente:'alteração pendente',confirmada:'confirmada, não enviada',enviada:'enviada ao grupo',mudou:'mudou após o envio'};
+// UX Fase A (08/11/2026): no celular a situação do dia é símbolo + cor (não só cor). \uFE0E = forma de texto, nunca emoji.
+const STATUS_SYM={rascunho:'\u25CB',pendente:'\u25D0',confirmada:'\u25CF',enviada:'\u2713\uFE0E',mudou:'!'};
 function markSent(ks){
   const now=Date.now(); let n=0;
   ks.forEach(k=>{ const d=STATE.days[k]; if(!d||!d.conf||d.draft) return; d.conf.sent={at:now,sig:confSig(d.conf),snap:confSnap(d.conf)}; d.conf.at=now; n++; });  // at sobe para o merge do servidor ficar com esta versão
@@ -1443,6 +1470,12 @@ function predict(k,id,type){
   return after;
 }
 
+// UX Fase A (A1): no celular a caixa da grade não rola (overflow:clip). Em aparelho sem clip, scrollIntoView
+// ainda conseguiria rolar a caixa por dentro e esconder as primeiras linhas sob o cabeçalho: devolve ao topo.
+function mqGuardScroll(el){
+  if(el._guard) return; el._guard=true;
+  el.addEventListener('scroll',()=>{ if(window.matchMedia&&matchMedia('(max-width:700px)').matches&&(el.scrollTop||el.scrollLeft)){ el.scrollTop=0; el.scrollLeft=0; } });
+}
 function mqShift(d){ MQ.start=dAdd(mqDays()[0],14*d); renderMontar(); }
 const MQ_LET={abertura:'A',intermediario:'I',fechamento:'F',folga:'–',ferias:'Fé'};
 function chipHTML(t,time,sev,w){
@@ -1460,17 +1493,20 @@ function shortName(e,team){
 function renderMontar(){
   const host=document.getElementById('mq-body'); if(!host) return;
   const ks=mqDays(), items=assess(ks), iss=cellIssues(items);
+  if(host.dataset.start!==ks[0]){ host.scrollTop=0; host.scrollLeft=0; host.dataset.start=ks[0]; }   // UX Fase A: outra quinzena começa do primeiro dia
+  mqGuardScroll(host);
   const a=dD(ks[0]), b=dD(ks[13]);
   document.getElementById('mq-title').textContent=`${a.getUTCDate()} ${MES[a.getUTCMonth()]} – ${b.getUTCDate()} ${MES[b.getUTCMonth()]}`;
   const empty=ks.filter(k=>!view(k)).length, drafts=ks.filter(k=>STATE.days[k]&&STATE.days[k].draft).length;
-  document.getElementById('mq-sub').textContent=empty===14?'Quinzena vazia — monte à mão ou gere uma sugestão':(()=>{ const c=t=>ks.filter(k=>dayStatus(k)===t).length, parts=[]; if(c('rascunho')+c('pendente')) parts.push(`${c('rascunho')+c('pendente')} para confirmar`); if(c('confirmada')) parts.push(`${c('confirmada')} sem enviar`); if(c('mudou')) parts.push(`${c('mudou')} mudaram após o envio`); return `${14-empty} de 14 dias montados${parts.length?' · '+parts.join(' · '):''}`; })();
+  // UX Fase A: cada parte fica inteira na linha (nada de "6 sem / enviar")
+  document.getElementById('mq-sub').innerHTML=empty===14?'Quinzena vazia — monte à mão ou gere uma sugestão':(()=>{ const c=t=>ks.filter(k=>dayStatus(k)===t).length, parts=[`${14-empty} de 14 dias montados`]; if(c('rascunho')+c('pendente')) parts.push(`${c('rascunho')+c('pendente')} para confirmar`); if(c('confirmada')) parts.push(`${c('confirmada')} sem enviar`); if(c('mudou')) parts.push(`${c('mudou')} mudaram após o envio`); return parts.map(x=>`<span class="nw">${x}</span>`).join(' · '); })();
   const team=visibleTeam(ks);
   let h=`<table class="mq"><thead><tr><th class="mq-day">Dia</th>${team.map(e=>`<th><span class="mq-hn"><span class="lg">${esc(e.name)}</span><span class="sm">${esc(shortName(e,team))}</span></span></th>`).join('')}<th class="mq-dih"><span class="lg">Diaristas</span><span class="sm">Diar.</span></th></tr></thead><tbody>`;
   ks.forEach((k,i)=>{
     const v=view(k), w=dDow(k), d=STATE.days[k];
-    const ds=dayStatus(k), st=ds?`<span class="mq-st s-${ds}" title="${STATUS_TXT[ds]}"><span class="lg">${STATUS_TXT[ds]}</span></span>`:'';
+    const ds=dayStatus(k), st=ds?`<span class="mq-st s-${ds}" title="${STATUS_TXT[ds]}" aria-label="${STATUS_TXT[ds]}"><span class="lg">${STATUS_TXT[ds]}</span><span class="sm" aria-hidden="true">${STATUS_SYM[ds]}</span></span>`:'';
     if(i===7) h+=`<tr class="mq-sep"><td colspan="${team.length+2}"></td></tr>`;
-    h+=`<tr class="${w>=5?'we':''}${isHoliday(k)?' hol':''}" id="mq-r-${k}"><td class="mq-day"><button class="mq-dbtn" onclick="mqDayOpen(event,'${k}')" aria-label="Quantas pessoas em ${DOW_LABELS[w]}, ${br(k)}"><b><span class="dw">${DOW_SHORT[w].toLowerCase()}</span> <span class="dd">${br(k)}</span></b>${isHoliday(k)?`<span class="mq-hol">${esc(holidayName(k))}</span>`:''}${(STATE.compDay||{})[k]?`<span class="mq-cp" title="Número de pessoas mudado para este dia">${compTotal(STATE.compDay[k])} pessoas</span>`:''}${taskFor(k)?`<span class="mq-task" title="${esc(taskFor(k))}"><span class="lg">${esc(taskFor(k))}</span><span class="sm">tarefa</span></span>`:''}</button>${st}</td>`;
+    h+=`<tr class="${w>=5?'we':''}${isHoliday(k)?' hol':''}" id="mq-r-${k}"><td class="mq-day"><button class="mq-dbtn" onclick="mqDayOpen(event,'${k}')" aria-label="Quantas pessoas em ${DOW_LABELS[w]}, ${br(k)}"><b><span class="dw">${DOW_SHORT[w].toLowerCase()}</span> <span class="dd">${br(k)}</span></b>${isHoliday(k)?`<span class="mq-hol" title="${esc(holidayName(k)||'Feriado')}"><span class="lg">${esc(holidayName(k)||'Feriado')}</span><span class="sm">feriado</span></span>`:''}${(STATE.compDay||{})[k]?`<span class="mq-cp" title="Número de pessoas mudado para este dia">${compTotal(STATE.compDay[k])} pessoas</span>`:''}${taskFor(k)?`<span class="mq-task" title="${esc(taskFor(k))}"><span class="lg">${esc(taskFor(k))}</span><span class="sm">tarefa</span></span>`:''}</button>${st}</td>`;
     team.forEach(e=>{ const c=v&&v.sh[e.id]; h+=`<td><button class="mq-cell" id="mq-c-${k}-${e.id}" onclick="mqOpen(event,'${k}','${e.id}')">${chipHTML(c&&c.type,c&&works(c.type)?c.time:null,iss[k+'|'+e.id],w)}</button></td>`; });
     const di=(v&&v.diar)||[];
     h+=`<td class="mq-di">${di.map((x,j)=>`<button class="mq-chip dia" onclick="openDiar('${k}',${j})">${esc(x.name||'diarista')}<small>${diarHours(w,x).replace('–',' – ')}</small></button>`).join('')}<button class="mq-add" onclick="addDiarOpen('${k}')" aria-label="Adicionar diarista">+</button><button class="mq-dn${di.length?' has':''}" onclick="mqDiarMenu(event,'${k}')" aria-label="Diaristas">${di.length||'+'}</button></td></tr>`;
