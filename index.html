@@ -371,6 +371,26 @@ table.mqp{min-width:760px}
 .mqp .mq-chip.dia{cursor:default;min-width:0}
 .mqp-di{min-width:150px}
 .mqp tr.hol .mqp-day b{color:var(--orange)}
+/* UX Fase B (08/11/2026): a imagem/PDF para a equipe não herda as regras de tela pequena da grade do Montar
+   (a tabela usa class "mq mqp"); nada é cortado: nomes, feriados e tarefas quebram linha. */
+.mq.mqp thead th{white-space:normal;min-width:76px;max-width:150px;vertical-align:bottom;font-size:13px;letter-spacing:normal;line-height:1.35}
+.mqp .mq-hol,.mqp-tk{display:block;white-space:normal;max-width:180px;overflow:visible;text-overflow:clip;line-height:1.35}
+.mqp-day b,.mqp-day .dd{white-space:nowrap}
+.pv-sum{font-size:14px;color:var(--label-2);margin:14px 4px 8px;text-wrap:pretty}
+.pv-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 4px 8px}
+.pv-bar button{border:1px solid var(--sep);background:var(--paper);color:var(--tint);border-radius:9px;padding:8px 12px;font:600 14px var(--font);min-height:40px;cursor:pointer}
+.pv-wrap{overflow:hidden}
+.pdf-warn{background:var(--orange-wash);border-left:3px solid var(--orange);border-radius:10px;padding:12px 14px;margin:10px 0;font-size:14.5px;line-height:1.45;text-wrap:pretty}
+.pdf-warn b{display:block;margin-bottom:4px}
+.pdf-warn .btn-row{flex-direction:row;flex-wrap:wrap;margin-top:10px}.pdf-warn .btn-row .btn{flex:1;min-width:150px}
+.pv-wrap.zoom{overflow-x:auto;-webkit-overflow-scrolling:touch}
+@media (max-width:700px){
+  table.mq.mqp{table-layout:auto;font-size:13.5px}
+  .mq.mqp thead th{padding:6px 8px;letter-spacing:normal;text-align:left;font-size:13px;overflow:visible;text-overflow:clip;white-space:normal}
+  .mqp .mq-hol{font-size:11px;line-height:1.35;max-width:180px;white-space:normal}
+  .mqp .mq-chip{min-width:0;padding:3px 8px;font-size:12.5px;font-weight:500;align-items:normal;text-align:left}
+  .mqp .mq-chip small{font-size:11px;font-weight:500}
+}
 
 /* ---------- impressão ---------- */
 @media print{
@@ -386,6 +406,7 @@ table.mqp{min-width:760px}
   table.pdft td,table.pdft th,.pdf h3{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .mqp-block,.mqp-block *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   table.mqp{min-width:0} .mqp-block{padding:0}
+  #print-weeks{zoom:1!important} #print-weeks .pdf-block{width:auto!important} .pv-wrap{overflow:visible!important}
 }
 
 
@@ -806,10 +827,14 @@ table.iw tr{cursor:pointer} table.iw tr.today td{background:var(--tint-wash)}
       </div>
       <div class="btn-row no-print">
         <button class="btn fill block" id="share-btn" onclick="shareEscala()">Enviar no WhatsApp</button>
-        <button class="btn block" onclick="window.print()">Gerar PDF</button>
+        <button class="btn block" id="pdf-btn" onclick="gerarPdf()">Gerar PDF</button>
       </div>
+      <div class="pdf-warn no-print" id="share-err" role="alert" hidden></div>
+      <div class="pdf-warn no-print" id="pdf-warn" role="alert" hidden></div>
       <div class="send-box no-print" id="send-box"></div>
-      <div id="print-weeks"></div>
+      <p class="pv-sum no-print" id="pv-sum"></p>
+      <div class="pv-bar no-print" id="pv-bar" hidden><span class="hint" id="pv-hint">Prévia inteira, reduzida para caber.</span><button type="button" onclick="pvToggle()" id="pv-btn">Ampliar</button></div>
+      <div class="pv-wrap" id="pv-wrap"><div id="print-weeks"></div></div>
     </section>
 
     <!-- ===== AJUSTES ===== -->
@@ -1021,7 +1046,7 @@ if('serviceWorker' in navigator){ navigator.serviceWorker.register('/sw.js').cat
 const STORE_KEY='ank_escala_v1';
 const SCHEMA=2;
 // Versão do código (sobe a cada mudança publicada). Em Ajustes; fora do endereço oficial aparece "cópia local".
-const APP_VERSION='2026.11.08.4-ux-a';
+const APP_VERSION='2026.11.08.5-ux-b';
 const DOW_LABELS=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
 const DOW_SHORT=['SEG','TER','QUA','QUI','SEX','SÁB','DOM'];
 const DOW_MIN=['seg','ter','qua','qui','sex','sáb','dom'];
@@ -2308,7 +2333,9 @@ function renderPrintView(){
   const box=document.getElementById('print-weeks'), f=document.getElementById('print-from'), t=document.getElementById('print-to');
   const conf=sortedDays().filter(k=>STATE.days[k].conf);
   if(!conf.length){ box.innerHTML='<div class="emptybox">Nenhum dia confirmado ainda.</div>'; return; }
-  if(!f.value||!t.value){ const lc=conf[conf.length-1]; t.value=lc; const back=dAdd(lc,-14); f.value=conf.find(k=>k>=back)||conf[0]; }
+  // UX Fase B (B4): padrão = da segunda-feira da semana anterior até o último confirmado (antes "-14 dias"
+  // caía no mesmo dia da semana do fim: com fim no domingo, começava num domingo e virava um bloco de 1 dia).
+  if(!f.value||!t.value){ const lc=conf[conf.length-1]; t.value=lc; const back=dMon(dAdd(lc,-7)); f.value=conf.find(k=>k>=back)||conf[0]; }
   const days=dRange(f.value,t.value).filter(k=>STATE.days[k]&&STATE.days[k].conf);
   if(!days.length){ box.innerHTML='<div class="emptybox">Nenhum dia confirmado nesse período.</div>'; return; }
   // uma folha por semana (seg–dom) no PDF (20/10/2026); a imagem do WhatsApp leva as semanas empilhadas
@@ -2326,8 +2353,102 @@ function renderPrintView(){
   const head=team=>`<thead><tr><th class="mqp-day">Dia</th>${team.map(e=>`<th>${esc(e.name)}</th>`).join('')}<th>Diaristas</th></tr></thead>`;
   box.innerHTML=`<div class="pdf pdf-block mqp-block">${weeks.map(wk=>{ const team=visibleTeam(wk.ks); return `<section class="pdf-week"><div class="mqp-h"><b>Escala da semana</b><span>${br(wk.ks[0])} a ${br(wk.ks[wk.ks.length-1])} · Açaí NoKilo · Cruz das Almas</span></div>
     <div class="mqp-box"><table class="mq mqp">${head(team)}<tbody>${wk.ks.map(k=>row(k,team)).join('')}</tbody></table></div></section>`; }).join('')}</div>`;
+  pvSummary(days,weeks); pvFit(); pdfWarnClose();
+  const pb=document.getElementById('pdf-btn'); if(pb) pb.textContent=pdfTooWide()?'Gerar PDF (pode cortar colunas)':'Gerar PDF';
   prepareShare(days[0],days[days.length-1]);
   renderSendBox(days);
+}
+// ---------- UX Fase B (08/11/2026): prévia = imagem enviada ----------
+// Largura da imagem: no mínimo 1100 px e o que a tabela mais larga precisar (antes fixa em 1100: com muita gente
+// as colunas da direita — pessoas e diaristas — saíam cortadas da imagem). A prévia usa a mesma largura.
+const EXPORT_MIN_W=1100;
+function exportWidthFor(block){
+  block.style.width=EXPORT_MIN_W+'px';
+  const pad=32+4, need=Math.max(0,...[...block.querySelectorAll('table.mqp')].map(t=>t.scrollWidth))+pad;
+  const W=Math.max(EXPORT_MIN_W,Math.ceil(need));
+  block.style.width=W+'px';
+  return W;
+}
+// ---------- UX Fase B.3 (08/11/2026): exportação nunca entrega arquivo inválido ----------
+// Limite conservador: o Safari do iPhone recusa canvas acima de ~16,7 Mpx (outros aparelhos variam), então
+// ficamos abaixo disso e também limitamos o lado. Reduzir a resolução só até 1× (texto menor da imagem = 11 px);
+// abaixo disso o texto fica ilegível e a exportação é recusada com orientação.
+const EXPORT_MAX_PX=16000000, EXPORT_MAX_SIDE=16384, EXPORT_SCALE=2, EXPORT_MIN_SCALE=1;
+function exportPlan(W,H,weeks){
+  const fit=Math.min(EXPORT_SCALE,Math.sqrt(EXPORT_MAX_PX/(W*H)),EXPORT_MAX_SIDE/W,EXPORT_MAX_SIDE/H);
+  const scale=Math.floor(fit*100)/100;
+  if(!(W>0&&H>0)) return {ok:false,scale:0,reason:'nada para enviar'};
+  if(scale<EXPORT_MIN_SCALE){
+    const perWeek=H/Math.max(1,weeks||1), maxWeeks=Math.max(1,Math.floor(Math.min(EXPORT_MAX_PX/(W*EXPORT_MIN_SCALE*EXPORT_MIN_SCALE),EXPORT_MAX_SIDE/EXPORT_MIN_SCALE)/(perWeek*EXPORT_MIN_SCALE)));
+    return {ok:false,scale,maxWeeks,reason:`o período é longo demais para uma imagem legível no celular. Escolha até ${maxWeeks} semana${maxWeeks===1?'':'s'} por vez`};
+  }
+  return {ok:true,scale,px:Math.round(W*scale)*Math.round(H*scale)};
+}
+const PNG_SIG=[0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A];
+// Aceita só PNG de verdade: não nulo, tipo certo, tamanho plausível e assinatura PNG nos 8 primeiros bytes.
+async function checkPngBlob(blob){
+  if(!blob) throw new Error('o navegador não conseguiu desenhar a imagem');
+  if(blob.type&&blob.type!=='image/png') throw new Error('a imagem saiu num formato inválido');
+  if(!(blob.size>=1024)) throw new Error('a imagem saiu vazia');
+  const head=new Uint8Array(await blob.slice(0,8).arrayBuffer());
+  if(PNG_SIG.some((b,i)=>head[i]!==b)) throw new Error('a imagem saiu corrompida');
+  return blob;
+}
+// Canvas do tamanho errado ou todo em branco = o aparelho não desenhou de verdade.
+function checkCanvas(canvas,expW,expH){
+  if(!canvas||!(canvas.width>0)||!(canvas.height>0)) throw new Error('o navegador não conseguiu desenhar a imagem');
+  if(Math.abs(canvas.width-expW)>2||Math.abs(canvas.height-expH)>2) throw new Error('a imagem saiu com tamanho errado');
+  const ctx=canvas.getContext&&canvas.getContext('2d'); if(!ctx) return;
+  let colored=false;
+  for(const f of [0.1,0.25,0.5,0.75,0.9]){
+    const y=Math.min(canvas.height-1,Math.floor(canvas.height*f)), row=ctx.getImageData(0,y,canvas.width,1).data;
+    for(let i=0;i<row.length;i+=16){ if(row[i]<235||row[i+1]<235||row[i+2]<235){ colored=true; break; } }
+    if(colored) break;
+  }
+  if(!colored) throw new Error('a imagem saiu em branco');
+}
+// PDF: largura útil da folha A4 deitada (297 mm − 2×8 mm de margem) em px de tela.
+const PDF_USABLE_W=Math.floor((297-16)*96/25.4);
+
+// Mede a largura MÍNIMA de cada tabela (min-content: o máximo que dá para espremer quebrando linhas),
+// sem o zoom da prévia. A tabela ocupa 100% da caixa, então a largura atual não diz se ela cabe na folha.
+function pdfTooWide(){
+  const box=document.getElementById('print-weeks'), blk=box&&box.querySelector('.pdf-block'); if(!blk) return 0;
+  const z=box.style.zoom; box.style.zoom=1;
+  const need=Math.max(0,...[...blk.querySelectorAll('table.mqp')].map(t=>{ const w0=t.style.width, m0=t.style.minWidth; t.style.width='min-content'; t.style.minWidth='0'; const w=t.offsetWidth; t.style.width=w0; t.style.minWidth=m0; return w; }));
+  box.style.zoom=z;
+  return need>PDF_USABLE_W?need:0;
+}
+function gerarPdf(force){
+  const el=document.getElementById('pdf-warn'), need=pdfTooWide();
+  if(need&&!force){
+    const n=visibleTeam(dRange(document.getElementById('print-from').value,document.getElementById('print-to').value)).length;
+    el.innerHTML=`<b>O PDF pode sair cortado</b>Com ${n} pessoas a tabela fica mais larga que a folha A4 (${need} px para ${PDF_USABLE_W} px). As colunas da direita (pessoas ou diaristas) podem ficar de fora do PDF. A imagem do WhatsApp sai completa.<div class="btn-row"><button class="btn fill" onclick="pdfWarnClose();shareEscala()">Usar a imagem</button><button class="btn" onclick="gerarPdf(true)">Gerar PDF mesmo assim</button><button class="btn plain" onclick="pdfWarnClose()">Cancelar</button></div>`;
+    el.hidden=false; el.scrollIntoView&&el.scrollIntoView({block:'nearest'});
+    return false;
+  }
+  pdfWarnClose(); window.print(); return true;
+}
+function pdfWarnClose(){ const el=document.getElementById('pdf-warn'); if(el){ el.hidden=true; el.innerHTML=''; } }
+let pvZoomed=false;
+function pvFit(){
+  const wrap=document.getElementById('pv-wrap'), box=document.getElementById('print-weeks'), bar=document.getElementById('pv-bar');
+  const block=box&&box.querySelector('.pdf-block'); if(!wrap||!block){ if(bar) bar.hidden=true; return; }
+  box.style.zoom=1; const W=exportWidthFor(block), avail=wrap.clientWidth||W;
+  const z=Math.min(1,avail/W), small=z<0.999;
+  box.style.zoom=(pvZoomed||!small)?1:z.toFixed(4);
+  wrap.classList.toggle('zoom',pvZoomed&&small);
+  bar.hidden=!small;
+  document.getElementById('pv-btn').textContent=pvZoomed?'Ver inteira':'Ampliar';
+  document.getElementById('pv-hint').textContent=pvZoomed?'Tamanho real: arraste para o lado para ver tudo.':'Prévia inteira, reduzida para caber. É a mesma imagem que vai para o grupo.';
+}
+function pvToggle(){ pvZoomed=!pvZoomed; pvFit(); }
+window.addEventListener('resize',()=>{ if(document.getElementById('print-weeks')&&document.querySelector('#print-weeks .pdf-block')) pvFit(); });
+// Diz exatamente o que vai na imagem; bloco semanal incompleto é explicado (nada some em silêncio).
+function pvSummary(days,weeks){
+  const el=document.getElementById('pv-sum'); if(!el) return;
+  const parts=weeks.filter(w=>w.ks.length<7).map(w=>w.ks.length===1?`${DOW_LABELS[dDow(w.ks[0])].toLowerCase()} ${br(w.ks[0])} sozinho`:`${br(w.ks[0])} a ${br(w.ks[w.ks.length-1])} com ${nd(w.ks.length)}`);
+  el.textContent=`Vai na imagem: ${nd(days.length)} confirmado${days.length===1?'':'s'} (${br(days[0])} a ${br(days[days.length-1])}), em ${weeks.length} bloco${weeks.length===1?'':'s'} de semana (segunda a domingo).`+(parts.length?` Bloco incompleto: ${parts.join('; ')}.`:'');
 }
 function renderSendBox(days){
   const el=document.getElementById('send-box'); if(!el) return;
@@ -2352,7 +2473,14 @@ function sbMark(ks){ const n=markSent(ks); saveState(); renderAll(); renderPrint
 // ---------- ENVIAR NO WHATSAPP (2026-10-08) ----------
 // Gera uma imagem da tabela da aba Equipe e abre o compartilhar do celular (WhatsApp → grupo).
 // O iPhone só deixa compartilhar logo após o toque, então a imagem é preparada antes, ao abrir a aba.
-let shareFile=null, shareKey='', shareJob=null;
+let shareFile=null, shareKey='', shareJob=null, shareErr=null;
+// UX Fase B.3: falha ao preparar a imagem fica visível (não some num toast) e nada é oferecido para enviar
+function showShareErr(e){
+  const el=document.getElementById('share-err'); if(!el) return;
+  if(!e){ el.hidden=true; el.innerHTML=''; return; }
+  el.innerHTML=`<b>A imagem não foi gerada</b>${esc((e&&e.message)||'erro')}. Nada será enviado até isso ser resolvido.`;
+  el.hidden=false;
+}
 function loadH2C(){
   if(window.html2canvas) return Promise.resolve();
   return new Promise((ok,err)=>{ const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'; s.onload=ok; s.onerror=()=>err(new Error('sem internet para gerar a imagem')); document.head.appendChild(s); });
@@ -2361,25 +2489,30 @@ async function buildShareFile(from,to){
   await loadH2C();
   const src=document.querySelector('#print-weeks .pdf-block'); if(!src) throw new Error('nada para enviar');
   const holder=document.createElement('div');
-  holder.style.cssText='position:fixed;left:-10000px;top:0;width:1100px;background:#fff';
+  holder.style.cssText='position:fixed;left:-10000px;top:0;width:'+EXPORT_MIN_W+'px;background:#fff';
   const clone=src.cloneNode(true); clone.style.overflow='visible'; clone.style.margin='0'; clone.style.borderRadius='0';
   holder.appendChild(clone); document.body.appendChild(holder);
+  holder.style.width=exportWidthFor(clone)+'px';   // UX Fase B: nenhuma coluna fica de fora da imagem
   try{
-    const canvas=await html2canvas(clone,{scale:2,backgroundColor:'#ffffff',logging:false});
-    const blob=await new Promise(r=>canvas.toBlob(r,'image/png'));
+    // UX Fase B.3: mede antes, reduz a resolução só até ficar legível, confere o resultado antes de entregar
+    const W=clone.offsetWidth, H=clone.offsetHeight, plan=exportPlan(W,H,clone.querySelectorAll('.pdf-week').length);
+    if(!plan.ok) throw new Error(plan.reason);
+    const canvas=await html2canvas(clone,{scale:plan.scale,backgroundColor:'#ffffff',logging:false});
+    checkCanvas(canvas,Math.round(W*plan.scale),Math.round(H*plan.scale));
+    const blob=await checkPngBlob(await new Promise(r=>{ try{ canvas.toBlob(r,'image/png'); }catch(e){ r(null); } }));
     return new File([blob],`escala-ank-${br(from).replace('/','-')}-a-${br(to).replace('/','-')}.png`,{type:'image/png'});
   } finally { holder.remove(); }
 }
 function prepareShare(from,to){
   const key=from+'|'+to+'|'+JSON.stringify(dRange(from,to).map(k=>STATE.days[k]&&STATE.days[k].conf&&STATE.days[k].conf.at));
   if(key===shareKey&&(shareFile||shareJob)) return;
-  shareKey=key; shareFile=null;
-  const job=shareJob=buildShareFile(from,to).then(f=>{ if(shareJob===job){ shareFile=f; shareJob=null; } return f; }).catch(e=>{ if(shareJob===job) shareJob=null; throw e; });
+  shareKey=key; shareFile=null; shareErr=null; showShareErr(null);
+  const job=shareJob=buildShareFile(from,to).then(f=>{ if(shareJob===job){ shareFile=f; shareJob=null; } return f; }).catch(e=>{ if(shareJob===job){ shareJob=null; shareErr=e; showShareErr(e); } throw e; });
   job.catch(()=>{});
 }
 async function shareEscala(){
   try{
-    const file=shareFile||await (shareJob||Promise.reject(new Error('nada para enviar')));
+    const file=shareFile||await (shareJob||Promise.reject(shareErr||new Error('nada para enviar')));
     const text=`Escala Açaí NoKilo — ${file.name.replace(/^escala-ank-|\.png$/g,'').replace(/-a-/,' a ').replace(/-/g,'/')}`;
     if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],text}); return; }
     const a=document.createElement('a'); a.href=URL.createObjectURL(file); a.download=file.name; document.body.appendChild(a); a.click(); a.remove();
