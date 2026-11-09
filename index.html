@@ -654,6 +654,15 @@ table.sg .mq-chip{min-width:22px;padding:1px 4px;font-size:12px;justify-content:
 .lt,.lt-sub,.mq-top .ws,.mq-top .wt{text-wrap:balance}
 .app .banner,.app .hint,.app .group-f,.lt-sub,.in-al .ia span,.ic-card,.cp-note{text-wrap:pretty}
 #print-weeks *{text-wrap:wrap}
+/* UX Fase E (08/11/2026): polimento. Só telas do app; a imagem enviada (#print-weeks/.mqp) não muda. */
+.app p,.app .cell .sub,.app .cp-lab{text-wrap:pretty}
+.iw-st{display:inline-block;width:12px;margin-right:5px;font-size:11px;font-weight:700;line-height:1;text-align:center}
+.iw-st.s-enviada,.iw-leg .s-enviada{color:var(--green)} .iw-st.s-confirmada,.iw-leg .s-confirmada{color:var(--tint)} .iw-st.s-pendente,.iw-st.s-rascunho,.iw-leg .s-pendente,.iw-leg .s-rascunho{color:var(--orange)} .iw-st.s-mudou,.iw-leg .s-mudou{color:var(--red)}
+.iw-st.s-confirmada,.iw-leg .s-confirmada b{font-size:8.5px;vertical-align:1px}
+.iw-leg b{font-weight:700;margin-right:3px}
+.ic-h{flex-wrap:wrap} .ic-st{white-space:nowrap} .ic-p small{white-space:nowrap}
+table.team-cfg select{min-width:116px;padding-right:24px}
+.lvl button[aria-pressed="true"][data-l="off"]{background:#fff;color:var(--label);box-shadow:inset 0 0 0 1px rgba(55,53,47,.35)}
 .mq-leg2{display:none}
 @media (max-width:700px){
   .mq-scroll{overflow:hidden;overflow:clip}
@@ -958,7 +967,7 @@ table.iw tr{cursor:pointer} table.iw tr.today td{background:var(--tint-wash)}
       <button class="cell" onclick="openSheet('sh-chat')">Editar por comando de texto…</button>
       <button class="cell" onclick="openSheet('sh-period')">Gerar outro período…</button>
     </div>
-    <div class="group"><button class="cell danger" onclick="openSheet('sh-discard')">Apagar o que ainda não foi enviado</button></div>
+    <div class="group"><button class="cell danger" onclick="openSheet('sh-discard')">Descartar rascunhos e alterações pendentes</button></div>
     <div class="group"><button class="cell bold" onclick="closeSheet()">Cancelar</button></div>
   </div>
 </div>
@@ -1057,12 +1066,23 @@ table.iw tr{cursor:pointer} table.iw tr.today td{background:var(--tint-wash)}
   </div>
 </div>
 
-<div class="sheet asheet" id="sh-discard" role="dialog" aria-modal="true" aria-label="Apagar o que não foi enviado" hidden>
+<div class="sheet asheet" id="sh-discard" role="dialog" aria-modal="true" aria-label="Descartar rascunhos e alterações pendentes" hidden>
   <div class="grab"></div>
   <div class="sb">
     <div class="group">
       <div class="cell center" id="discard-msg" style="font-size:13px;color:var(--label-2);min-height:0;padding:14px 16px;text-align:center"></div>
-      <button class="cell danger" onclick="uiDiscardDrafts(); closeSheet();">Apagar o que não foi enviado</button>
+      <button class="cell danger" id="discard-btn" onclick="uiDiscardDrafts(); closeSheet();">Descartar rascunhos e alterações</button>
+    </div>
+    <div class="group"><button class="cell bold" onclick="closeSheet()">Cancelar</button></div>
+  </div>
+</div>
+
+<div class="sheet asheet" id="sh-remove-emp" role="dialog" aria-modal="true" aria-label="Remover da equipe" hidden>
+  <div class="grab"></div>
+  <div class="sb">
+    <div class="group">
+      <div class="cell center" id="remove-emp-msg" style="font-size:13px;color:var(--label-2);min-height:0;padding:14px 16px;text-align:center"></div>
+      <button class="cell danger" id="remove-emp-btn" onclick="doRemoveEmployee()">Remover da equipe</button>
     </div>
     <div class="group"><button class="cell bold" onclick="closeSheet()">Cancelar</button></div>
   </div>
@@ -1089,7 +1109,7 @@ if('serviceWorker' in navigator){ navigator.serviceWorker.register('/sw.js').cat
 const STORE_KEY='ank_escala_v1';
 const SCHEMA=2;
 // Versão do código (sobe a cada mudança publicada). Em Ajustes; fora do endereço oficial aparece "cópia local".
-const APP_VERSION='2026.11.08.7-ux-d';
+const APP_VERSION='2026.11.08.8-ux-e';
 const DOW_LABELS=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
 const DOW_SHORT=['SEG','TER','QUA','QUI','SEX','SÁB','DOM'];
 const DOW_MIN=['seg','ter','qua','qui','sex','sáb','dom'];
@@ -1345,6 +1365,8 @@ function dayStatus(k){
 const STATUS_TXT={rascunho:'rascunho',pendente:'alteração pendente',confirmada:'confirmada, não enviada',enviada:'enviada ao grupo',mudou:'mudou após o envio'};
 // UX Fase A (08/11/2026): no celular a situação do dia é símbolo + cor (não só cor). \uFE0E = forma de texto, nunca emoji.
 const STATUS_SYM={rascunho:'\u25CB',pendente:'\u25D0',confirmada:'\u25CF',enviada:'\u2713\uFE0E',mudou:'!'};
+// UX Fase E (08/11/2026): legenda do Início com os mesmos nomes e símbolos da legenda do Montar.
+const IW_LEG=[['enviada','enviada'],['confirmada','confirmada'],['pendente','alteração pendente'],['rascunho','rascunho'],['mudou','mudou após o envio']];
 function markSent(ks){
   const now=Date.now(); let n=0;
   ks.forEach(k=>{ const d=STATE.days[k]; if(!d||!d.conf||d.draft) return; d.conf.sent={at:now,sig:confSig(d.conf),snap:confSnap(d.conf)}; d.conf.at=now; n++; });  // at sobe para o merge do servidor ficar com esta versão
@@ -1383,7 +1405,7 @@ const RULES=[
   {id:'plano',nome:'Pessoas escolhidas para o dia',txt:'Quando você muda quantas pessoas trabalham num dia (toque no dia, na aba Montar), avisa se faltou gente.'},
   {id:'folgas',nome:'2 folgas por semana',txt:'Regra da loja: cada pessoa folga 2 dias de segunda a domingo (a lei exige ao menos 1).'},
   {id:'justica',nome:'Divisão justa na quinzena',txt:'Avisa quando fechamentos, aberturas ou sábados à noite ficam concentrados em poucas pessoas.'},
-  {id:'rot',nome:'Metas de rodízio',txt:'Máximo de fechamentos e aberturas por semana para cada pessoa (definido em Equipe).'},
+  {id:'rot',nome:'Metas de rodízio',txt:'Máximo de fechamentos e aberturas por semana para cada pessoa (definido abaixo, em Metas e pausa).'},
   {id:'vinculo',nome:'Diarista 3 semanas seguidas',txt:'Uso recorrente da mesma diarista pode caracterizar vínculo (art. 3º CLT).'},
   {id:'teto',nome:'Teto de horas por semana',txt:'Avisa quando alguém passa do teto informado em Equipe (ex.: Maria, 21h).'}
 ];
@@ -1737,8 +1759,8 @@ function renderInicio(){
   const next14=dRange(t,dAdd(t,13)), al=[];
   const by=st=>sortedDays().filter(k=>k>=dAdd(t,-7)&&dayStatus(k)===st);
   const mud=by('mudou'), nao=by('confirmada'), pend=sortedDays().filter(k=>k>=dAdd(t,-7)&&['rascunho','pendente'].includes(dayStatus(k)));
-  if(mud.length) al.push(['red',`${mud.length} dia${mud.length>1?'s':''} mudou após o envio. Avise o grupo.`,'Avisar o grupo',`goSend('${mud[0]}','${mud[mud.length-1]}')`]);
-  if(pend.length) al.push(['orange',`${pend.length} dia${pend.length>1?'s':''} com mudança para revisar e confirmar.`,'Revisar',`mqGoto('${pend[0]}')`]);
+  if(mud.length) al.push(['red',`${mud.length} dia${mud.length>1?'s mudaram':' mudou'} após o envio. Avise o grupo.`,'Avisar o grupo',`goSend('${mud[0]}','${mud[mud.length-1]}')`]);
+  if(pend.length) al.push(['orange',`${pend.length} dia${pend.length>1?'s':''} em rascunho ou com alteração pendente. Revise e confirme.`,'Revisar',`mqGoto('${pend[0]}')`]);
   if(nao.length) al.push(['tint',`${nao.length} dia${nao.length>1?'s':''} confirmado${nao.length>1?'s':''} e ainda não marcado${nao.length>1?'s':''} como enviado${nao.length>1?'s':''}.`,'Enviar',`goSend('${nao[0]}','${nao[nao.length-1]}')`]);
   if(sugView()){ const [a,b]=sugRange(sugView()); al.push(['tint',`Há uma sugestão de escala para ${br(a)} – ${br(b)}.`,'Ver sugestão',`mqGoto('${a}');setTimeout(sugOpen,120)`]); }
   const vazio=next14.find(k=>!view(k));
@@ -1749,8 +1771,8 @@ function renderInicio(){
   // semana valendo (somente leitura); tocar num dia abre o Montar nele
   const wk=dRange(dMon(t),dAdd(dMon(t),6)), team=visibleTeam(wk);
   h+=`<div class="in-week"><div class="iw-h"><b>Esta semana</b><span>toque num dia para trocar</span></div><div class="tablewrap"><table class="sg iw"><thead><tr><th></th>${team.map(e=>`<th>${esc(shortName(e,team))}</th>`).join('')}<th>Diar.</th></tr></thead><tbody>${wk.map(k=>{ const v=view(k), w=dDow(k), ds=dayStatus(k);
-    return `<tr class="${w>=5?'we':''}${k===t?' today':''}" onclick="mqGoto('${k}')"><td><span class="iw-dot s-${ds}"></span>${DOW_SHORT[w].toLowerCase()} ${br(k)}</td>${team.map(e=>{ const x=v&&v.sh[e.id], ty=x&&x.type; return `<td>${ty?`<span class="mq-chip ${TCLS[ty]||'off'}">${MQ_LET[ty]}</span>`:''}</td>`; }).join('')}<td>${(v&&v.diar||[]).length||''}</td></tr>`; }).join('')}</tbody></table></div>
-    <div class="iw-leg"><span><i class="iw-dot s-enviada"></i>enviada</span><span><i class="iw-dot s-confirmada"></i>confirmada</span><span><i class="iw-dot s-pendente"></i>a confirmar</span><span><i class="iw-dot s-mudou"></i>mudou após o envio</span></div></div>`;
+    return `<tr class="${w>=5?'we':''}${k===t?' today':''}" onclick="mqGoto('${k}')"><td>${ds?`<span class="iw-st s-${ds}" title="${STATUS_TXT[ds]}" aria-label="${STATUS_TXT[ds]}">${STATUS_SYM[ds]}</span>`:'<span class="iw-st"></span>'}${DOW_SHORT[w].toLowerCase()} ${br(k)}</td>${team.map(e=>{ const x=v&&v.sh[e.id], ty=x&&x.type; return `<td>${ty?`<span class="mq-chip ${TCLS[ty]||'off'}">${MQ_LET[ty]}</span>`:''}</td>`; }).join('')}<td>${(v&&v.diar||[]).length||''}</td></tr>`; }).join('')}</tbody></table></div>
+    <div class="iw-leg" aria-hidden="true">${IW_LEG.filter(([st])=>wk.some(k=>dayStatus(k)===st)).map(([st,l])=>`<span class="s-${st}"><b>${STATUS_SYM[st]}</b>${l}</span>`).join('')}</div></div>`;
   h+=`<div class="in-act"><button onclick="mqGoto('${t}')">Fazer uma troca</button><button onclick="mqGoto('${vazio||dAdd(t,14)}')">Montar próxima quinzena</button><button onclick="goSend('${t}','${dAdd(t,13)}')">Enviar para o grupo</button></div>`;
   el.innerHTML=h;
 }
@@ -1783,7 +1805,7 @@ function sugOpen(){
   h+=`<div class="tablewrap"><table class="sg"><thead><tr><th></th>${team.map(e=>`<th>${esc(shortName(e,team))}</th>`).join('')}<th>Diar.</th></tr></thead><tbody>${ks.map(k=>{ const d=g.days[k], w=dDow(k), lock=conf.includes(k);
     return `<tr class="${w>=5?'we':''}${lock?' lock':''}"><td>${DOW_SHORT[w].toLowerCase()} ${br(k)}</td>${team.map(e=>{ const x=d.sh[e.id]; const t=x&&x.type; return `<td>${t?`<span class="mq-chip ${TCLS[t]||'off'}">${MQ_LET[t]}</span>`:''}</td>`; }).join('')}<td>${(d.diar||[]).length||''}</td></tr>`; }).join('')}</tbody></table></div>`;
   if(it.filter(i=>i.sev!=='just').length) h+=`<div class="sg-iss">${it.filter(i=>i.sev!=='just').map(i=>`<p>${SEV_INFO[i.sev].ic} ${i.k?`<b>${DOW_MIN[dDow(i.k)]} ${br(i.k)}</b> · `:''}${esc(i.msg)}</p>`).join('')}</div>`;
-  h+=`<p class="foot" style="padding:0 4px">Aplicar coloca a sugestão como “não enviado” para você ajustar e confirmar.${conf.length?` ${conf.length} dia(s) já confirmado(s) não mudam.`:''}${mine.length?` <b>${mine.length} dia(s) que você já começou serão substituídos.</b>`:''}</p>`;
+  h+=`<p class="foot" style="padding:0 4px">Aplicar coloca a sugestão como rascunho para você ajustar e confirmar.${conf.length?` ${conf.length} dia(s) já confirmado(s) não mudam.`:''}${mine.length?` <b>${mine.length} dia(s) que você já começou serão substituídos.</b>`:''}</p>`;
   h+=`<div class="btn-row"><button class="btn fill" onclick="sugApply()">Aplicar</button><button class="btn" onclick="sugDiscard()">Descartar</button></div>`;
   document.getElementById('sug-body').innerHTML=h; openSheet('sh-sug');
 }
@@ -2294,10 +2316,27 @@ function readGenPeriod(){
 }
 function uiGenerate(){ const p=readGenPeriod(); if(!p) return; const r=buildReport(generateRange(p[0],p[1])); UI.day=p[0]; closeSheet(); saveState(); renderAll(); showBuildReport(r); }
 function uiCopyPrev(){ const p=readGenPeriod(); if(!p) return; const r=buildReport(copyPrevRange(p[0],p[1])); UI.day=p[0]; closeSheet(); saveState(); renderAll(); showBuildReport(r); }
+// UX Fase E.3 (08/11/2026): textos da ação de descarte separam rascunho (dia sem versão confirmada, é apagado)
+// de alteração pendente (dia confirmado com mudança, volta à versão confirmada). Mesmo critério da ação; lógica igual.
+function discardCounts(){ const p=pendingDays(); const alt=p.filter(k=>STATE.days[k].conf).length; return {rasc:p.length-alt, alt}; }
+const nRasc=n=>`${n} dia${n>1?'s':''} em rascunho`, nAlt=n=>`${n} alteraç${n>1?'ões':'ão'} pendente${n>1?'s':''}`;
+function discardAskText(c){
+  if(!c.rasc&&!c.alt) return 'Não há rascunho nem alteração pendente para descartar.';
+  const o=[c.rasc?nRasc(c.rasc):'',c.alt?nAlt(c.alt):''].filter(Boolean).join(' e ');
+  return `Descartar ${o}?`+(c.alt?(c.alt>1?' As alterações pendentes voltarão à versão confirmada.':' A alteração pendente voltará à versão confirmada.'):'')+' Os dias confirmados sem alterações permanecerão intactos.';
+}
+function discardDoneText(c){
+  const o=[c.rasc?`${nRasc(c.rasc)} descartado${c.rasc>1?'s':''}`:'',c.alt?`${nAlt(c.alt)} desfeita${c.alt>1?'s':''} (volt${c.alt>1?'aram':'ou'} à versão confirmada)`:''].filter(Boolean).join('; ');
+  return `${o.charAt(0).toUpperCase()+o.slice(1)}. Os dias confirmados sem alterações continuam iguais.`;
+}
 function uiDiscardDrafts(){
-  const p=pendingDays(); if(!p.length){ toast('Não há rascunho para descartar.'); return; }
-  p.forEach(k=>{ const d=STATE.days[k]; if(d.conf) d.draft=null; else delete STATE.days[k]; });
-  saveState(); renderAll(); toast('Rascunho descartado. Os dias confirmados continuam iguais.');
+  const p=pendingDays(); if(!p.length){ toast('Não há rascunho nem alteração pendente para descartar.'); return; }
+  const c=discardCounts();
+  try{
+    p.forEach(k=>{ const d=STATE.days[k]; if(d.conf) d.draft=null; else delete STATE.days[k]; });
+    saveState();
+  }catch(e){ renderAll(); toast('Não deu para descartar: '+((e&&e.message)||'erro')); return; }   // sem mensagem de sucesso se falhar
+  renderAll(); toast(discardDoneText(c));
 }
 function confirmSeq(){
   const p=pendingDays(); if(!p.length) return [];
@@ -2497,7 +2536,7 @@ function renderSendBox(days){
   const el=document.getElementById('send-box'); if(!el) return;
   const by=t=>days.filter(k=>dayStatus(k)===t);
   const notSent=by('confirmada'), changed=by('mudou'), sent=by('enviada');
-  let h=`<div class="sb-h"><b>Situação do envio</b><span>${sent.length} enviado${sent.length===1?'':'s'} · ${notSent.length} sem enviar · ${changed.length} mudou após o envio</span></div>`;
+  let h=`<div class="sb-h"><b>Situação do envio</b><span>${sent.length} enviado${sent.length===1?'':'s'} · ${notSent.length} sem enviar · ${changed.length} ${changed.length>1?'mudaram':'mudou'} após o envio</span></div>`;
   if(changed.length){
     const msg=sendUpdateText(changed);
     h+=`<p class="sb-p">Estes dias mudaram depois do último envio. Mande só a atualização no grupo:</p><textarea id="sb-msg" rows="${Math.min(10,msg.split('\n').length+1)}" readonly>${esc(msg)}</textarea><div class="sb-a"><button onclick="copySendMsg()">Copiar mensagem</button><button class="pri" onclick="sbMark(${JSON.stringify(changed).replace(/"/g,"'")})">Marquei como enviada</button></div>`;
@@ -2641,7 +2680,7 @@ function openSheet(id){
   if(openSheetEl&&openSheetEl!==s){ openSheetEl.classList.remove('on'); openSheetEl.hidden=true; openSheetEl.style.transform=''; }
   clearTimeout(sheetTimer);
   if(id==='sh-period') periodDefaults();
-  if(id==='sh-discard'){ const n=pendingDays().length; document.getElementById('discard-msg').textContent=n?`Descartar ${n} dia${n>1?'s':''} em rascunho? Os dias confirmados não mudam.`:'Não há rascunho para descartar.'; }
+  if(id==='sh-discard'){ const c=discardCounts(); document.getElementById('discard-msg').textContent=discardAskText(c); const b=document.getElementById('discard-btn'); if(b) b.disabled=!(c.rasc||c.alt); }
   if(id==='sh-chat') renderChatSub();
   scrim.hidden=false; s.hidden=false; s.style.transform='';
   void s.offsetWidth;
@@ -2802,7 +2841,7 @@ function openConfirm(){
   sel.innerHTML=seq.map(k=>`<option value="${k}">${DOW_MIN[dDow(k)]} ${br(k)}</option>`).join('');
   sel.value=seq.filter(k=>STATE.days[k].draft).pop();
   const gap=p.filter(k=>!seq.includes(k)).length;
-  document.getElementById('bar-sum').textContent=`${p.length} dia${p.length>1?'s':''} ainda não enviado${p.length>1?'s':''}, a partir de ${DOW_MIN[dDow(p[0])]} ${br(p[0])}. A confirmação é sempre em sequência.`+(gap?` ${gap} dia(s) depois de um buraco ficam para depois.`:'');
+  document.getElementById('bar-sum').textContent=`${p.length} dia${p.length>1?'s':''} para confirmar (rascunho ou alteração pendente), a partir de ${DOW_MIN[dDow(p[0])]} ${br(p[0])}. A confirmação é sempre em sequência.`+(gap?` ${gap} dia(s) depois de um buraco ficam para depois.`:'');
   document.getElementById('motivo').value='';
   renderConfirmSheet();
   openSheet('sh-confirm');
@@ -2931,8 +2970,19 @@ function addEmployee(){
   STATE.team.push({id:'e'+Date.now(),name:n,hourlyRate:0,employmentType:'horista',maxWeeklyHours:null,podeOperarCaixa:false,cond:defaultCond()});
   saveState(); renderAll();
 }
+// UX Fase E.4 (08/11/2026): confirmação honesta em folha própria ("Remover da equipe" / "Cancelar").
+// A remoção é a mesma de antes (tira a pessoa de STATE.team); só muda o aviso e o botão.
+let removeEmpId=null;
+function removeEmpText(e){ return `Remover ${e.name} da equipe? Ela deixa de aparecer nas escalas, nas imagens, nos PDFs e nos relatórios, inclusive nos períodos anteriores. Os registros continuam armazenados, mas não aparecem mais nessas telas. Se ela só saiu da loja, use “Último dia de trabalho” em Ajustes › Condições de cada pessoa.`; }
 function removeEmployee(i){
-  if(!confirm('Remover '+STATE.team[i].name+' da equipe? Os dias já confirmados continuam no histórico.')) return;
+  const e=STATE.team[i]; if(!e) return;
+  removeEmpId=e.id;
+  const m=document.getElementById('remove-emp-msg'); if(m) m.textContent=removeEmpText(e);
+  openSheet('sh-remove-emp');
+}
+function doRemoveEmployee(){
+  const i=STATE.team.findIndex(e=>e.id===removeEmpId); removeEmpId=null; closeSheet();
+  if(i<0) return;
   STATE.team.splice(i,1); saveState(); renderAll();
 }
 function saveConfig(){
