@@ -875,7 +875,7 @@ table.iw tr{cursor:pointer} table.iw tr.today td{background:var(--tint-wash)}
         <button class="cell" onclick="cfgGo('regras')"><span class="grow">Regras e metas<span class="sub">Livro de regras, metas por semana e pausa</span></span>›</button>
         <button class="cell" onclick="cfgGo('equipe')"><span class="grow">Equipe e valores<span class="sub">Vínculo, valor da hora ou salário e teto de horas</span></span>›</button>
         </div>
-      <p class="foot">Sincronizado entre aparelhos · Açaí No Kilo — Cruz das Almas/BA</p>
+      <p class="foot"><span id="sync-foot"></span><br>Açaí No Kilo — Cruz das Almas/BA</p>
       <div class="group-f" id="app-version" style="text-align:center;margin-top:28px"></div>
       </div>
       <div class="cfg-sub" data-sub="pessoas" data-title="Condições de cada pessoa" hidden>
@@ -1109,7 +1109,7 @@ if('serviceWorker' in navigator){ navigator.serviceWorker.register('/sw.js').cat
 const STORE_KEY='ank_escala_v1';
 const SCHEMA=2;
 // Versão do código (sobe a cada mudança publicada). Em Ajustes; fora do endereço oficial aparece "cópia local".
-const APP_VERSION='2026.11.08.8-ux-e';
+const APP_VERSION='2026.11.08.9-12b';
 const DOW_LABELS=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
 const DOW_SHORT=['SEG','TER','QUA','QUI','SEX','SÁB','DOM'];
 const DOW_MIN=['seg','ter','qua','qui','sex','sáb','dom'];
@@ -1228,8 +1228,9 @@ let lastCfg='', localRev=0;
 function saveState(opts){
   STATE._updatedAt=Date.now(); localRev++;
   const cj=cfgJson(STATE); if(cj!==lastCfg){ STATE._cfgAt=STATE._updatedAt; lastCfg=cj; }
-  try{ localStorage.setItem(STORE_KEY, JSON.stringify(STATE)); }catch(e){}
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(STATE)); localSaveOk=true; }catch(e){ localSaveOk=false; }
   if(!(opts&&opts.keepUndo)) dropUndo();
+  if(typeof SYNC!=='undefined'&&!syncBlocked()&&SYNC.st!=='salvando') setSync('pendente');
   syncStateToServer(opts&&opts.delay);
 }
 // ---------- CHAVE DE ACESSO (2026-10-07) ----------
@@ -1252,36 +1253,232 @@ function saveAccessKey(){
   if(!v) return;
   try{ localStorage.setItem(KEY_STORE,v); }catch(e){}
   closeSheet();
+  if(SYNC.st==='chave'){ if(!STATE._updatedAt&&!confirmedCount(STATE)){ setSync('pendente',{err:''}); syncStateFromServerOnLoad(); } else { setSync('falha',{err:'chave digitada de novo'}); syncRetryUI(); } return; }
   syncStateFromServerOnLoad();
 }
 // ---------- SINCRONIZAÇÃO (Upstash via /api/state) ----------
-// Regra de ouro (2026-10-20): o servidor JUNTA o estado deste aparelho com o dele, dia a dia
-// (api/_merge.js) — dia confirmado nunca some. Se faltava algo aqui, ele responde 409 com o
-// estado já junto, e este aparelho adota (a não ser que tenha editado de novo nesse meio tempo;
-// aí a próxima gravação junta outra vez).
-let syncTimer=null, syncPending=false;
-function syncStateToServer(delay){
-  clearTimeout(syncTimer); syncPending=true;
-  syncTimer=setTimeout(async ()=>{
-    syncPending=false;
-    const sentRev=localRev;
-    try{
-      const res=await apiFetch('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(STATE)});
-      if(res.status===409){
-        const data=await res.json();
-        if(data && data.state){
-          if(localRev!==sentRev){ syncStateToServer(); return; }
-          const before=confirmedCount(STATE);
-          adoptServerState(data.state);
-          if(confirmedCount(STATE)!==before) toast('Este aparelho estava desatualizado. Juntei com a versão do servidor.');
-        }
-      }
-    }catch(e){}
-  },delay||400);
+// Regra de ouro (2026-10-20): o servidor JUNTA o estado deste aparelho com o dele, dia a dia (api/_merge.js) —
+// dia confirmado nunca some.
+// ---------- Etapa 12B (08/11/2026): situação REAL do salvamento ----------
+// A API não tem versão nem gravação condicional (o servidor lê, junta e grava em passos separados), então
+// não há como garantir que um reenvio não passe por cima de algo gravado por outro aparelho. Por isso:
+//  - "Salvo no servidor" só com 200 (ou 409 adotado sem descartar nada deste aparelho) para a revisão local mais nova;
+//  - falha (500/503/rede/15 s sem resposta/401) SUSPENDE o envio automático: nada de retentativa cega;
+//  - "Tentar agora" primeiro confere (GET) se o servidor ainda é a última versão conhecida; se mudou → conflito.
+//    Essa conferência NÃO é atômica: reduz o risco, não é garantia;
+//  - 409 que descarta configuração/rascunho/confirmação ainda não sincronizados daqui → NÃO adota; guarda as duas
+//    cópias (ank_sync_remoto) e mostra "conflito". Nada é apagado nem sobrescrito automaticamente.
+const SYNC_KEY='ank_sync_v1', SYNC_REMOTE_KEY='ank_sync_remoto', SYNC_TIMEOUT=15000, SYNC_WARN_MS=60000;
+const SYNC_BLOCK=['falha','chave','conflito'];
+let syncTimer=null, syncPending=false, syncInFlight=false, syncAgain=false, localSaveOk=true;
+function loadSync(){ const d={st:'pendente',since:Date.now(),err:'',at:0,known:null,cfgH:null,dH:null,cH:null}; try{ return Object.assign(d,JSON.parse(localStorage.getItem(SYNC_KEY)||'{}')); }catch(e){ return d; } }
+let SYNC=loadSync();
+function setSync(st,extra){
+  const prev=SYNC.st; SYNC=Object.assign({},SYNC,extra||{},{st});
+  if(st!==prev&&!(extra&&('since' in extra))&&!(prev==='salvando'&&st==='pendente')&&!(prev==='pendente'&&st==='salvando')) SYNC.since=Date.now();
+  try{ localStorage.setItem(SYNC_KEY,JSON.stringify(SYNC)); }catch(e){}
+  renderSync();
 }
-// Se a página fechar com gravação pendente (ex.: dentro da janela de "Desfazer"), envia na hora.
+function syncBlocked(){ return SYNC_BLOCK.includes(SYNC.st); }
+function stableJ(v){ if(Array.isArray(v)) return '['+v.map(stableJ).join(',')+']'; if(v&&typeof v==='object') return '{'+Object.keys(v).sort().filter(k=>v[k]!==undefined).map(k=>JSON.stringify(k)+':'+stableJ(v[k])).join(',')+'}'; return JSON.stringify(v===undefined?null:v); }
+function hashJ(v){ const s=stableJ(v); let h=2166136261>>>0; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619)>>>0; } return h.toString(16)+':'+s.length; }
+function cfgOf(st){ const o={}; Object.keys(st||{}).forEach(k=>{ if(!NOT_CFG.includes(k)) o[k]=st[k]; }); return o; }
+// Fotografia do que o servidor confirmou deste aparelho (para saber o que ainda NÃO foi sincronizado).
+// view = estado do aparelho (já normalizado, como é enviado); remoteRaw = o que o servidor guarda (para conferir com GET).
+function markSynced(view,remoteRaw){
+  const dH={}, cH={}; Object.entries(view.days||{}).forEach(([k,d])=>{ if(d&&d.draft) dH[k]=hashJ(d.draft); if(d&&d.conf) cH[k]=hashJ(d.conf); });
+  SYNC=Object.assign({},SYNC,{known:hashJ(remoteRaw===undefined?view:remoteRaw),cfgH:hashJ(cfgOf(view)),dH,cH});
+}
+// 12B.3 — comparação explícita entre o aparelho e o servidor (sem referência anterior):
+//  - os dois lados passam por normalizeState (mesmos campos-padrão) e por JSON (tira undefined) → mesma representação;
+//  - chaves em ordem (stableJ); metadados _updatedAt/_cfgAt/schema/legacyHistory/history fora (não são dados do usuário);
+//  - configuração (equipe, regras, valores, pedidos em ordem, tarefas…) e rascunhos de cada dia: precisam ser IGUAIS;
+//  - confirmações: o aparelho não pode ter nenhuma confirmação que o servidor não tenha igual — ou mais nova E que
+//    contenha tudo da daqui (12B.5/D3: mesma escala, mesmo histórico de mudanças `log`, marca de envio igual ou posterior);
+//  - histórico antigo (legacyHistory) do aparelho, se existir, precisa ser igual ao do servidor.
+// Resultado: 'igual' | 'atrasado' (o servidor só tem confirmações a mais/mais novas — nada exclusivo daqui) | lista do que diverge.
+function confCore(c){ const o=Object.assign({},c); delete o.at; delete o.sent; delete o.log; return stableJ(o); }
+function confCovered(a,b){   // a = confirmação deste aparelho, b = do servidor (mais nova): nada de a se perde ao adotar b?
+  if(!b||confCore(a)!==confCore(b)) return false;
+  const rl=new Set((b.log||[]).map(stableJ)); if((a.log||[]).some(x=>!rl.has(stableJ(x)))) return false;
+  if(a.sent&&!(b.sent&&(stableJ(a.sent)===stableJ(b.sent)||(b.sent.at||0)>(a.sent.at||0)))) return false;
+  return true;
+}
+function compareWithRemote(localView,remoteRaw){
+  let rv; try{ rv=JSON.parse(JSON.stringify(normalizeState(JSON.parse(JSON.stringify(remoteRaw))))); }catch(e){ return ['o servidor devolveu um estado ilegível']; }
+  const lv=JSON.parse(JSON.stringify(localView)), out=[]; let atras=false;
+  if(stableJ(cfgOf(lv))!==stableJ(cfgOf(rv))) out.push('configuração (equipe, regras, pedidos ou valores)');
+  const ld=lv.days||{}, rd=rv.days||{};
+  new Set([...Object.keys(ld),...Object.keys(rd)]).forEach(k=>{
+    const a=ld[k]||{}, b=rd[k]||{};
+    if(stableJ(a.draft||null)!==stableJ(b.draft||null)) out.push('rascunho de '+br(k));
+    if(stableJ(a.conf||null)!==stableJ(b.conf||null)){
+      if(a.conf&&(!b.conf||(a.conf.at||0)>=(b.conf.at||0)||!confCovered(a.conf,b.conf))) out.push('confirmação de '+br(k)); else atras=true;
+    }
+  });
+  if(lv.legacyHistory&&stableJ(lv.legacyHistory)!==stableJ(rv.legacyHistory||null)) out.push('histórico antigo');
+  return out.length?out:(atras?'atrasado':'igual');
+}
+let baseRun=null;
+function getTimed(url){   // leitura com o mesmo tempo-limite das gravações (15 s)
+  const ctl=typeof AbortController==='function'?new AbortController():null, t=ctl?setTimeout(()=>ctl.abort(),SYNC_TIMEOUT):0;
+  return apiFetch(url,ctl?{signal:ctl.signal}:{}).finally(()=>clearTimeout(t));
+}
+// 12B.5 — aparelho só desatualizado: o estado deste aparelho é IDÊNTICO (dados normalizados + carimbos _updatedAt/_cfgAt)
+// a uma das versões anteriores que o servidor guarda (GET ?versions=1 e ?version=N, só leitura)? Então tudo o que há
+// aqui já esteve no servidor e nenhuma alteração local foi feita depois (qualquer edição sobe _updatedAt) → adotar é seguro.
+// Histórico ausente, incompleto, ilegível ou sem correspondência → 'nao' (fica o conflito).
+async function matchesHistory(view){
+  try{
+    const r=await getTimed('/api/state?versions=1'); if(!r||r.status!==200) return 'nao';
+    const d=await r.json(); if(!d||!Array.isArray(d.versions)||!d.versions.length) return 'nao';
+    for(const v of d.versions){
+      if(!v||typeof v.i!=='number') return 'nao';
+      const rv=await getTimed('/api/state?version='+v.i); if(!rv||rv.status!==200) return 'nao';
+      const dv=await rv.json(); if(!dv||typeof dv!=='object'||!('state' in dv)) return 'nao';
+      const st=dv.state; if(!st||typeof st!=='object'||typeof st.days!=='object') continue;
+      if((view._updatedAt||0)!==(st._updatedAt||0)||(view._cfgAt||0)!==(st._cfgAt||0)) continue;
+      if(compareWithRemote(view,st)==='igual') return 'sim';
+    }
+    return 'nao';
+  }catch(e){ return 'nao'; }
+}
+// Sem referência (1ª abertura nesta versão ou aparelho novo): LÊ o servidor, não grava. Igual → referência; atrasado só em
+// confirmações → adota (nada daqui se perde); divergente (ou edição durante o carregamento que diverge) → conflito, as duas cópias guardadas.
+function establishBaseline(){
+  if(baseRun) return baseRun;
+  if(SYNC.st==='conflito') return Promise.resolve('conflito');   // conflito só se resolve com ajuda; nada de nova comparação por cima
+  baseRun=(async()=>{
+    setSync(SYNC.st==='salvo'?'pendente':SYNC.st==='conflito'?'conflito':(syncBlocked()?SYNC.st:'salvando'));
+    let res=null;
+    try{ res=await getTimed('/api/state'); }catch(e){ setSync('falha',{err:(e&&e.name==='AbortError')?'o servidor não respondeu a tempo':'sem conexão com o servidor'}); return 'falha'; }
+    if(res.status===401){ setSync('chave',{err:'chave de acesso recusada'}); return 'chave'; }
+    if(!res.ok){ setSync('falha',{err:'o servidor não respondeu, código '+res.status}); return 'falha'; }
+    let data=null; try{ data=await res.json(); }catch(e){}
+    if(!data||typeof data!=='object'||!('state' in data)||(data.state!==null&&typeof data.state!=='object')){ setSync('falha',{err:'resposta inesperada do servidor'}); return 'falha'; }
+    const remote=data.state, vazio=!STATE._updatedAt&&!confirmedCount(STATE);
+    if(remote===null){   // servidor vazio: nada a sobrescrever — a 1ª gravação pode seguir
+      if(vazio){ setSync('salvo',{err:'',at:Date.now(),known:null}); return 'salvo'; }
+      SYNC.known='vazio'; setSync('pendente',{err:''}); return syncNow({semBase:true});
+    }
+    let view=JSON.parse(JSON.stringify(STATE));
+    const cmp=vazio?(remote.days||remote.team?'atrasado':'igual'):compareWithRemote(view,remote);
+    if(cmp==='igual'||cmp==='atrasado'){
+      if(cmp==='atrasado'){ const before=confirmedCount(STATE); adoptServerState(remote); if(!vazio&&confirmedCount(STATE)!==before) toast('Este aparelho estava desatualizado. Atualizei com a versão do servidor (nada deste aparelho foi descartado).'); }
+      markSynced(JSON.parse(JSON.stringify(STATE)),remote); setSync('salvo',{err:'',at:Date.now()}); return 'salvo';
+    }
+    // 12B.5: antes de declarar conflito, confere se este aparelho é só uma versão antiga do servidor (sem nada próprio)
+    const rev0=localRev, hist=await matchesHistory(view);
+    if(hist==='sim'&&localRev===rev0&&!baseEditedSince(view)){
+      adoptServerState(remote); markSynced(JSON.parse(JSON.stringify(STATE)),remote); setSync('salvo',{err:'',at:Date.now()});
+      toast('Este aparelho estava desatualizado. Atualizei com a versão do servidor.'); return 'salvo';
+    }
+    if(localRev!==rev0) view=JSON.parse(JSON.stringify(STATE));   // editou durante a conferência: guarda a versão atual
+    keepConflictCopy(remote,view,cmp); setSync('conflito',{err:'este aparelho e o servidor têm versões diferentes ('+cmp.slice(0,3).join('; ')+(cmp.length>3?'…':'')+')'}); return 'conflito';
+  })().finally(()=>{ baseRun=null; });
+  return baseRun;
+}
+function baseEditedSince(view){ return stableJ(JSON.parse(JSON.stringify(STATE)))!==stableJ(view); }
+// O que deste aparelho (ainda não sincronizado) a junção do servidor deixou de fora
+function discardedByMerge(sent,merged){
+  if(SYNC.cfgH==null) return [];   // sem base conhecida (1ª vez após a atualização): comportamento antigo
+  const out=[], md=merged.days||{};
+  if(hashJ(cfgOf(sent))!==SYNC.cfgH&&stableJ(cfgOf(sent))!==stableJ(cfgOf(merged))) out.push('configuração (equipe, regras, pedidos ou valores)');
+  Object.entries(sent.days||{}).forEach(([k,d])=>{
+    if(!d) return; const m=md[k]||{};
+    if(d.draft&&hashJ(d.draft)!==(SYNC.dH||{})[k]&&stableJ(m.draft||null)!==stableJ(d.draft)) out.push('rascunho de '+br(k));
+    if(d.conf&&hashJ(d.conf)!==(SYNC.cH||{})[k]&&stableJ(m.conf||null)!==stableJ(d.conf)) out.push('confirmação de '+br(k));
+  });
+  return out;
+}
+function keepConflictCopy(remote,local,itens){ try{ localStorage.setItem(SYNC_REMOTE_KEY,JSON.stringify({at:Date.now(),itens,remoto:remote,local})); return true; }catch(e){ return false; } }
+function afterSync(){ if(syncAgain&&!syncBlocked()){ syncAgain=false; Promise.resolve().then(()=>syncNow()); } }
+async function syncNow(opts){
+  opts=opts||{};
+  if(syncBlocked()&&!opts.manual) return 'bloqueado';
+  if(!SYNC.known&&!opts.semBase) return establishBaseline();   // 12B.3: sem referência, nunca grava às cegas
+  if(syncInFlight){ syncAgain=true; return 'em-andamento'; }
+  syncInFlight=true; syncAgain=false; syncPending=false;
+  const sentRev=localRev, bodyStr=JSON.stringify(STATE), sent=JSON.parse(bodyStr);
+  setSync('salvando');
+  let res=null, falhou='';
+  try{
+    const ctl=typeof AbortController==='function'?new AbortController():null;
+    const t=ctl?setTimeout(()=>ctl.abort(),SYNC_TIMEOUT):0;
+    try{ res=await apiFetch('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},body:bodyStr,signal:ctl?ctl.signal:undefined}); }
+    finally{ clearTimeout(t); }
+  }catch(e){ falhou=(e&&e.name==='AbortError')?'o servidor não respondeu a tempo':'sem conexão com o servidor'; }
+  syncInFlight=false;
+  if(falhou){ setSync('falha',{err:falhou}); return 'falha'; }
+  if(res.status===401){ setSync('chave',{err:'chave de acesso recusada'}); return 'chave'; }
+  if(res.status===200){
+    let ok=null; try{ ok=await res.json(); }catch(e){}
+    if(!ok||ok.ok!==true){ setSync('falha',{err:'resposta inesperada do servidor'}); return 'falha'; }   // 12B.3: 200 sem o contrato {ok:true} não é confirmação
+    if(localRev!==sentRev){ setSync('pendente'); syncAgain=true; afterSync(); return 'reenviar'; }   // resposta antiga não marca a versão nova como salva
+    markSynced(sent); setSync('salvo',{err:'',at:Date.now()}); afterSync(); return 'salvo';
+  }
+  if(res.status===409){
+    let data=null; try{ data=await res.json(); }catch(e){}
+    if(!data||!data.state||typeof data.state!=='object'||typeof data.state.days!=='object'){ setSync('falha',{err:'resposta inesperada do servidor'}); return 'falha'; }
+    if(localRev!==sentRev){ setSync('pendente'); syncAgain=true; afterSync(); return 'reenviar'; }
+    const lost=discardedByMerge(sent,data.state);
+    if(lost.length){ keepConflictCopy(data.state,sent,lost); setSync('conflito',{err:lost.join('; ')}); return 'conflito'; }
+    const before=confirmedCount(STATE); adoptServerState(data.state); markSynced(JSON.parse(JSON.stringify(STATE)),data.state);
+    setSync('salvo',{err:'',at:Date.now()});
+    if(confirmedCount(STATE)!==before) toast('Este aparelho estava desatualizado. Juntei com a versão do servidor.');
+    afterSync(); return 'salvo';
+  }
+  setSync('falha',{err:'o servidor recusou a gravação, código '+res.status}); return 'falha';
+}
+function syncStateToServer(delay){
+  if(syncBlocked()){ renderSync(); return; }   // suspenso: nada de reenvio automático depois de falha/conflito
+  if(!SYNC.known){ renderSync(); if(!baseRun) setTimeout(()=>{ if(!SYNC.known) establishBaseline(); else syncStateToServer(1); },delay||400); return; }   // 12B.3: sem referência, espera a comparação (só leitura)
+  clearTimeout(syncTimer); syncPending=true;
+  syncTimer=setTimeout(()=>{ syncNow(); },delay||400);
+}
+// "Tentar agora": confere antes se o servidor ainda é a última versão conhecida por este aparelho.
+async function retryNow(){
+  if(syncInFlight) return 'em-andamento';
+  if(SYNC.st==='conflito') return 'conflito';
+  if(!SYNC.known) return establishBaseline();   // 12B.3: sem referência → lê e compara, não grava
+  let res=null;
+  try{ res=await apiFetch('/api/state'); }catch(e){ setSync('falha',{err:'sem conexão com o servidor'}); return 'falha'; }
+  if(res.status===401){ setSync('chave',{err:'chave de acesso recusada'}); return 'chave'; }
+  if(!res.ok){ setSync('falha',{err:'o servidor não respondeu, código '+res.status}); return 'falha'; }
+  let data=null; try{ data=await res.json(); }catch(e){}
+  if(!data||typeof data!=='object'||!('state' in data)){ setSync('falha',{err:'resposta inesperada do servidor'}); return 'falha'; }
+  const remote=data.state;
+  if(SYNC.known==='vazio'?remote!==null:(!remote||hashJ(remote)!==SYNC.known)){ keepConflictCopy(remote,JSON.parse(JSON.stringify(STATE)),['o servidor mudou desde a última gravação confirmada deste aparelho']); setSync('conflito',{err:'o servidor recebeu outra gravação desde a última confirmada deste aparelho'}); return 'conflito'; }
+  setSync('pendente',{err:''});
+  return syncNow({manual:true});
+}
+function syncRetryUI(){ retryNow().then(r=>{ toast({salvo:'Salvo no servidor.',falha:'Ainda sem sincronizar. As alterações continuam neste aparelho.',chave:'O servidor recusou a chave de acesso.',conflito:'O servidor mudou desde a última gravação deste aparelho. Nada foi enviado.',reenviar:'Enviando a versão mais nova…'}[r]||'Tentando…'); }); }
+function syncText(){
+  const hh=t=>{ const d=new Date(t); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); };
+  const aqui=localSaveOk?'As alterações estão guardadas neste aparelho.':'ATENÇÃO: não foi possível guardar neste aparelho; se fechar o app, as alterações podem ser perdidas.';
+  if(baseRun&&SYNC.st==='salvando') return 'Conferindo com o servidor…'+(localSaveOk?'':' '+aqui);
+  if(!localSaveOk&&SYNC.st!=='salvo') return {salvando:'Salvando no servidor… '+aqui, pendente:'Aguardando o servidor. '+aqui, falha:`Não foi possível sincronizar (${SYNC.err}). ${aqui}`, chave:`O servidor recusou a chave de acesso. ${aqui}`, conflito:`Conflito entre aparelhos. ${aqui}`}[SYNC.st]||aqui;
+  return {salvando:'Salvando…', salvo:SYNC.at?`Salvo no servidor às ${hh(SYNC.at)}`+(localSaveOk?'':' (não foi possível guardar neste aparelho)'):'Salvo no servidor', pendente:'Salvo só neste aparelho · aguardando o servidor',
+    falha:`Não foi possível sincronizar (${SYNC.err}). ${aqui}`, chave:`O servidor recusou a chave de acesso. ${aqui}`,
+    conflito:`Conflito entre aparelhos: nada foi sobrescrito.`}[SYNC.st]||'';
+}
+function renderSync(){
+  const f=document.getElementById('sync-foot'); if(f){ f.textContent=syncText(); f.className='sync-'+SYNC.st; }
+  if(typeof UI!=='undefined'&&UI.tab==='tab-inicio'&&typeof renderInicio==='function') renderInicio();
+}
+// Aviso do Início: só quando há algo a fazer (falha/chave/conflito) ou pendência há mais de ~1 min.
+function syncAlert(){
+  const min=Math.max(1,Math.round((Date.now()-(SYNC.since||Date.now()))/60000));
+  if(!localSaveOk&&SYNC.st!=='salvo') return ['red','Não foi possível guardar as alterações neste aparelho (armazenamento cheio ou indisponível). Elas existem só na tela: não feche o app até aparecer "Salvo no servidor".','',''];
+  if(SYNC.st==='falha') return ['red',`Alterações só neste aparelho: o servidor não confirmou a gravação (${SYNC.err}). Elas estão guardadas aqui; o envio automático está pausado. Evite editar em outro aparelho até resolver.`,'Tentar agora','syncRetryUI()'];
+  if(SYNC.st==='chave') return ['red','O servidor recusou a chave de acesso. As alterações estão guardadas neste aparelho, mas não foram enviadas.','Digitar a chave','askAccessKey()'];
+  if(SYNC.st==='conflito') return ['red',`Conflito entre aparelhos: ${SYNC.err}. Nada foi sobrescrito; a versão deste aparelho e a do servidor estão guardadas. O envio está pausado. Não edite em outro aparelho e peça ajuda para resolver.`,'',''];
+  if((SYNC.st==='pendente'||SYNC.st==='salvando')&&Date.now()-(SYNC.since||Date.now())>SYNC_WARN_MS) return ['orange',`Alterações ainda não confirmadas pelo servidor (há ${min} min). Estão guardadas neste aparelho; o envio está em andamento. Evite trocar de aparelho até aparecer "Salvo no servidor".`,'',''];
+  return null;
+}
+// Se a página fechar com envio pendente (ex.: janela do "Desfazer"), envia na hora — nunca quando o envio está pausado.
 window.addEventListener('pagehide',()=>{
-  if(!syncPending) return;
+  if(!syncPending||syncBlocked()) return;
   const body=JSON.stringify(STATE), k=accessKey();
   try{
     if(body.length<60000){
@@ -1292,25 +1489,26 @@ window.addEventListener('pagehide',()=>{
     syncPending=false;
   }catch(e){}
 });
+window.addEventListener('online',()=>renderSync());
+// 12B.3: alterações só em memória (aparelho não conseguiu guardar e servidor não confirmou) → o navegador avisa ao fechar
+window.addEventListener('beforeunload',e=>{ if(!localSaveOk&&SYNC.st!=='salvo'){ e.preventDefault(); e.returnValue=''; } });
 function adoptServerState(raw){
   STATE=normalizeState(raw); lastCfg=cfgJson(STATE);
-  try{ localStorage.setItem(STORE_KEY, JSON.stringify(STATE)); }catch(e){}
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(STATE)); localSaveOk=true; }catch(e){ localSaveOk=false; }
   renderAll(); periodDefaults();
 }
-// No carregamento: aparelho sem nada próprio só lê o servidor; com dados próprios, manda
-// para o servidor juntar (ele só grava se algo mudou e devolve 409 + o junto se faltava algo aqui).
+// No carregamento: aparelho sem nada próprio só lê o servidor; com dados próprios, manda para o servidor juntar
+// — exceto se o envio estiver pausado (falha/chave/conflito persistidos): aí só mostra a situação.
 async function syncStateFromServerOnLoad(){
-  try{
-    if(!STATE._updatedAt && !confirmedCount(STATE)){
-      const res=await apiFetch('/api/state');
-      if(!res.ok) return;
-      const data=await res.json();
-      if(data.state) adoptServerState(data.state);
-      return;
-    }
-    syncStateToServer(1);
-  }catch(e){}
+  renderSync();
+  // 12B.3: sem referência (1ª abertura nesta versão, aparelho novo ou falha antes de ter referência): só LÊ e compara —
+  // nunca reenvia às cegas. Com referência e envio pausado (falha/chave/conflito): só mostra a situação.
+  if(SYNC.st==='conflito') return;
+  if(!SYNC.known){ if(SYNC.st!=='chave'||accessKey()) await establishBaseline(); return; }
+  if(syncBlocked()) return;
+  syncStateToServer(1);
 }
+if(typeof setInterval==='function') setInterval(()=>{ if(SYNC.st!=='salvo') renderSync(); },30000);   // atualiza "há N min"
 let STATE=loadState(); lastCfg=cfgJson(STATE);
 
 // ---------- datas em texto 'AAAA-MM-DD' (sem fuso) ----------
@@ -1759,6 +1957,7 @@ function renderInicio(){
   const next14=dRange(t,dAdd(t,13)), al=[];
   const by=st=>sortedDays().filter(k=>k>=dAdd(t,-7)&&dayStatus(k)===st);
   const mud=by('mudou'), nao=by('confirmada'), pend=sortedDays().filter(k=>k>=dAdd(t,-7)&&['rascunho','pendente'].includes(dayStatus(k)));
+  const sa=syncAlert(); if(sa) al.push(sa);   // Etapa 12B: salvamento no servidor
   if(mud.length) al.push(['red',`${mud.length} dia${mud.length>1?'s mudaram':' mudou'} após o envio. Avise o grupo.`,'Avisar o grupo',`goSend('${mud[0]}','${mud[mud.length-1]}')`]);
   if(pend.length) al.push(['orange',`${pend.length} dia${pend.length>1?'s':''} em rascunho ou com alteração pendente. Revise e confirme.`,'Revisar',`mqGoto('${pend[0]}')`]);
   if(nao.length) al.push(['tint',`${nao.length} dia${nao.length>1?'s':''} confirmado${nao.length>1?'s':''} e ainda não marcado${nao.length>1?'s':''} como enviado${nao.length>1?'s':''}.`,'Enviar',`goSend('${nao[0]}','${nao[nao.length-1]}')`]);
