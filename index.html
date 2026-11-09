@@ -672,6 +672,16 @@ table.sg .mq-chip{min-width:22px;padding:1px 4px;font-size:12px;justify-content:
   .mq-leg2 b{font-weight:700;margin-right:3px}
   .mq-leg2 .s-enviada{color:var(--green)} .mq-leg2 .s-confirmada{color:var(--tint)} .mq-leg2 .s-pendente,.mq-leg2 .s-rascunho{color:var(--orange)} .mq-leg2 .s-mudou{color:var(--red)}
 }
+/* --- UX Fase D, alternativa A "compacta melhorada" (08/11/2026): só a grade interativa do celular (.mq:not(.mqp)).
+   Mesma largura de colunas, mesmo visual; cresce só a área de toque. Sem rolagem nova (a caixa continua overflow:clip). --- */
+@media (max-width:700px){
+  .mq:not(.mqp) .mq-cell{min-height:44px}
+  .mq:not(.mqp) .mq-dbtn{min-height:44px;display:flex;flex-direction:column;justify-content:center}
+  /* diarista: o botão ocupa a célula inteira (toque ~40×44); o quadradinho visível continua compacto (36 px), desenhado por dentro */
+  .mq:not(.mqp) .mq-di .mq-dn{position:relative;isolation:isolate;display:grid;place-items:center;width:100%;height:44px;border:0;border-radius:6px;background:transparent}
+  .mq:not(.mqp) .mq-di .mq-dn::before{content:'';position:absolute;z-index:-1;width:36px;height:36px;left:50%;top:50%;transform:translate(-50%,-50%);border:1px dashed var(--sep);border-radius:6px;box-sizing:border-box;pointer-events:none}
+  .mq:not(.mqp) .mq-di .mq-dn.has::before{border:0;background:var(--cell-2)}
+}
 .cp-lab{font-size:11.5px;font-weight:600;color:var(--label-2);text-transform:uppercase;letter-spacing:.03em;padding:2px 10px 0}
 table.pdft td.day{min-width:112px;max-width:150px}
 table.pdft td.day .tk{display:block;margin-top:5px;background:#FFF1C9;color:#3b3b3b;font-size:10.5px;font-weight:700;line-height:1.25;padding:4px 6px;border-radius:4px;white-space:normal;text-align:center}
@@ -1079,7 +1089,7 @@ if('serviceWorker' in navigator){ navigator.serviceWorker.register('/sw.js').cat
 const STORE_KEY='ank_escala_v1';
 const SCHEMA=2;
 // Versão do código (sobe a cada mudança publicada). Em Ajustes; fora do endereço oficial aparece "cópia local".
-const APP_VERSION='2026.11.08.6-ux-c';
+const APP_VERSION='2026.11.08.7-ux-d';
 const DOW_LABELS=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
 const DOW_SHORT=['SEG','TER','QUA','QUI','SEX','SÁB','DOM'];
 const DOW_MIN=['seg','ter','qua','qui','sex','sáb','dom'];
