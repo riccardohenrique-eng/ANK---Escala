@@ -205,7 +205,7 @@ table.wgrid td.nm{text-align:left;padding-left:14px;font-size:14px;font-weight:5
 .sheet .sb .group-h:first-child{margin-top:8px}
 .asheet .sb{padding-top:8px}
 .asheet .group+.group{margin-top:8px}
-.asheet .cell{justify-content:center;font-size:19px;color:var(--tint);min-height:56px}
+.asheet .cell{justify-content:center;text-align:center;text-wrap:balance;font-size:19px;color:var(--tint);min-height:56px}
 .asheet .cell.danger{color:var(--red)}
 .asheet .cell.bold{font-weight:600}
 .opt-row .check{color:var(--tint);width:20px;height:20px;flex-shrink:0;opacity:0}
@@ -249,7 +249,20 @@ table tr:last-child td{border-bottom:0}
 .stat .sm b{font-size:20px;font-variant-numeric:tabular-nums}
 .stat .sm span{display:none}
 .costbar{display:flex;justify-content:space-between;align-items:baseline;gap:10px;background:var(--cell);border-radius:12px;padding:14px 16px;font-size:15px}
-.costbar b{font-size:20px;font-variant-numeric:tabular-nums}
+.costbar b{font-size:20px;font-variant-numeric:tabular-nums;white-space:nowrap}
+/* polimento 10/11: no celular a folha vira lista (categoria + valor na mesma linha, explicação embaixo), sem rolar de lado */
+@media (max-width:700px){
+  .payroll-table{min-width:0;width:100%}
+  .payroll-table tr:first-child{display:none}
+  .payroll-table tr{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;padding:10px 12px;border-top:1px solid var(--sep)}
+  .payroll-table tr:nth-child(2){border-top:0}
+  .payroll-table td{display:block;padding:0;border:0;background:none}
+  .payroll-table td.val{grid-column:2;grid-row:1;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .payroll-table td.why{grid-column:1/-1;min-width:0;margin-top:3px}
+  .payroll-table td.why:empty{display:none}
+  .payroll-table tr.total{border-top:1px solid var(--label-2)}
+  .payroll-table tr.total td{border:0}
+}
 .costbar+.costbar{margin-top:8px}
 .banner{display:flex;gap:10px;padding:12px 14px;border-radius:12px;background:var(--cell);font-size:15px;margin:10px 0}
 .banner.danger{background:var(--red-wash)} .banner.ok{background:var(--green-wash)} .banner.warn{background:var(--orange-wash)}
@@ -425,7 +438,7 @@ table.mqp{min-width:760px}
 
 /* ===== MONTAR (2026-10-20): tabela estilo Notion + assessor ao lado ===== */
 body.wide .app{max-width:1480px}
-.mq-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 4px 14px}
+.mq-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 14px}
 .mq-top .mid{min-width:150px}
 .mq-per{background:none;border:0;padding:4px 6px;margin:-4px -6px;border-radius:8px;text-align:left;font:inherit;color:inherit;cursor:pointer;min-height:44px}
 .mq-per:active{background:var(--tint-wash)}
@@ -531,13 +544,13 @@ table.mq{border-collapse:separate;border-spacing:0;width:100%;font-size:13.5px}
   .mq .sm,.mq-btn .sm{display:inline}
   .mq .mq-chip .sm{display:flex;flex-direction:column;align-items:center;line-height:1.1}
   .mq .mq-chip .lg{display:none}
-  #tab-montar{margin:0 -10px}
+  #tab-montar{margin:0 -6px}   /* polimento 10/11: calha de 10px (células da grade seguem ≥44px) */
   .mq-top{margin:0 0 8px;gap:4px}
   .mq-top .wt{font-size:17px}
   .mq-top .ws{font-size:12px}
   .mq-top .mq-acts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;width:100%;overflow:visible}
   .mq-btn{padding:7px 4px;font-size:13px;text-align:center;justify-content:center;display:flex;align-items:center}
-  .mq-legend{display:flex;flex-wrap:wrap;align-items:center;gap:3px 5px;font-size:11px;color:var(--label-2);margin:0 2px 8px}
+  .mq-legend{display:flex;flex-wrap:wrap;align-items:center;gap:3px 5px;font-size:11px;color:var(--label-2);margin:0 0 8px}
   .mq-legend .mq-chip{padding:0 5px;font-size:11px;margin-left:4px}
   .mq-wrap{display:flex;flex-direction:column;align-items:stretch;gap:8px}
   .mq-adv{order:-1;position:static;padding:0;max-height:none;border-radius:10px}
@@ -704,7 +717,7 @@ table.team-cfg select{min-width:116px;padding-right:24px}
   .mq:not(.mqp) .mq-chip small{font-size:10.5px}
   .mq-legend{font-size:11px}
   .mq-legend .mq-chip{font-size:11px}
-  .mq-leg2{display:flex;flex-wrap:wrap;gap:2px 10px;font-size:11px;color:var(--label-2);margin:-4px 2px 8px}
+  .mq-leg2{display:flex;flex-wrap:wrap;gap:2px 10px;font-size:11px;color:var(--label-2);margin:-4px 0 8px}
   .mq-leg2 b{font-weight:700;margin-right:3px}
   .mq-leg2 .s-enviada{color:var(--green)} .mq-leg2 .s-confirmada{color:var(--tint)} .mq-leg2 .s-pendente,.mq-leg2 .s-rascunho{color:var(--orange)} .mq-leg2 .s-mudou{color:var(--red)}
 }
@@ -731,6 +744,7 @@ table.pdft td.day .tk{display:block;margin-top:5px;background:#FFF1C9;color:#3b3
 .send-box .sb-p{font-size:14px;color:var(--label-2);margin:10px 0 6px}
 .send-box textarea{width:100%;border:1px solid var(--sep);border-radius:8px;padding:8px 10px;font:14px/1.45 var(--font);background:var(--paper);color:var(--label);resize:vertical}
 .send-box .sb-a{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.send-box .sb-a button{flex:1 1 auto;min-height:44px;text-align:center}
 .send-box button{border:1px solid var(--sep);background:var(--paper);color:var(--label);border-radius:8px;padding:8px 12px;font:500 14px var(--font);cursor:pointer}
 .send-box button.pri{background:var(--tint-fill);border-color:var(--tint-fill);color:var(--on-tint)}
 .cp-hist{margin:8px 10px 6px;padding-top:10px;border-top:1px solid var(--sep);font-size:13px}
@@ -757,6 +771,7 @@ table.pdft td.day .tk{display:block;margin-top:5px;background:#FFF1C9;color:#3b3
 .ic-l.ab{background:var(--ab-bg);color:var(--ab-fg)} .ic-l.in{background:var(--in-bg);color:var(--in-fg)} .ic-l.fe{background:var(--fe-bg);color:var(--fe-fg)} .ic-l.off{background:var(--off-bg);color:var(--off-fg)}
 .ic-p small{color:var(--label-2);font-size:12.5px} .ic-p.muted{color:var(--label-2)}
 .ic-empty{margin:0;color:var(--label-2)}
+.in-card .ic-btn{margin-top:auto}
 .ic-btn{align-self:flex-start;border:1px solid var(--sep);background:var(--paper);color:var(--tint);border-radius:8px;padding:7px 12px;font:500 14px var(--font);cursor:pointer;margin-top:2px}
 .in-week{margin-top:16px;background:var(--paper);border:1px solid var(--sep);border-radius:12px;padding:12px}
 .iw-h{display:flex;justify-content:space-between;align-items:baseline;margin:0 2px 8px} .iw-h span{font-size:12.5px;color:var(--label-2)}
@@ -916,7 +931,7 @@ table.iw tr{cursor:pointer} table.iw tr.today td{background:var(--tint-wash)}
         <button class="cell" onclick="cfgGo('equipe')"><span class="grow">Equipe e valores<span class="sub">Vínculo, valor da hora ou salário e teto de horas</span></span>›</button>
         </div>
       <p class="foot"><span id="sync-foot"></span><br>Açaí No Kilo — Cruz das Almas/BA</p>
-      <div class="group-f" id="app-version" style="text-align:center;margin-top:28px"></div>
+      <div class="group-f" id="app-version" style="text-align:center;margin-top:4px;font-size:12px;color:var(--label-3)"></div>
       </div>
       <div class="cfg-sub" data-sub="pessoas" data-title="Condições de cada pessoa" hidden>
         <button class="back-link" onclick="cfgGo('')">‹ Ajustes</button>
@@ -1164,7 +1179,7 @@ if('serviceWorker' in navigator){ navigator.serviceWorker.register('/sw.js').cat
 const STORE_KEY='ank_escala_v1';
 const SCHEMA=2;
 // Versão do código (sobe a cada mudança publicada). Em Ajustes; fora do endereço oficial aparece "cópia local".
-const APP_VERSION='2026.11.10.3-faceid';
+const APP_VERSION='2026.11.10.4-polimento';
 const DOW_LABELS=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
 const DOW_SHORT=['SEG','TER','QUA','QUI','SEX','SÁB','DOM'];
 const DOW_MIN=['seg','ter','qua','qui','sex','sáb','dom'];
@@ -4080,7 +4095,7 @@ function renderPeriodSummary(dateList){
   }
   const rows = STATE.team.map(e=>{
     const s=computePeriodTurnos(e.id, dateList);
-    return `<tr><td class="cat">${e.name}</td><td class="val">${s.dias}</td><td class="val">${s.horas.toFixed(1)}h</td><td class="val">${s.ab}</td><td class="val">${s.fe}</td><td class="val">${s.int}</td><td class="val">${s.folga}</td></tr>`;
+    return `<tr><td class="cat">${e.name}</td><td class="val">${s.dias}</td><td class="val">${s.horas.toFixed(1).replace(".",",")}h</td><td class="val">${s.ab}</td><td class="val">${s.fe}</td><td class="val">${s.int}</td><td class="val">${s.folga}</td></tr>`;
   }).join('');
   box.innerHTML = `<div class="tablewrap"><table class="payroll-table">
     <tr><th>Colaboradora</th><th>Dias trab.</th><th>Horas</th><th>Aberturas</th><th>Fechamentos</th><th>Intermediários</th><th>Folgas</th></tr>
@@ -4144,14 +4159,14 @@ function renderReport(){
       <div class="emp-body">
         <div class="stat-row" style="margin-bottom:14px">
           <div class="stat"><div class="snm">Dias trabalhados</div><div class="sm"><span></span><b>${p.diasTrabalhados}</b></div></div>
-          <div class="stat"><div class="snm">Horas normais</div><div class="sm"><span></span><b>${p.normalHours.toFixed(1)}h</b></div></div>
-          <div class="stat"><div class="snm">Horas extras</div><div class="sm"><span></span><b>${p.extraHours.toFixed(1)}h</b></div></div>
+          <div class="stat"><div class="snm">Horas normais</div><div class="sm"><span></span><b>${p.normalHours.toFixed(1).replace(".",",")}h</b></div></div>
+          <div class="stat"><div class="snm">Horas extras</div><div class="sm"><span></span><b>${p.extraHours.toFixed(1).replace(".",",")}h</b></div></div>
           <div class="stat"><div class="snm">Pausa não dada</div><div class="sm"><span></span><b>${p.missingBreakMin}min</b></div></div>
         </div>
         <div class="tablewrap">
         <table class="payroll-table">
           <tr><th>Categoria</th><th>Por quê</th><th>Valor</th></tr>
-          <tr><td class="cat">Horas normais</td><td class="why">${p.normalHours.toFixed(1)}h efetivamente trabalhadas × ${moneyBR(rate)}/h.</td><td class="val">${moneyBR(p.valorNormal)}</td></tr>
+          <tr><td class="cat">Horas normais</td><td class="why">${p.normalHours.toFixed(1).replace(".",",")}h efetivamente trabalhadas × ${moneyBR(rate)}/h.</td><td class="val">${moneyBR(p.valorNormal)}</td></tr>
           <tr><td class="cat">Horas extras (+50%)</td><td class="why">Toda hora além de 8h/dia ou 44h/semana tem acréscimo mínimo de 50% (Art. 7º, XVI, CF).</td><td class="val">${moneyBR(p.valorExtra)}</td></tr>
           <tr><td class="cat">Intervalo suprimido (+50%)</td><td class="why">${p.missingBreakMin} min de pausa devida e não concedida conforme a escala confirmada, pagos como indenização de 50% sobre a hora normal (Art. 71 §4º CLT).</td><td class="val">${moneyBR(p.valorIntervalo)}</td></tr>
           <tr><td class="cat">DSR</td><td class="why">Descanso semanal remunerado: (remuneração normal da semana ÷ dias trabalhados) × 1 dia (Lei 605/49). Folgas além da 1ª não geram pagamento adicional.</td><td class="val">${moneyBR(p.dsr)}</td></tr>
