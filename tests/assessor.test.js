@@ -13,6 +13,7 @@ function app(plan) {
   });
   return a;
 }
+const periodo = (a, f, t) => require('vm').runInContext(`MQ.start='${f}';MQ.end='${t}'`, a);
 const regras = (a, k) => a.checkDay(k).flags.map((f) => f.rule);
 const semana = (seg, f) => { const o = {}; for (let i = 0; i < 7; i++) { const d = new Date(Date.UTC(2026, 10, seg + i)).toISOString().slice(0, 10); o[d] = f(i); } return o; };
 
@@ -21,6 +22,7 @@ test('feriado trabalhado sem folga extra nos 7 dias seguintes é apontado', () =
   const plan = { '2026-11-02': { joeli: 'abertura' } };
   for (let i = 3; i <= 9; i++) plan[`2026-11-0${i}`.replace('-0', '-0').slice(0, 10)] = { joeli: [4, 5].includes(i) ? 'folga' : 'abertura' };
   const a = app(plan);
+  periodo(a, '2026-11-02', '2026-11-09');   // 10/11: o assessor olha só o período escolhido no Montar
   assert.ok(regras(a, '2026-11-02').includes('feriado'));
 });
 
@@ -58,6 +60,7 @@ test('migração: estado antigo passa a 2×1 e Duda só fica proibida de ABRIR q
 test('2×1: 3º domingo seguido é apontado, 2º não', () => {
   const dom = { maria: 'abertura', marta: 'intermediario', alana: 'fechamento' };
   const a = app({ '2026-11-01': dom, '2026-11-08': dom, '2026-11-15': dom });
+  periodo(a, '2026-11-01', '2026-11-15');
   assert.ok(!regras(a, '2026-11-08').includes('dom'));
   assert.ok(regras(a, '2026-11-15').includes('dom'));
 });

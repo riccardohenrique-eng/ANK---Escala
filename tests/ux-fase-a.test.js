@@ -37,7 +37,7 @@ test('A2/A3: grade traz título/aria com a situação, feriado com nome completo
   a.markSent(a.dRange('2026-11-02', '2026-11-08'));
   const st = a.__get();
   st.days['2026-11-12'].draft = JSON.parse(JSON.stringify(st.days['2026-11-12'].conf));
-  require('vm').runInContext("MQ.start='2026-11-02'", a);
+  require('vm').runInContext("MQ.start='2026-11-02';MQ.end='2026-11-15'", a);
   a.renderMontar();
   const h = els['mq-body'].innerHTML;
   assert.match(h, /class="mq-st s-enviada" title="enviada ao grupo" aria-label="enviada ao grupo">.*?<span class="sm" aria-hidden="true">✓/);
@@ -51,7 +51,7 @@ test('A2/A3: grade traz título/aria com a situação, feriado com nome completo
 test('A4: resumo do topo quebra só entre as partes', () => {
   const { a, els } = app();
   confirmar(a, '2026-11-02', '2026-11-15');
-  require('vm').runInContext("MQ.start='2026-11-02'", a);
+  require('vm').runInContext("MQ.start='2026-11-02';MQ.end='2026-11-15'", a);
   a.renderMontar();
   const sub = els['mq-sub'].innerHTML;
   assert.match(sub, /^<span class="nw">14 de 14 dias montados<\/span> · <span class="nw">14 sem enviar<\/span>$/);
@@ -60,7 +60,7 @@ test('A4: resumo do topo quebra só entre as partes', () => {
 test('A1: trocar de quinzena volta a grade ao topo; editar na mesma quinzena não mexe', () => {
   const { a, els } = app();
   confirmar(a, '2026-11-02', '2026-11-29');
-  require('vm').runInContext("MQ.start='2026-11-02'", a);
+  require('vm').runInContext("MQ.start='2026-11-02';MQ.end='2026-11-15'", a);
   a.renderMontar();
   const host = els['mq-body'];
   host.scrollTop = 300; a.renderMontar();

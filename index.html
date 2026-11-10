@@ -89,6 +89,7 @@ button.cell:active,a.cell:active{background:var(--cell-3);transition:none}
 .btn.fill,.btn-primary{background:var(--tint-fill);color:var(--on-tint)}
 .btn.plain,.btn-plain{background:transparent}
 .btn.danger{background:var(--red-wash);color:var(--red)}
+.btn.danger.fill{background:var(--red);color:#fff}
 .btn.block{display:flex;width:100%}
 .btn.sm{min-height:36px;padding:0 14px;font-size:15px;border-radius:18px}
 .btn:disabled{opacity:.4}
@@ -415,6 +416,9 @@ table.mqp{min-width:760px}
 body.wide .app{max-width:1480px}
 .mq-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 4px 14px}
 .mq-top .mid{min-width:150px}
+.mq-per{background:none;border:0;padding:4px 6px;margin:-4px -6px;border-radius:8px;text-align:left;font:inherit;color:inherit;cursor:pointer;min-height:44px}
+.mq-per:active{background:var(--tint-wash)}
+.mq-per-ed{font-size:12px;font-weight:500;color:var(--tint);text-decoration:underline;text-underline-offset:2px;margin-left:4px;white-space:nowrap}
 @media (max-width:700px){ .mq-top .mid{flex:1;min-width:0} .mq-top .mq-acts{width:100%;margin-left:0;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px} .mq-btn{white-space:nowrap;flex:none} .mq-scroll{max-height:none} .mq-adv{position:static;max-height:none} }
 .mq-top .wt{font-size:20px;font-weight:700;letter-spacing:-.01em}
 .mq-top .ws{font-size:13px;color:var(--label-2)}
@@ -762,10 +766,10 @@ table.iw tr{cursor:pointer} table.iw tr.today td{background:var(--tint-wash)}
     <!-- ===== MONTAR (estilo Notion) ===== -->
     <section class="tabpage" id="tab-montar" data-title="Montar">
       <div class="mq-top">
-        <button class="nb-btn" onclick="mqShift(-1)" aria-label="Quinzena anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
-        <div class="mid"><div class="wt" id="mq-title"></div><div class="ws" id="mq-sub"></div></div>
+        <button class="nb-btn" onclick="mqShift(-1)" aria-label="Período anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <button class="mid mq-per" onclick="openSheet('sh-mqp')" aria-label="Escolher o período"><div class="wt"><span id="mq-title"></span> <span class="mq-per-ed">alterar</span></div><div class="ws" id="mq-sub"></div></button>
         <div class="mq-view" role="group" aria-label="Forma de ver"><button data-v="grade" onclick="mqSetView('grade')">Grade</button><button data-v="quadro" onclick="mqSetView('quadro')">Quadro</button></div>
-        <button class="nb-btn" onclick="mqShift(1)" aria-label="Próxima quinzena"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+        <button class="nb-btn" onclick="mqShift(1)" aria-label="Próximo período"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
         <div class="mq-acts">
           <button class="mq-btn" onclick="openSheet('sh-pedidos')"><span class="lg">Pedidos e férias</span><span class="sm">Pedidos</span></button>
           <button class="mq-btn" onclick="mqGenerate()"><span class="lg">Gerar sugestão</span><span class="sm">Gerar</span></button>
@@ -968,8 +972,27 @@ table.iw tr{cursor:pointer} table.iw tr.today td{background:var(--tint-wash)}
       <button class="cell" onclick="openSheet('sh-chat')">Editar por comando de texto…</button>
       <button class="cell" onclick="openSheet('sh-period')">Gerar outro período…</button>
     </div>
-    <div class="group"><button class="cell danger" onclick="openSheet('sh-discard')">Descartar rascunhos e alterações pendentes</button></div>
+    <div class="group"><button class="cell danger" onclick="openSheet('sh-discard')">Descartar rascunhos e alterações pendentes</button><button class="cell danger" onclick="openSheet('sh-clear')">Apagar escalas confirmadas…</button></div>
     <div class="group"><button class="cell bold" onclick="closeSheet()">Cancelar</button></div>
+  </div>
+</div>
+
+<div class="sheet" id="sh-clear" role="dialog" aria-modal="true" aria-labelledby="sh-clear-t" hidden>
+  <div class="grab"></div>
+  <div class="sh"><h2 id="sh-clear-t">Apagar escalas confirmadas</h2><button class="close" onclick="closeSheet()">Fechar</button></div>
+  <div class="sb" id="clear-body"></div>
+</div>
+
+<div class="sheet" id="sh-mqp" role="dialog" aria-modal="true" aria-labelledby="sh-mqp-t" hidden>
+  <div class="grab"></div>
+  <div class="sh"><h2 id="sh-mqp-t">Período da escala</h2><button class="close" onclick="closeSheet()">Fechar</button></div>
+  <div class="sb">
+    <div class="group">
+      <label class="cell"><span class="grow">De</span><input type="date" id="mqp-from" onchange="mqpNote()"></label>
+      <label class="cell"><span class="grow">Até</span><input type="date" id="mqp-to" onchange="mqpNote()"></label>
+    </div>
+    <div class="group-f" id="mqp-note"></div>
+    <div class="btn-row"><button class="btn fill" onclick="mqpApply()">Usar este período</button></div>
   </div>
 </div>
 
@@ -1110,7 +1133,7 @@ if('serviceWorker' in navigator){ navigator.serviceWorker.register('/sw.js').cat
 const STORE_KEY='ank_escala_v1';
 const SCHEMA=2;
 // Versão do código (sobe a cada mudança publicada). Em Ajustes; fora do endereço oficial aparece "cópia local".
-const APP_VERSION='2026.11.09-icone';
+const APP_VERSION='2026.11.10-periodo';
 const DOW_LABELS=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
 const DOW_SHORT=['SEG','TER','QUA','QUI','SEX','SÁB','DOM'];
 const DOW_MIN=['seg','ter','qua','qui','sex','sáb','dom'];
@@ -1208,6 +1231,7 @@ function normalizeState(parsed){
     if(du&&du.cond){ if(String(du.cond.intermediario)==='1,1,0,0,0,1,1') du.cond.intermediario=allDays(1); [2,3,4].forEach(i=>{ du.cond.abertura[i]=0; }); }
     s._mig20261020=1;
   }
+  applyCut(s,s.histCut);
   s.schema=SCHEMA;
   return s;
 }
@@ -1223,7 +1247,16 @@ function confirmedCount(s){
 // Configuração = tudo menos os dias (mesma lista NOT_CFG de api/_merge.js — manter iguais).
 // _cfgAt marca quando a configuração mudou neste aparelho; o servidor usa para não deixar
 // um aparelho com configuração velha passar por cima da nova.
-const NOT_CFG=['days','_updatedAt','_cfgAt','schema','legacyHistory','history'];
+const NOT_CFG=['days','_updatedAt','_cfgAt','schema','legacyHistory','history','histCut'];
+// 10/11/2026 — apagamento das escalas confirmadas (mesma regra de api/_merge.js): todo dia confirmado em ou antes de
+// histCut.at sai inteiro (confirmação + alteração pendente); o histórico antigo da planilha (legacyHistory) também.
+function cutOk(c){ return !!(c&&typeof c==='object'&&typeof c.at==='number'&&c.at>0); }
+function applyCut(s,cut){
+  if(!cutOk(cut)) return s;
+  s.histCut=cut; delete s.legacyHistory;
+  Object.keys(s.days||{}).forEach(k=>{ const d=s.days[k]; if(d&&d.conf&&(d.conf.at||0)<=cut.at) delete s.days[k]; });
+  return s;
+}
 function cfgJson(s){ const o={}; Object.keys(s).sort().forEach(k=>{ if(!NOT_CFG.includes(k)) o[k]=s[k]; }); return JSON.stringify(o); }
 let lastCfg='', localRev=0;
 function saveState(opts){
@@ -1307,7 +1340,10 @@ function confCovered(a,b){   // a = confirmação deste aparelho, b = do servido
 }
 function compareWithRemote(localView,remoteRaw){
   let rv; try{ rv=JSON.parse(JSON.stringify(normalizeState(JSON.parse(JSON.stringify(remoteRaw))))); }catch(e){ return ['o servidor devolveu um estado ilegível']; }
-  const lv=JSON.parse(JSON.stringify(localView)), out=[]; let atras=false;
+  let lv=JSON.parse(JSON.stringify(localView)); const out=[]; let atras=false;
+  const lc=cutOk(lv.histCut)?lv.histCut.at:0, rc=cutOk(rv.histCut)?rv.histCut.at:0;
+  if(rc>lc){ lv=applyCut(lv,rv.histCut); atras=true; }
+  else if(lc>rc) out.push('apagamento das escalas confirmadas');
   if(stableJ(cfgOf(lv))!==stableJ(cfgOf(rv))) out.push('configuração (equipe, regras, pedidos ou valores)');
   const ld=lv.days||{}, rd=rv.days||{};
   new Set([...Object.keys(ld),...Object.keys(rd)]).forEach(k=>{
@@ -1538,7 +1574,12 @@ function works(t){ return t==='abertura'||t==='intermediario'||t==='fechamento';
 
 // ---------- consultas ----------
 function sortedDays(){ return Object.keys(STATE.days).sort(); }
-function view(k){ const d=STATE.days[k]; return d?(d.draft||d.conf):null; }
+// 10/11/2026 (Ricardo): o assistente (assessor + gerador) olha SÓ os dias do período escolhido no Montar.
+// Durante uma conferência, RULE_SCOPE={from,to} faz os dias de fora parecerem vazios para as regras.
+let RULE_SCOPE=null;
+function withScope(from,to,fn){ const prev=RULE_SCOPE; RULE_SCOPE={from,to}; try{ return fn(); } finally { RULE_SCOPE=prev; } }
+function ruleScopeFor(k){ const ks=mqDays(); if(k>=ks[0]&&k<=ks[ks.length-1]) return {from:ks[0],to:ks[ks.length-1]}; return {from:dMon(k),to:dAdd(dMon(k),6)}; }
+function view(k){ if(RULE_SCOPE&&(k<RULE_SCOPE.from||k>RULE_SCOPE.to)) return null; const d=STATE.days[k]; return d?(d.draft||d.conf):null; }
 function typeOn(k,id){ const v=view(k); return v&&v.sh[id]?v.sh[id].type:null; }
 function lastConfirmed(){ let l=null; sortedDays().forEach(k=>{ if(STATE.days[k].conf) l=k; }); return l; }
 // Envio ao grupo e histórico (20/10/2026). Moram DENTRO de conf porque o merge do servidor só guarda
@@ -1620,7 +1661,8 @@ function weekStats(k,id){
   for(let i=0;i<7;i++){ const c=view(dAdd(mon,i)); const x=c&&c.sh[id]; if(!x) continue; if(x.type==='abertura')ab++; if(x.type==='fechamento')fe++; if(works(x.type)&&x.time){ const [a,b]=rangeMin(x.time); min+=b-a; } }
   return {ab,fe,min};
 }
-function checkDay(k){
+function checkDay(k){ if(RULE_SCOPE) return checkDayRaw(k); const s=ruleScopeFor(k); return withScope(s.from,s.to,()=>checkDayRaw(k)); }
+function checkDayRaw(k){
   const v=view(k), w=dDow(k), out=[], bad={};
   if(!v) return {flags:out,bad};
   const push=(rule,msg,who)=>{ const l=lvl(rule); if(l==='off') return; out.push({rule,l,msg,who:who||[]}); if(who&&l==='block') who.forEach(x=>bad[x]=1); };
@@ -1647,7 +1689,7 @@ function checkDay(k){
     sunWorkers(k).forEach(id=>{ const s=sundayStreak(id,k); if(s>=sunNeed()) push('dom',`${id.startsWith('d:')?id.slice(2):empName(id)}: ${s+1}º domingo seguido trabalhando`,[id]); });
   }
   const ks=sortedDays();
-  if(w===6||k===ks[ks.length-1]||!STATE.days[dAdd(k,1)]){
+  if(w===6||k===ks[ks.length-1]||!view(dAdd(k,1))){
     STATE.team.forEach(e=>{
       const st=weekStats(k,e.id);
       if(st.fe>STATE.caps.maxFechamentos) push('rot',`${e.name}: ${st.fe} fechamentos na semana`);
@@ -1716,10 +1758,71 @@ function extraChecks(k,v,w,push){
 
 const SEV={sete:'lei',inter:'lei',dom:'lei',feriado:'lei',h44:'lei',caixa:'loja',cober:'loja',cond:'loja',plano:'loja',folgas:'loja',vinculo:'loja',teto:'loja',rot:'just',justica:'just'};
 const SEV_INFO={lei:{t:'Lei trabalhista',w:'Lei',ic:'<i class="sv lei"></i>'},loja:{t:'Regras da loja',w:'Loja',ic:'<i class="sv loja"></i>'},just:{t:'Justiça',w:'Justiça',ic:'<i class="sv just"></i>'}};
-const MQ_ANCHOR='2026-10-05';
-function mqStartFor(k){ const n=Math.floor((dD(k)-dD(MQ_ANCHOR))/864e5/14); return dAdd(MQ_ANCHOR,n*14); }
-const MQ={start:null,open:null};
-function mqDays(){ if(!MQ.start) MQ.start=mqStartFor(todayISO()); return dRange(MQ.start,dAdd(MQ.start,13)); }
+const MQ={start:null,end:null,open:null};
+// 10/11/2026: período livre De/Até (1 a 42 dias), guardado só neste aparelho.
+const MQ_MAX=42, MQ_KEY='ank_mq_periodo';
+function mqDefault(){ const p=pendingDays(), lc=lastConfirmed(), t=todayISO(); const s=p.length&&p[0]>=t?p[0]:(lc&&dAdd(lc,1)>t?dAdd(lc,1):t); return [s,dAdd(s,6)]; }
+function mqSetPeriod(a,b,quiet){
+  if(b<a) [a,b]=[b,a]; if(dRange(a,b).length>MQ_MAX) b=dAdd(a,MQ_MAX-1);
+  MQ.start=a; MQ.end=b; try{ localStorage.setItem(MQ_KEY,JSON.stringify([a,b])); }catch(e){}
+  if(!quiet) renderMontar();
+}
+function mqDays(){
+  if(!MQ.start||!MQ.end){
+    let p=null; try{ p=JSON.parse(localStorage.getItem(MQ_KEY)||'null'); }catch(e){}
+    if(!(Array.isArray(p)&&/^\d{4}-\d\d-\d\d$/.test(p[0]||'')&&/^\d{4}-\d\d-\d\d$/.test(p[1]||'')&&p[1]>=p[0]&&p[1]>=todayISO())) p=mqDefault();
+    mqSetPeriod(p[0],p[1],true);
+  }
+  return dRange(MQ.start,MQ.end);
+}
+function mqpOpen(){ const ks=mqDays(); document.getElementById('mqp-from').value=ks[0]; document.getElementById('mqp-to').value=ks[ks.length-1]; mqpNote(); }
+function mqpRead(){ const f=document.getElementById('mqp-from').value, t=document.getElementById('mqp-to').value; return (f&&t&&t>=f)?[f,t]:null; }
+function mqpNote(){
+  const p=mqpRead(), n=document.getElementById('mqp-note');
+  if(!p){ n.textContent='Escolha o primeiro e o último dia (De antes de Até).'; return; }
+  const N=dRange(p[0],p[1]).length;
+  n.textContent=N>MQ_MAX?`São ${N} dias; o máximo é ${MQ_MAX} (6 semanas).`:`${N} dia${N>1?'s':''}. O assessor e o gerador olham só para estes dias: o que veio antes de ${br(p[0])} não conta (domingos seguidos, dias seguidos, folgas da semana).`;
+}
+function mqpApply(){ const p=mqpRead(); if(!p){ toast('Escolha um período válido (De antes de Até).'); return; } if(dRange(p[0],p[1]).length>MQ_MAX){ toast('Escolha no máximo 6 semanas por vez.'); return; } closeSheet(); mqSetPeriod(p[0],p[1]); }
+// ---------- apagar escalas confirmadas (10/11/2026) ----------
+// Some todo dia confirmado (com o que estiver pendente nele) e o histórico antigo da planilha. Rascunhos sem confirmação ficam.
+// O servidor guarda as 30 versões anteriores; antes, o app oferece baixar uma cópia. Exige 2 toques.
+const CLEAR={armed:false};
+function confirmedKeys(){ return sortedDays().filter(k=>STATE.days[k]&&STATE.days[k].conf); }
+function renderClear(){
+  const el=document.getElementById('clear-body'); if(!el) return;
+  const ks=confirmedKeys(), n=ks.length;
+  if(!n&&!STATE.legacyHistory){ el.innerHTML=`<div class="group-f">Não há escalas confirmadas guardadas no app.</div>`; return; }
+  const env=ks.filter(k=>STATE.days[k].conf.sent).length;
+  let h=`<div class="group-f">${n?`<b>${n} dia${n>1?'s':''} confirmado${n>1?'s':''}</b>, de ${brY(ks[0])} a ${brY(ks[n-1])}${env?` (${env} marcado${env>1?'s':''} como enviado${env>1?'s':''})`:''}.`:'Só o histórico antigo da planilha.'}<br>
+    Depois de apagar: o Montar, o Enviar e os Relatórios ficam vazios nesses dias, e o assistente começa do zero. Rascunhos que ainda não foram confirmados continuam. Equipe, regras, pedidos e valores não mudam.<br>
+    Vale para todos os aparelhos: um celular antigo não traz esses dias de volta.</div>`;
+  if(syncBlocked()) h+=`<div class="group-f" style="color:var(--red)">O salvamento no servidor está pausado (${esc(SYNC.err||SYNC.st)}). Resolva isso antes de apagar.</div>`;
+  h+=`<div class="btn-row"><button class="btn" onclick="clearBackup()">Baixar cópia antes</button></div>`;
+  h+=`<div class="btn-row"><button class="btn danger${CLEAR.armed?' fill':''}" ${syncBlocked()?'disabled':''} onclick="clearConfirmed()">${CLEAR.armed?'Toque de novo para apagar':`Apagar ${n} dia${n===1?'':'s'} confirmado${n===1?'':'s'}`}</button></div>`;
+  h+=`<div class="group-f">O servidor também guarda as últimas 30 versões, incluindo a de antes do apagamento.</div>`;
+  el.innerHTML=h;
+}
+async function clearBackup(){
+  try{
+    const name=`escala-ank-copia-${todayISO()}.json`;
+    const file=new File([JSON.stringify(STATE,null,1)],name,{type:'application/json'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file]}); return; }
+    const a=document.createElement('a'); a.href=URL.createObjectURL(file); a.download=name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),5000); toast('Cópia baixada.');
+  }catch(e){ if(e&&e.name==='AbortError') return; toast('Não consegui gerar a cópia neste aparelho.'); }
+}
+function clearConfirmed(){
+  if(syncBlocked()){ toast('Resolva o salvamento no servidor antes de apagar.'); return; }
+  if(!CLEAR.armed){ CLEAR.armed=true; renderClear(); return; }
+  const n=confirmedKeys().length;
+  applyCut(STATE,{at:Date.now()});
+  CLEAR.armed=false; MQ.start=MQ.end=null; try{ localStorage.removeItem(MQ_KEY); }catch(e){}
+  closeSheet(); saveState(); renderAll();
+  toast(`${n} dia${n===1?'':'s'} confirmado${n===1?'':'s'} apagado${n===1?'':'s'}. O app começa do zero.`);
+}
+// Leva o Montar até o dia k: se já está no período, só rola; senão abre um período do mesmo tamanho começando na segunda.
+function mqShowDay(k){ const ks=mqDays(); if(k<ks[0]||k>ks[ks.length-1]){ const s=dMon(k); mqSetPeriod(s,dAdd(s,ks.length-1),true); } }
 function canEver(id,type){ const e=empById(id); return !!(e&&(!e.cond||!e.cond[type]||e.cond[type].some(Boolean))); }
 
 // Justiça: olha a quinzena inteira.
@@ -1741,6 +1844,11 @@ function fairness(ks){
 function dayComplete(k){ const v=view(k); return !!v&&STATE.team.every(e=>v.sh[e.id]&&v.sh[e.id].type); }
 const RULE_ORDER=['cond','sete','inter','dom','feriado','h44','caixa','cober','plano','folgas','vinculo','teto','rot','justica'];
 function assess(ks){
+  if(!ks.length) return [];
+  const a=ks.reduce((m,k)=>k<m?k:m,ks[0]), b=ks.reduce((m,k)=>k>m?k:m,ks[0]);
+  return withScope(a,b,()=>assessRaw(ks));
+}
+function assessRaw(ks){
   const items=[];
   ks.forEach(k=>{ if(!view(k)) return; const full=dayComplete(k); checkDay(k).flags.forEach(f=>{ if(!full&&(f.rule==='cober'||f.rule==='caixa'||f.rule==='plano')) return; items.push({sev:SEV[f.rule]||'loja',rule:f.rule,k,who:f.who||[],msg:f.msg,l:f.l}); }); });
   return items.concat(fairness(ks));
@@ -1750,7 +1858,7 @@ function cellIssues(items){ const r={lei:3,loja:2,just:1}, m={}; items.forEach(i
 // Prévia: o que acontece se eu colocar esse turno aqui? (simula sem salvar)
 function predict(k,id,type){
   const before=STATE.days[k]?JSON.stringify(STATE.days[k]):null;
-  const win=dRange(dAdd(k,-1),dAdd(k,8));
+  const mk=mqDays(), win=(k>=mk[0]&&k<=mk[mk.length-1])?mk:dRange(dAdd(k,-1),dAdd(k,8));
   const base=new Set(assess(win).filter(it=>(it.who||[]).includes(id)).map(it=>it.msg));
   const dr=ensureDraft(k); dr.sh[id]={type,time:shiftTime(dDow(k),type)};
   const after=assess(win).filter(it=>(it.who||[]).includes(id)&&!base.has(it.msg));
@@ -1765,7 +1873,7 @@ function mqGuardScroll(el){
   if(el._guard) return; el._guard=true;
   el.addEventListener('scroll',()=>{ if(window.matchMedia&&matchMedia('(max-width:700px)').matches&&(el.scrollTop||el.scrollLeft)){ el.scrollTop=0; el.scrollLeft=0; } });
 }
-function mqShift(d){ MQ.start=dAdd(mqDays()[0],14*d); renderMontar(); }
+function mqShift(d){ const ks=mqDays(), n=ks.length; mqSetPeriod(dAdd(ks[0],n*d),dAdd(ks[n-1],n*d)); }
 const MQ_LET={abertura:'A',intermediario:'I',fechamento:'F',folga:'–',ferias:'Fé'};
 function chipHTML(t,time,sev,w){
   if(!t) return `<span class="mq-chip empty">—</span>`;
@@ -1784,17 +1892,17 @@ function renderMontar(){
   const ks=mqDays(), items=assess(ks), iss=cellIssues(items);
   if(host.dataset.start!==ks[0]){ host.scrollTop=0; host.scrollLeft=0; host.dataset.start=ks[0]; }   // UX Fase A: outra quinzena começa do primeiro dia
   mqGuardScroll(host);
-  const a=dD(ks[0]), b=dD(ks[13]);
-  document.getElementById('mq-title').textContent=`${a.getUTCDate()} ${MES[a.getUTCMonth()]} – ${b.getUTCDate()} ${MES[b.getUTCMonth()]}`;
+  const N=ks.length, a=dD(ks[0]), b=dD(ks[N-1]);
+  document.getElementById('mq-title').textContent=N===1?`${a.getUTCDate()} ${MES[a.getUTCMonth()]}`:`${a.getUTCDate()} ${MES[a.getUTCMonth()]} – ${b.getUTCDate()} ${MES[b.getUTCMonth()]}`;
   const empty=ks.filter(k=>!view(k)).length, drafts=ks.filter(k=>STATE.days[k]&&STATE.days[k].draft).length;
   // UX Fase A: cada parte fica inteira na linha (nada de "6 sem / enviar")
-  document.getElementById('mq-sub').innerHTML=empty===14?'Quinzena vazia — monte à mão ou gere uma sugestão':(()=>{ const c=t=>ks.filter(k=>dayStatus(k)===t).length, parts=[`${14-empty} de 14 dias montados`]; if(c('rascunho')+c('pendente')) parts.push(`${c('rascunho')+c('pendente')} para confirmar`); if(c('confirmada')) parts.push(`${c('confirmada')} sem enviar`); if(c('mudou')) parts.push(`${c('mudou')} mudaram após o envio`); return parts.map(x=>`<span class="nw">${x}</span>`).join(' · '); })();
+  document.getElementById('mq-sub').innerHTML=empty===N?`${N} dia${N>1?'s':''} vazio${N>1?'s':''} — monte à mão ou gere uma sugestão`:(()=>{ const c=t=>ks.filter(k=>dayStatus(k)===t).length, parts=[`${N-empty} de ${N} dias montados`]; if(c('rascunho')+c('pendente')) parts.push(`${c('rascunho')+c('pendente')} para confirmar`); if(c('confirmada')) parts.push(`${c('confirmada')} sem enviar`); if(c('mudou')) parts.push(`${c('mudou')} mudaram após o envio`); return parts.map(x=>`<span class="nw">${x}</span>`).join(' · '); })();
   const team=visibleTeam(ks);
   let h=`<table class="mq"><thead><tr><th class="mq-day">Dia</th>${team.map(e=>`<th><span class="mq-hn"><span class="lg">${esc(e.name)}</span><span class="sm">${esc(shortName(e,team))}</span></span></th>`).join('')}<th class="mq-dih"><span class="lg">Diaristas</span><span class="sm">Diar.</span></th></tr></thead><tbody>`;
   ks.forEach((k,i)=>{
     const v=view(k), w=dDow(k), d=STATE.days[k];
     const ds=dayStatus(k), st=ds?`<span class="mq-st s-${ds}" title="${STATUS_TXT[ds]}" aria-label="${STATUS_TXT[ds]}"><span class="lg">${STATUS_TXT[ds]}</span><span class="sm" aria-hidden="true">${STATUS_SYM[ds]}</span></span>`:'';
-    if(i===7) h+=`<tr class="mq-sep"><td colspan="${team.length+2}"></td></tr>`;
+    if(i>0&&w===0) h+=`<tr class="mq-sep"><td colspan="${team.length+2}"></td></tr>`;
     h+=`<tr class="${w>=5?'we':''}${isHoliday(k)?' hol':''}" id="mq-r-${k}"><td class="mq-day"><button class="mq-dbtn" onclick="mqDayOpen(event,'${k}')" aria-label="Quantas pessoas em ${DOW_LABELS[w]}, ${br(k)}"><b><span class="dw">${DOW_SHORT[w].toLowerCase()}</span> <span class="dd">${br(k)}</span></b>${isHoliday(k)?`<span class="mq-hol" title="${esc(holidayName(k)||'Feriado')}"><span class="lg">${esc(holidayName(k)||'Feriado')}</span><span class="sm">feriado</span></span>`:''}${(STATE.compDay||{})[k]?`<span class="mq-cp" title="Número de pessoas mudado para este dia">${compTotal(STATE.compDay[k])} pessoas</span>`:''}${taskFor(k)?`<span class="mq-task" title="${esc(taskFor(k))}"><span class="lg">${esc(taskFor(k))}</span><span class="sm">tarefa</span></span>`:''}</button>${st}</td>`;
     team.forEach(e=>{ const c=v&&v.sh[e.id]; h+=`<td><button class="mq-cell" id="mq-c-${k}-${e.id}" onclick="mqOpen(event,'${k}','${e.id}')">${chipHTML(c&&c.type,c&&works(c.type)?c.time:null,iss[k+'|'+e.id],w)}</button></td>`; });
     const di=(v&&v.diar)||[];
@@ -1826,11 +1934,11 @@ function renderAdvisor(items,ks){
   items.forEach(it=>{ const key=it.sev+it.msg+(it.k||''); if(seen.has(key)) return; seen.add(key); (by[it.sev]||by.loja).push(it); });
   const n=s=>by[s].length, tot=n('lei')+n('loja')+n('just');
   const empty=ks.filter(k=>!view(k)).length;
-  const pill=tot?['lei','loja','just'].filter(n).map(s=>`<i class="adv-pill ${s}">${n(s)}</i>`).join(''):`<i class="adv-pill ok">${empty===14?'—':'ok'}</i>`;
-  let h=`<button class="adv-h" onclick="MQ.adv=!MQ.adv;this.parentNode.classList.toggle('open',MQ.adv)" aria-expanded="${!!MQ.adv}"><b>Assessor de RH</b><span class="adv-st">${tot===0?(empty===14?'aguardando a escala':'tudo certo'):`${tot} ponto${tot>1?'s':''}`}</span><span class="adv-pills">${pill}<i class="adv-car">▾</i></span></button><div class="adv-body">`;
+  const N=ks.length, pill=tot?['lei','loja','just'].filter(n).map(s=>`<i class="adv-pill ${s}">${n(s)}</i>`).join(''):`<i class="adv-pill ok">${empty===N?'—':'ok'}</i>`;
+  let h=`<button class="adv-h" onclick="MQ.adv=!MQ.adv;this.parentNode.classList.toggle('open',MQ.adv)" aria-expanded="${!!MQ.adv}"><b>Assessor de RH</b><span class="adv-st">${tot===0?(empty===N?'aguardando a escala':'tudo certo'):`${tot} ponto${tot>1?'s':''}`}</span><span class="adv-pills">${pill}<i class="adv-car">▾</i></span></button><div class="adv-body">`;
   if(tot===0){
-    h+=empty===14?`<p class="adv-empty">Monte a quinzena tocando nas células, ou gere uma sugestão. Eu confiro cada mudança.</p>`
-      :`<div class="adv-ok">Nenhum problema nos ${14-empty} dias montados.${empty?` Faltam ${empty} dias.`:''}</div>`;
+    h+=empty===N?`<p class="adv-empty">Monte o período tocando nas células, ou gere uma sugestão. Eu confiro cada mudança, olhando só para os dias deste período.</p>`
+      :`<div class="adv-ok">Nenhum problema nos ${N-empty} dias montados.${empty?` Faltam ${empty} dias.`:''}</div>`;
   }
   ['lei','loja','just'].forEach(s=>{
     if(!n(s)) return;
@@ -1936,7 +2044,7 @@ function initBoard(){
 }
 
 // ---------- Início: quem trabalha hoje e amanhã, semana valendo, o que está pendente ----------
-function mqGoto(k){ MQ.start=mqStartFor(k); showTab('tab-montar'); setTimeout(()=>{ const r=document.getElementById('mq-r-'+k)||document.getElementById('kb-'+k); if(r){ r.scrollIntoView({behavior:'smooth',block:'center',inline:'start'}); r.classList.remove('flash'); void r.offsetWidth; r.classList.add('flash'); } },80); }
+function mqGoto(k){ mqShowDay(k); showTab('tab-montar'); setTimeout(()=>{ const r=document.getElementById('mq-r-'+k)||document.getElementById('kb-'+k); if(r){ r.scrollIntoView({behavior:'smooth',block:'center',inline:'start'}); r.classList.remove('flash'); void r.offsetWidth; r.classList.add('flash'); } },80); }
 function goSend(from,to){ showTab('tab-imprimir'); document.getElementById('print-from').value=from; document.getElementById('print-to').value=to; renderPrintView(); }
 function dayCard(k,label){
   const v=view(k), w=dDow(k), ds=dayStatus(k), team=visibleTeam([k]);
@@ -2013,7 +2121,7 @@ function sugApply(){
   const g=sugView(); if(!g) return;
   const ks=Object.keys(g.days).sort(); let n=0;
   ks.forEach(k=>{ if(STATE.days[k]&&STATE.days[k].conf) return; STATE.days[k]={conf:null,draft:JSON.parse(JSON.stringify(g.days[k]))}; n++; });
-  STATE.sugestao=null; MQ.start=mqStartFor(ks[0]);
+  STATE.sugestao=null; mqSetPeriod(ks[0],ks[ks.length-1],true);
   closeSheet(); saveState(); renderAll();
   toast(`Sugestão aplicada em ${n} dia${n>1?'s':''}. Confira o assessor e confirme.`);
 }
@@ -2262,7 +2370,7 @@ function showBuildReport(r,opt){
   toast(r.completo?`Montados ${nd(r.gerados.length)}. Confira o assessor.`:(r.gerados.length===r.pedidos.length?`Montados ${nd(r.gerados.length)}, ${r.need.length} com pendência. Veja o assessor.`:r.gerados.length?`Montagem parcial: ${r.gerados.length} de ${nd(r.pedidos.length)}. Veja o resumo no Montar.`:`Nenhum dia montado. Veja o resumo no Montar.`));
   return txt;
 }
-function mqGenerate(){ const ks=mqDays(); const r=buildReport(generateRange(ks[0],ks[13])); saveState(); renderAll(); showBuildReport(r); }
+function mqGenerate(){ const ks=mqDays(); const r=buildReport(generateRange(ks[0],ks[ks.length-1])); saveState(); renderAll(); showBuildReport(r); }
 document.addEventListener('click',e=>{ const m=document.getElementById('mq-menu'); if(m&&!m.hidden&&e.target.isConnected&&!m.contains(e.target)) mqClose(); }); // isConnected: botão do próprio menu que acabou de ser redesenhado
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') mqClose(); });
 
@@ -2361,7 +2469,7 @@ function generateRange(from,to){
     const holiday=!!(cur&&cur.draft&&cur.draft.holiday);
     const manual={}; if(cur&&cur.draft) Object.entries(cur.draft.sh).forEach(([id,c])=>{ if(c.manual) manual[id]=c; });
     const w=dDow(k), comp=compFor(k,holiday), sh={}, why=[];
-    const hs=(id,day)=>{ const d=STATE.days[day]; if(!d) return null; if(day>=from&&day<k&&d.draft) return d.draft.sh[id]&&d.draft.sh[id].type; if(d.conf) return d.conf.sh[id]&&d.conf.sh[id].type; return null; };
+    const hs=(id,day)=>{ if(day<from) return null; const d=STATE.days[day]; if(!d) return null; if(day>=from&&day<k&&d.draft) return d.draft.sh[id]&&d.draft.sh[id].type; if(d.conf) return d.conf.sh[id]&&d.conf.sh[id].type; return null; };
     const weekCount=id=>{ let n=0; for(let x=dMon(k);x<k;x=dAdd(x,1)) if(works(hs(id,x))) n++; return n; };
     const typeWeek=(id,t)=>{ let n=0; for(let x=dMon(k);x<k;x=dAdd(x,1)) if(hs(id,x)===t) n++; return n; };
     const lastN=(id,t,n)=>{ let c=0; for(let i=1;i<=n;i++) if(hs(id,dAdd(k,-i))===t) c++; return c; };
@@ -2437,7 +2545,7 @@ function generateRange(from,to){
     }
     STATE.team.forEach(e=>{ if(sh[e.id]===null) sh[e.id]={type:'folga',time:null}; });
     // diaristas: prefere quem trabalhou menos nos últimos 14 dias (espalha e reduz risco de vínculo)
-    const used=n=>{ let c=0; for(let i=1;i<=14;i++){ const x=view(dAdd(k,-i)); if(x&&(x.diar||[]).some(d=>d.name===n)) c++; } return c; };
+    const used=n=>{ let c=0; for(let i=1;i<=14;i++){ if(dAdd(k,-i)<from) break; const x=view(dAdd(k,-i)); if(x&&(x.diar||[]).some(d=>d.name===n)) c++; } return c; };
     const diar=[];
     [['ab',comp.dAb+extraDiar.ab],['fe',comp.dFe+extraDiar.fe]].forEach(([t,n])=>{
       for(let i=0;i<n;i++){
@@ -2511,10 +2619,10 @@ function undoDay(k){ const d=STATE.days[k]; if(!d) return; if(d.conf) d.draft=nu
 function readGenPeriod(){
   const f=document.getElementById('gen-from').value, t=document.getElementById('gen-to').value;
   if(!f||!t||t<f){ toast('Escolha um período válido (De antes de Até).'); return null; }
-  if(dRange(f,t).length>62){ toast('Escolha no máximo 2 meses por vez.'); return null; }
+  if(dRange(f,t).length>MQ_MAX){ toast('Escolha no máximo 6 semanas por vez.'); return null; }
   return [f,t];
 }
-function uiGenerate(){ const p=readGenPeriod(); if(!p) return; const r=buildReport(generateRange(p[0],p[1])); UI.day=p[0]; closeSheet(); saveState(); renderAll(); showBuildReport(r); }
+function uiGenerate(){ const p=readGenPeriod(); if(!p) return; mqSetPeriod(p[0],p[1],true); const r=buildReport(generateRange(p[0],p[1])); UI.day=p[0]; closeSheet(); saveState(); renderAll(); showBuildReport(r); }
 function uiCopyPrev(){ const p=readGenPeriod(); if(!p) return; const r=buildReport(copyPrevRange(p[0],p[1])); UI.day=p[0]; closeSheet(); saveState(); renderAll(); showBuildReport(r); }
 // UX Fase E.3 (08/11/2026): textos da ação de descarte separam rascunho (dia sem versão confirmada, é apagado)
 // de alteração pendente (dia confirmado com mudança, volta à versão confirmada). Mesmo critério da ação; lógica igual.
@@ -2880,6 +2988,8 @@ function openSheet(id){
   if(openSheetEl&&openSheetEl!==s){ openSheetEl.classList.remove('on'); openSheetEl.hidden=true; openSheetEl.style.transform=''; }
   clearTimeout(sheetTimer);
   if(id==='sh-period') periodDefaults();
+  if(id==='sh-mqp') mqpOpen();
+  if(id==='sh-clear'){ CLEAR.armed=false; renderClear(); }
   if(id==='sh-discard'){ const c=discardCounts(); document.getElementById('discard-msg').textContent=discardAskText(c); const b=document.getElementById('discard-btn'); if(b) b.disabled=!(c.rasc||c.alt); }
   if(id==='sh-chat') renderChatSub();
   scrim.hidden=false; s.hidden=false; s.style.transform='';
@@ -3076,8 +3186,7 @@ function periodDefaults(){
 }
 function periodNote(){
   const f=document.getElementById('gen-from').value, lc=lastConfirmed(), n=document.getElementById('gen-note');
-  if(f&&lc&&f>dAdd(lc,1)){ n.style.color='var(--orange)'; n.textContent=`Há ${dRange(dAdd(lc,1),dAdd(f,-1)).length} dia(s) sem escala confirmada entre ${br(lc)} e ${br(f)}. O rascunho sai, mas domingo, dias seguidos e rodízio ficam sem base até esse intervalo ser confirmado.`; }
-  else { n.style.color=''; n.textContent='Começa em qualquer dia. O gerador segue as condições, os pedidos e o livro de regras, olhando para os dias já confirmados. Edições feitas à mão são mantidas.'; }
+  { n.style.color=''; n.textContent='Começa em qualquer dia. O gerador segue as condições, os pedidos e o livro de regras, olhando só para os dias deste período. Edições feitas à mão são mantidas.'; }
 }
 function renderChatSub(){ const p=pendingDays(); document.getElementById('chat-sub').textContent=p.length?`Vale para ${br(p[0])} a ${br(dAdd(p[0],6))}, os 7 primeiros dias do rascunho.`:'Gere um rascunho primeiro. O comando nunca mexe no que já foi confirmado.'; }
 
@@ -3381,11 +3490,11 @@ function localBuildRange(text){
   if(isNaN(Date.parse(f))||isNaN(Date.parse(to))) return null;
   return {type:'build_range',dateStart:f<=to?f:to,dateEnd:f<=to?to:f,note:m[0]};
 }
-function buildRangeClamp(a,b){ if(b<a) [a,b]=[b,a]; if(dRange(a,b).length>62) b=dAdd(a,61); return [a,b]; }
+function buildRangeClamp(a,b){ if(b<a) [a,b]=[b,a]; if(dRange(a,b).length>MQ_MAX) b=dAdd(a,MQ_MAX-1); return [a,b]; }
 function buildOfferHTML(){ const s=nextBuildStart(); return `<div class="btn-row"><button class="btn" onclick="buildFrom('${s}','${dAdd(s,6)}')">Montar ${br(s)} a ${br(dAdd(s,6))}</button></div>`; }
 function buildFrom(f,t,reqs){
-  [f,t]=buildRangeClamp(f,t);
-  const r=buildReport(generateRange(f,t),reqs); saveState(); closeSheet(); mqGoto(f); if(dAdd(MQ.start,13)<t){ MQ.start=dMon(f); renderAll(); }
+  [f,t]=buildRangeClamp(f,t); mqSetPeriod(f,t,true);
+  const r=buildReport(generateRange(f,t),reqs); saveState(); closeSheet(); mqGoto(f);
   const txt=showBuildReport(r);
   if(reqs) p01Prepare(reqs,r,'mq');
   return txt;

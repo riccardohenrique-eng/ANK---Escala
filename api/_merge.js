@@ -10,7 +10,19 @@
 // Arquivo com "_" no início: a Vercel não expõe como rota.
 
 // Chaves que não são configuração. O app tem a mesma lista em cfgJson() — manter iguais.
-const NOT_CFG = new Set(['days', '_updatedAt', '_cfgAt', 'schema', 'legacyHistory', 'history']);
+const NOT_CFG = new Set(['days', '_updatedAt', '_cfgAt', 'schema', 'legacyHistory', 'history', 'histCut']);
+
+// Apagamento das escalas confirmadas (10/11/2026, pedido do Ricardo): histCut = { at } marca o momento do
+// apagamento. Todo dia confirmado em ou antes de histCut.at some (inteiro: confirmação + alteração pendente),
+// venha do servidor ou de um aparelho antigo — assim um aparelho desatualizado não traz os dias de volta.
+// Vale o histCut mais recente dos dois lados. Dias confirmados depois do apagamento ficam normalmente.
+function pickCut(a, b) {
+  const ok = (c) => c && typeof c === 'object' && typeof c.at === 'number' && c.at > 0;
+  if (!ok(a)) return ok(b) ? b : null;
+  if (!ok(b)) return a;
+  return b.at > a.at ? b : a;
+}
+function cutDrops(day, cut) { return !!(cut && day && day.conf && (day.conf.at || 0) <= cut.at); }
 
 function pickConf(a, b) {
   if (!a) return b || null;
@@ -34,15 +46,18 @@ function mergeStates(server, incoming) {
   out._cfgAt = Math.max(server._cfgAt || 0, incoming._cfgAt || 0);
   const schema = Math.max(server.schema || 0, incoming.schema || 0);
   if (schema) out.schema = schema;
-  if (server.legacyHistory || incoming.legacyHistory) out.legacyHistory = server.legacyHistory || incoming.legacyHistory;
+  const cut = pickCut(server.histCut, incoming.histCut);
+  if (cut) out.histCut = cut;
+  else if (server.legacyHistory || incoming.legacyHistory) out.legacyHistory = server.legacyHistory || incoming.legacyHistory;
 
   const sd = server.days || {}, id = incoming.days || {};
   out.days = {};
   Object.keys({ ...sd, ...id }).sort().forEach((k) => {
     const s = sd[k], i = id[k];
-    const conf = pickConf(s && s.conf, i && i.conf);
+    const sOk = !cutDrops(s, cut), iOk = !cutDrops(i, cut);
+    const conf = pickConf(sOk && s && s.conf, iOk && i && i.conf);
     const draftSrc = draftsFromIncoming ? i : s;
-    const draft = (draftSrc && draftSrc.draft) || null;
+    const draft = (draftSrc && (draftsFromIncoming ? iOk : sOk) && draftSrc.draft) || null;
     if (conf || draft) out.days[k] = { conf: conf || null, draft };
   });
   return out;
@@ -71,4 +86,4 @@ function summary(s) {
   };
 }
 
-module.exports = { mergeStates, stable, summary, NOT_CFG };
+module.exports = { mergeStates, stable, summary, NOT_CFG, pickCut };

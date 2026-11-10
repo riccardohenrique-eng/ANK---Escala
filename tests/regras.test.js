@@ -61,5 +61,6 @@ test('domingos alternados: 2º domingo seguido é bloqueado', () => {
   const dom = { maria: 'abertura', marta: 'intermediario', alana: 'fechamento' };
   const a = app({ '2026-10-11': dom, '2026-10-18': dom }, { '2026-10-11': [{ name: 'D1', t: 'ab' }, { name: 'D2', t: 'fe' }], '2026-10-18': [{ name: 'D1', t: 'ab' }, { name: 'D2', t: 'fe' }] });
   a.__get().sunRule = 'alt';
+  require('vm').runInContext("MQ.start='2026-10-11';MQ.end='2026-10-18'", a);   // 10/11: só o período do Montar conta
   assert.ok(regras(a, '2026-10-18').includes('dom'));
 });
