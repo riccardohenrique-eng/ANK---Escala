@@ -483,6 +483,17 @@ table.mq{border-collapse:separate;border-spacing:0;width:100%;font-size:13.5px}
 .mm-time{display:flex;align-items:center;gap:6px;padding:8px 10px;border-top:1px solid var(--sep);margin-top:4px;font-size:13px;color:var(--label-2)}
 .mm-time input{background:var(--cell-2);border:0;border-radius:6px;color:var(--label);padding:5px;font:inherit}
 .mm-time button,.mm-undo{border:0;background:var(--cell-2);color:var(--label);border-radius:6px;padding:6px 10px;font:600 13px var(--font);cursor:pointer}
+.mm-sw{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px 10px;border-top:1px solid var(--sep)}
+.mm-sw>span{width:100%;font-size:12px;color:var(--label-2)}
+.mm-sw button{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--sep);background:var(--cell);border-radius:8px;padding:6px 8px;min-height:40px;font:500 14px var(--font);color:var(--label);cursor:pointer}
+.mm-sw .mq-chip{pointer-events:none}
+.mq-antes-b{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;background:var(--cell);border:1px solid var(--sep);border-radius:10px;padding:10px 12px;margin:0 0 12px;font:14px var(--font);color:var(--label);text-align:left;cursor:pointer;min-height:44px}
+.mq-antes-b em{color:var(--orange);font-style:normal}
+.antes-t{width:100%;border-collapse:collapse;font-size:14px}
+.antes-t th{font:500 11.5px var(--font);color:var(--label-2);text-align:center;padding:8px 4px;line-height:1.25}
+.antes-t td{padding:6px 4px;border-top:1px solid var(--sep);text-align:center}
+.antes-t td:first-child{text-align:left;padding-left:12px;font-weight:600}
+.antes-t select{font:15px var(--font);padding:6px 8px;border-radius:8px;border:1px solid var(--sep);background:var(--cell);min-height:36px}
 .mm-undo{display:block;width:100%;margin-top:4px;color:var(--red);background:transparent;text-align:left}
 /* --- Montar: acabamento Notion + modo compacto no celular (20/10 noite) --- */
 .mq .sm,.mq-btn .sm,.mq-st .sm,.mq-chip .sm{display:none}
@@ -780,6 +791,7 @@ table.iw tr{cursor:pointer} table.iw tr.today td{background:var(--tint-wash)}
       <div class="mq-sug" id="mq-sug" hidden></div>
       <div class="mq-res" id="mq-res" aria-live="polite" hidden></div>
       <div id="p01-mq" hidden></div>
+      <div class="mq-antes" id="mq-antes"></div>
       <div class="mq-legend"><span class="mq-chip ab">A</span>abertura <span class="mq-chip in">I</span>interm. <span class="mq-chip fe">F</span>fecham. <span class="mq-chip off">–</span>folga <span class="mq-chip fer">Fé</span>férias</div>
       <div class="mq-leg2" aria-hidden="true"><span class="s-enviada"><b>&#x2713;&#xFE0E;</b>enviada</span><span class="s-confirmada"><b>&#x25CF;</b>confirmada</span><span class="s-pendente"><b>&#x25D0;</b>alteração pendente</span><span class="s-rascunho"><b>&#x25CB;</b>rascunho</span><span class="s-mudou"><b>!</b>mudou após o envio</span></div>
       <div class="mq-wrap">
@@ -983,6 +995,12 @@ table.iw tr{cursor:pointer} table.iw tr.today td{background:var(--tint-wash)}
   <div class="sb" id="clear-body"></div>
 </div>
 
+<div class="sheet" id="sh-antes" role="dialog" aria-modal="true" aria-labelledby="sh-antes-t" hidden>
+  <div class="grab"></div>
+  <div class="sh"><h2 id="sh-antes-t">Como terminou a escala anterior</h2><button class="close" onclick="closeSheet()">OK</button></div>
+  <div class="sb" id="antes-body"></div>
+</div>
+
 <div class="sheet" id="sh-mqp" role="dialog" aria-modal="true" aria-labelledby="sh-mqp-t" hidden>
   <div class="grab"></div>
   <div class="sh"><h2 id="sh-mqp-t">Período da escala</h2><button class="close" onclick="closeSheet()">Fechar</button></div>
@@ -1133,7 +1151,7 @@ if('serviceWorker' in navigator){ navigator.serviceWorker.register('/sw.js').cat
 const STORE_KEY='ank_escala_v1';
 const SCHEMA=2;
 // Versão do código (sobe a cada mudança publicada). Em Ajustes; fora do endereço oficial aparece "cópia local".
-const APP_VERSION='2026.11.10-periodo';
+const APP_VERSION='2026.11.10.2-antes';
 const DOW_LABELS=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
 const DOW_SHORT=['SEG','TER','QUA','QUI','SEX','SÁB','DOM'];
 const DOW_MIN=['seg','ter','qua','qui','sex','sáb','dom'];
@@ -1186,6 +1204,7 @@ function normalizeState(parsed){
     compDay:(parsed.compDay&&typeof parsed.compDay==='object')?parsed.compDay:{},
     tasks:(parsed.tasks&&typeof parsed.tasks==='object')?parsed.tasks:{...CLEAN_TASKS},
     taskDay:(parsed.taskDay&&typeof parsed.taskDay==='object')?parsed.taskDay:{},
+    antes:(parsed.antes&&typeof parsed.antes==='object'&&!Array.isArray(parsed.antes))?parsed.antes:{},
     days:parsed.days||{},
     constraints:parsed.constraints||[]
   };
@@ -1655,7 +1674,13 @@ function sunWorkers(k){
   if(STATE.sunDiar) (v.diar||[]).forEach(x=>{ if(x.name) ids.push('d:'+x.name); });
   return ids;
 }
-function sundayStreak(id,k){ let s=0,x=dAdd(k,-7); while(view(x)&&sunWorkers(x).includes(id)&&s<sunNeed()){ s++; x=dAdd(x,-7); } return s; }
+function sundayStreak(id,k){ let s=0,x=dAdd(k,-7); while(view(x)&&sunWorkers(x).includes(id)&&s<sunNeed()){ s++; x=dAdd(x,-7); } if(RULE_SCOPE&&x<RULE_SCOPE.from&&s<sunNeed()) s=Math.min(sunNeed(),s+seedOf(RULE_SCOPE.from,'dom',id)); return s; }
+// 10/11/2026 — "Antes do período": o que o dono informa sobre como terminou a escala anterior (o assistente não lê nada
+// antes do período). STATE.antes[inícioDoPeríodo] = {dom:{id:domingos seguidos até o último domingo antes}, run:{id:dias seguidos
+// trabalhando até a véspera}}. Só vale quando a sequência chega sem interrupção ao início.
+function antesOf(from){ const a=STATE.antes&&STATE.antes[from]; return a&&typeof a==='object'?a:null; }
+function seedOf(from,f,id){ const a=antesOf(from); const v=a&&a[f]&&a[f][id]; return Math.max(0,Math.min(6,+v||0)); }
+function lastSunBefore(k){ return dAdd(k,-(dDow(k)+1)); }
 function weekStats(k,id){
   const mon=dMon(k); let ab=0,fe=0,min=0;
   for(let i=0;i<7;i++){ const c=view(dAdd(mon,i)); const x=c&&c.sh[id]; if(!x) continue; if(x.type==='abertura')ab++; if(x.type==='fechamento')fe++; if(works(x.type)&&x.time){ const [a,b]=rangeMin(x.time); min+=b-a; } }
@@ -1678,6 +1703,7 @@ function checkDayRaw(k){
     if(!allowed(e.id,c.type,w)) push('cond',`${e.name} não pode ${TYPE_VERB[c.type]} ${w>=5?'no fim de semana':'na '+DOW_MIN[w]}`,[e.id]);
     if(absentOn(e.id,k)) push('cond',`${e.name} está de férias/ausente neste dia`,[e.id]);
     let run=0,x=k; while(view(x)&&works(typeOn(x,e.id))){ run++; x=dAdd(x,-1); }
+    if(RULE_SCOPE&&x===dAdd(RULE_SCOPE.from,-1)) run+=seedOf(RULE_SCOPE.from,'run',e.id);
     if(run>=7) push('sete',`${e.name}: ${run}º dia seguido de trabalho`,[e.id]);
     const pk=dAdd(k,-1), p=view(pk), pc=p&&p.sh[e.id];
     if(pc&&works(pc.type)&&pc.time&&c.time){
@@ -1821,6 +1847,48 @@ function clearConfirmed(){
   closeSheet(); saveState(); renderAll();
   toast(`${n} dia${n===1?'':'s'} confirmado${n===1?'':'s'} apagado${n===1?'':'s'}. O app começa do zero.`);
 }
+function antesSummary(from){
+  const a=antesOf(from); if(!a) return '';
+  const out=[]; STATE.team.forEach(e=>{
+    const d=seedOf(from,'dom',e.id), r=seedOf(from,'run',e.id), p=[];
+    if(d) p.push(`${d} dom.`); if(r) p.push(`${r} dia${r>1?'s':''}`);
+    if(p.length) out.push(`${shortName(e,STATE.team)} ${p.join(', ')}`);
+  });
+  return out.join(' · ');
+}
+function renderAntesBar(ks){
+  const el=document.getElementById('mq-antes'); if(!el) return;
+  const from=ks[0], sm=antesSummary(from), a=antesOf(from);
+  el.innerHTML=`<button class="mq-antes-b" onclick="openSheet('sh-antes')"><span><b>Antes de ${br(from)}</b> ${a?(sm?esc(sm):'ninguém com sequência'):'<em>não informado</em>'}</span><span class="mq-per-ed">${a?'alterar':'informar'}</span></button>`;
+}
+function renderAntes(){
+  const el=document.getElementById('antes-body'); if(!el) return;
+  const from=mqDays()[0], ls=lastSunBefore(from), pv=dAdd(from,-1), need=sunNeed();
+  const team=STATE.team.filter(e=>isActive(e.id,pv)||isActive(e.id,from));
+  const opt=(f,id,max)=>{ const v=seedOf(from,f,id); let h=''; for(let i=0;i<=max;i++) h+=`<option value="${i}"${i===v?' selected':''}>${i}</option>`; return `<select aria-label="${f==='dom'?'Domingos seguidos':'Dias seguidos'}" onchange="setAntes('${f}','${id}',this.value)">${h}</select>`; };
+  el.innerHTML=`<div class="group-f">Olhe a última escala (a que veio antes de ${br(from)}) e informe a situação de cada uma. Com isso o assistente não deixa passar de ${need} domingo${need>1?'s':''} seguido${need>1?'s':''} nem de 6 dias seguidos.</div>
+  <div class="group"><table class="antes-t"><thead><tr><th></th><th>Domingos seguidos até ${br(ls)}</th><th>Dias seguidos até ${br(pv)}</th></tr></thead><tbody>${team.map(e=>`<tr><td>${esc(e.name)}</td><td>${opt('dom',e.id,need)}</td><td>${opt('run',e.id,6)}</td></tr>`).join('')}</tbody></table></div>
+  <div class="btn-row"><button class="btn" onclick="setAntesVazio()">Ninguém vem de sequência</button></div>`;
+}
+function antesEnsure(from){ STATE.antes=STATE.antes||{}; const a=STATE.antes[from]||(STATE.antes[from]={}); ['dom','run'].forEach(f=>{ if(!a[f]||typeof a[f]!=='object') a[f]={}; }); return a; }
+function setAntes(f,id,v){
+  const from=mqDays()[0], a=antesEnsure(from);
+  const n=Math.max(0,Math.min(6,+v||0)); if(n) a[f][id]=n; else delete a[f][id];
+  saveState(); renderAll();
+}
+function setAntesVazio(){ const from=mqDays()[0]; STATE.antes=STATE.antes||{}; STATE.antes[from]={dom:{},run:{}}; saveState(); renderAll(); renderAntes(); toast(`Antes de ${br(from)}: ninguém vem de sequência.`); }
+// Trocar duas pessoas no mesmo dia (turno e horário vão juntos).
+function swapCandidates(k,id){ const cur=typeOn(k,id); return STATE.team.filter(e=>e.id!==id&&isActive(e.id,k)&&!absentOn(e.id,k)&&typeOn(k,e.id)&&typeOn(k,e.id)!=='ferias'&&typeOn(k,e.id)!==cur); }
+function mqSwap(k,a,b){
+  mqClose();
+  const ks=mqDays(), win=(k>=ks[0]&&k<=ks[ks.length-1])?ks:[k];
+  const mine=it=>(it.who||[]).some(x=>x===a||x===b), before=new Set(assess(win).filter(mine).map(it=>it.msg));
+  const dr=ensureDraft(k), x=dr.sh[a]||{type:'folga',time:null}, y=dr.sh[b]||{type:'folga',time:null};
+  dr.sh[a]={type:y.type,time:y.time,manual:true}; dr.sh[b]={type:x.type,time:x.time,manual:true}; dr.why=[];
+  saveState(); renderAll();
+  const novos=assess(win).filter(it=>mine(it)&&!before.has(it.msg)), r={lei:3,loja:2,just:1}; novos.sort((p,q)=>r[q.sev]-r[p.sev]);
+  toast(`${empName(a)} e ${empName(b)} trocaram em ${DOW_MIN[dDow(k)]} ${br(k)}${novos[0]?` · ${SEV_INFO[novos[0].sev].w}: ${novos[0].msg}`:' · sem problemas'}`);
+}
 // Leva o Montar até o dia k: se já está no período, só rola; senão abre um período do mesmo tamanho começando na segunda.
 function mqShowDay(k){ const ks=mqDays(); if(k<ks[0]||k>ks[ks.length-1]){ const s=dMon(k); mqSetPeriod(s,dAdd(s,ks.length-1),true); } }
 function canEver(id,type){ const e=empById(id); return !!(e&&(!e.cond||!e.cond[type]||e.cond[type].some(Boolean))); }
@@ -1927,6 +1995,7 @@ function renderMontar(){
   if(mqView()==='quadro') initBoard();
   renderAdvisor(items,ks);
   renderSugBanner();
+  renderAntesBar(ks);
 }
 function renderAdvisor(items,ks){
   const el=document.getElementById('mq-adv'); if(!el) return;
@@ -2155,6 +2224,7 @@ function mqOpen(ev,k,id){
     const t=(view(k).sh[id].time||'').split('–');
     h+=`<div class="mm-time"><span>Horário</span><input type="time" id="mm-a" value="${t[0]||''}"><span>até</span><input type="time" id="mm-b" value="${t[1]||''}"><button onclick="mqTime('${k}','${id}')">OK</button></div>`;
   }
+  if(cur&&cur!=='ferias'){ const cs=swapCandidates(k,id); if(cs.length) h+=`<div class="mm-sw"><span>Trocar com</span>${cs.map(e=>`<button onclick="mqSwap('${k}','${id}','${e.id}')">${esc(shortName(e,STATE.team))} ${chipHTML(typeOn(k,e.id),null,null)}</button>`).join('')}</div>`; }
   if(STATE.days[k]&&STATE.days[k].draft&&STATE.days[k].conf) h+=`<button class="mm-undo" onclick="mqClose();undoDay('${k}')">Desfazer alterações deste dia</button>`;
   menu.innerHTML=h; menu.hidden=false;
   const r=ev.currentTarget.getBoundingClientRect();
@@ -2473,8 +2543,8 @@ function generateRange(from,to){
     const weekCount=id=>{ let n=0; for(let x=dMon(k);x<k;x=dAdd(x,1)) if(works(hs(id,x))) n++; return n; };
     const typeWeek=(id,t)=>{ let n=0; for(let x=dMon(k);x<k;x=dAdd(x,1)) if(hs(id,x)===t) n++; return n; };
     const lastN=(id,t,n)=>{ let c=0; for(let i=1;i<=n;i++) if(hs(id,dAdd(k,-i))===t) c++; return c; };
-    const run=id=>{ let r=0,x=dAdd(k,-1); while(works(hs(id,x))){ r++; x=dAdd(x,-1); } return r; };
-    const sunBlocked=id=>{ let s=0,x=dAdd(k,-7); while(works(hs(id,x))&&s<sunNeed()){ s++; x=dAdd(x,-7); } return s>=sunNeed(); };
+    const run=id=>{ let r=0,x=dAdd(k,-1); while(works(hs(id,x))){ r++; x=dAdd(x,-1); } if(x===dAdd(from,-1)) r+=seedOf(from,'run',id); return r; };
+    const sunBlocked=id=>{ let s=0,x=dAdd(k,-7); while(works(hs(id,x))&&s<sunNeed()){ s++; x=dAdd(x,-7); } if(x<from&&s<sunNeed()) s+=seedOf(from,'dom',id); return s>=sunNeed(); };
     const interOK=(id,t)=>{ const pk=dAdd(k,-1), p=hs(id,pk); if(!works(p)) return true; return 24*60-rangeMin(shiftTime(dDow(pk),p))[1]+rangeMin(shiftTime(w,t))[0]>=660; };
     const weekMin=id=>{ let m=0; for(let x=dMon(k);x<k;x=dAdd(x,1)){ const t=hs(id,x); if(works(t)){ const [a,b]=rangeMin(shiftTime(dDow(x),t)); m+=b-a; } } return m; };
     STATE.team.forEach(e=>{ sh[e.id]=null; });
@@ -2989,6 +3059,7 @@ function openSheet(id){
   clearTimeout(sheetTimer);
   if(id==='sh-period') periodDefaults();
   if(id==='sh-mqp') mqpOpen();
+  if(id==='sh-antes') renderAntes();
   if(id==='sh-clear'){ CLEAR.armed=false; renderClear(); }
   if(id==='sh-discard'){ const c=discardCounts(); document.getElementById('discard-msg').textContent=discardAskText(c); const b=document.getElementById('discard-btn'); if(b) b.disabled=!(c.rasc||c.alt); }
   if(id==='sh-chat') renderChatSub();
