@@ -757,6 +757,9 @@ table.pdft td.day .tk{display:block;margin-top:5px;background:#FFF1C9;color:#3b3
 .ia{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-size:14.5px;background:var(--cell);border-left:3px solid var(--sep)}
 .ia span{flex:1}
 .ia.red{border-left-color:var(--red);background:var(--red-wash)} .ia.orange{border-left-color:var(--orange);background:var(--orange-wash)} .ia.tint{border-left-color:var(--tint);background:var(--tint-wash)} .ia.green{border-left-color:var(--green);background:var(--green-wash)}
+.ia .ia-x{border:0;background:none;color:var(--label-3);padding:0;width:32px;height:32px;min-width:32px;margin:-6px -6px -6px -4px;font-size:15px;display:flex;align-items:center;justify-content:center;border-radius:8px}
+.ia .ia-x:active{background:rgba(0,0,0,.06)}
+.ia-show{align-self:center;border:0;background:none;color:var(--label-2);font:500 13px var(--font);text-decoration:underline;text-underline-offset:2px;padding:8px;min-height:36px;cursor:pointer}
 .ia button{border:1px solid var(--sep);background:var(--paper);color:var(--label);border-radius:8px;padding:6px 12px;font:500 14px var(--font);cursor:pointer;white-space:nowrap}
 .in-days{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media (max-width:700px){ .in-days{grid-template-columns:1fr} }
@@ -1179,7 +1182,7 @@ if('serviceWorker' in navigator){ navigator.serviceWorker.register('/sw.js').cat
 const STORE_KEY='ank_escala_v1';
 const SCHEMA=2;
 // Versão do código (sobe a cada mudança publicada). Em Ajustes; fora do endereço oficial aparece "cópia local".
-const APP_VERSION='2026.11.10.4-polimento';
+const APP_VERSION='2026.11.10.5-avisos';
 const DOW_LABELS=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
 const DOW_SHORT=['SEG','TER','QUA','QUI','SEX','SÁB','DOM'];
 const DOW_MIN=['seg','ter','qua','qui','sex','sáb','dom'];
@@ -2228,28 +2231,40 @@ function dayCard(k,label){
   if(off.length) h+=`<div class="ic-row"><span class="ic-l off">Folga</span><span class="ic-p muted">${off.join(', ')}</span></div>`;
   return h+`<button class="ic-btn" onclick="mqGoto('${k}')">Fazer uma troca neste dia</button></div>`;
 }
+const IA_KEY='ank_avisos_ignorados';
+function iaKey(a){ return a[0]+'|'+a[1]; }
+function iaIgnored(){ try{ const v=JSON.parse(localStorage.getItem(IA_KEY)||'[]'); return Array.isArray(v)?v:[]; }catch(e){ return []; } }
+function iaSave(v){ try{ localStorage.setItem(IA_KEY,JSON.stringify(v)); }catch(e){} }
+function iaIgnore(k){ const v=iaIgnored(); if(!v.includes(k)) v.push(k); iaSave(v); renderInicio(); }
+function iaShowAll(){ iaSave([]); renderInicio(); }
+// esquece o que não aparece mais (situação mudou): se voltar igual depois, aparece de novo
+function iaPrune(al){ const cur=new Set(al.map(iaKey)), v=iaIgnored(), keep=v.filter(k=>cur.has(k)); if(keep.length!==v.length) iaSave(keep); }
 function renderInicio(){
   const el=document.getElementById('in-body'); if(!el) return;
   const t=todayISO(), d=document.getElementById('in-date'); if(d) d.textContent=dayLong(t);
   const next14=dRange(t,dAdd(t,13)), al=[];
   const by=st=>sortedDays().filter(k=>k>=dAdd(t,-7)&&dayStatus(k)===st);
   const mud=by('mudou'), nao=by('confirmada'), pend=sortedDays().filter(k=>k>=dAdd(t,-7)&&['rascunho','pendente'].includes(dayStatus(k)));
-  const sa=syncAlert(); if(sa) al.push(sa);   // Etapa 12B: salvamento no servidor
+  const sa=syncAlert(); if(sa) al.push([...sa,true]);   // Etapa 12B: salvamento no servidor (fixo: não dá para ignorar)
   if(mud.length) al.push(['red',`${mud.length} dia${mud.length>1?'s mudaram':' mudou'} após o envio. Avise o grupo.`,'Avisar o grupo',`goSend('${mud[0]}','${mud[mud.length-1]}')`]);
   if(pend.length) al.push(['orange',`${pend.length} dia${pend.length>1?'s':''} em rascunho ou com alteração pendente. Revise e confirme.`,'Revisar',`mqGoto('${pend[0]}')`]);
   if(nao.length) al.push(['tint',`${nao.length} dia${nao.length>1?'s':''} confirmado${nao.length>1?'s':''} e ainda não marcado${nao.length>1?'s':''} como enviado${nao.length>1?'s':''}.`,'Enviar',`goSend('${nao[0]}','${nao[nao.length-1]}')`]);
   if(sugView()){ const [a,b]=sugRange(sugView()); al.push(['tint',`Há uma sugestão de escala para ${br(a)} – ${br(b)}.`,'Ver sugestão',`mqGoto('${a}');setTimeout(sugOpen,120)`]); }
   const vazio=next14.find(k=>!view(k));
-  if(vazio) al.push(['orange',`A escala acaba em ${br(dAdd(vazio,-1))}. Monte a próxima quinzena.`,'Montar',`mqGoto('${vazio}')`]);
+  if(vazio) al.push(['orange',`A escala acaba em ${br(dAdd(vazio,-1))}. Monte os próximos dias.`,'Montar',`mqGoto('${vazio}')`]);
   STATE.team.filter(e=>e.saida&&e.saida>=dAdd(t,-1)&&e.saida<=dAdd(t,20)).forEach(e=>al.push(['gray',`${e.name} trabalha até ${br(e.saida)}.`,'','']));
-  let h=al.length?`<div class="in-al">${al.map(([c,m,b,fn])=>`<div class="ia ${c}"><span>${esc(m)}</span>${b?`<button onclick="${fn}">${b}</button>`:''}</div>`).join('')}</div>`:`<div class="in-al"><div class="ia green"><span>Tudo em dia: escala confirmada e enviada.</span></div></div>`;
+  // 10/11/2026: cada aviso pode ser ignorado NESTE aparelho até a situação mudar (a chave é o próprio texto: mudou o número
+  // ou a data, o aviso volta). Avisos de salvamento no servidor não podem ser ignorados.
+  const ign=iaIgnored(), vis=al.filter(a=>a[4]||!ign.includes(iaKey(a))), hid=al.length-vis.length;
+  iaPrune(al);
+  let h=`<div class="in-al">${vis.length?vis.map(a=>{ const [c,m,b,fn,fixo]=a; return `<div class="ia ${c}"><span>${esc(m)}</span>${b?`<button onclick="${fn}">${b}</button>`:''}${fixo?'':`<button class="ia-x" onclick="iaIgnore(${esc(JSON.stringify(iaKey(a)))})" aria-label="Ignorar este aviso" title="Ignorar">&#x2715;&#xFE0E;</button>`}</div>`; }).join(''):(hid?'':`<div class="ia green"><span>Tudo em dia: escala confirmada e enviada.</span></div>`)}${hid?`<button class="ia-show" onclick="iaShowAll()">${hid} aviso${hid>1?'s':''} ignorado${hid>1?'s':''} · mostrar</button>`:''}</div>`;
   h+=`<div class="in-days">${dayCard(t,'Hoje')}${dayCard(dAdd(t,1),'Amanhã')}</div>`;
   // semana valendo (somente leitura); tocar num dia abre o Montar nele
   const wk=dRange(dMon(t),dAdd(dMon(t),6)), team=visibleTeam(wk);
   h+=`<div class="in-week"><div class="iw-h"><b>Esta semana</b><span>toque num dia para trocar</span></div><div class="tablewrap"><table class="sg iw"><thead><tr><th></th>${team.map(e=>`<th>${esc(shortName(e,team))}</th>`).join('')}<th>Diar.</th></tr></thead><tbody>${wk.map(k=>{ const v=view(k), w=dDow(k), ds=dayStatus(k);
     return `<tr class="${w>=5?'we':''}${k===t?' today':''}" onclick="mqGoto('${k}')"><td>${ds?`<span class="iw-st s-${ds}" title="${STATUS_TXT[ds]}" aria-label="${STATUS_TXT[ds]}">${STATUS_SYM[ds]}</span>`:'<span class="iw-st"></span>'}${DOW_SHORT[w].toLowerCase()} ${br(k)}</td>${team.map(e=>{ const x=v&&v.sh[e.id], ty=x&&x.type; return `<td>${ty?`<span class="mq-chip ${TCLS[ty]||'off'}">${MQ_LET[ty]}</span>`:''}</td>`; }).join('')}<td>${(v&&v.diar||[]).length||''}</td></tr>`; }).join('')}</tbody></table></div>
     <div class="iw-leg" aria-hidden="true">${IW_LEG.filter(([st])=>wk.some(k=>dayStatus(k)===st)).map(([st,l])=>`<span class="s-${st}"><b>${STATUS_SYM[st]}</b>${l}</span>`).join('')}</div></div>`;
-  h+=`<div class="in-act"><button onclick="mqGoto('${t}')">Fazer uma troca</button><button onclick="mqGoto('${vazio||dAdd(t,14)}')">Montar próxima quinzena</button><button onclick="goSend('${t}','${dAdd(t,13)}')">Enviar para o grupo</button></div>`;
+  h+=`<div class="in-act"><button onclick="mqGoto('${t}')">Fazer uma troca</button><button onclick="mqGoto('${vazio||dAdd(t,14)}')">Montar próximos dias</button><button onclick="goSend('${t}','${dAdd(t,13)}')">Enviar para o grupo</button></div>`;
   el.innerHTML=h;
 }
 
