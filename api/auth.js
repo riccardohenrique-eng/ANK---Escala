@@ -32,14 +32,16 @@ module.exports = async (req, res) => {
   body = body && typeof body === 'object' ? body : {};
   const op = (req.query && req.query.op) || body.op, { rpId, origin } = where(req);
   try {
-    if (op === 'register-options') {
+    // PIN (10/11/2026): no computador a entrada é só o PIN de 6 números (o mesmo código de cadastro), com a mesma trava.
+    if (op === 'register-options' || op === 'pin-login') {
       const ip = ipOf(req), [nIp, nAll] = await kv([['GET', FAIL_IP + ip], ['GET', FAIL_ALL]]);
       if ((+nIp || 0) >= MAX_IP || (+nAll || 0) >= MAX_ALL) { res.status(429).json({ error: 'Muitas tentativas erradas. Espere 15 minutos.' }); return; }
       if (typeof body.code !== 'string' || !same(body.code.trim(), code)) {
         const [n] = await kv([['INCR', FAIL_IP + ip], ['EXPIRE', FAIL_IP + ip, String(LOCK_TTL)], ['INCR', FAIL_ALL], ['EXPIRE', FAIL_ALL, String(LOCK_TTL)]]);
-        res.status(403).json({ error: 'Código de cadastro errado.', restantes: Math.max(0, MAX_IP - (+n || 0)) }); return;
+        res.status(403).json({ error: op === 'pin-login' ? 'PIN errado.' : 'Código de cadastro errado.', restantes: Math.max(0, MAX_IP - (+n || 0)) }); return;
       }
       await kv([['DEL', FAIL_IP + ip]]);
+      if (op === 'pin-login') { res.status(200).json({ ok: true, token: await newSession() }); return; }
       const challenge = await newChallenge('reg');
       res.status(200).json({ publicKey: {
         challenge, rp: { id: rpId, name: 'Escala ANK' },

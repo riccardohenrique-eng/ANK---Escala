@@ -147,3 +147,12 @@ test('sem ANK_REG_CODE configurado: /api/auth responde 503 (não cadastra nada)'
   DB = {}; env(); delete process.env.ANK_REG_CODE;
   assert.strictEqual((await call('auth.js', { op: 'register-options', body: { code: '654321' } })).code, 503);
 });
+test('PIN (computador): certo → sessão; errado → 403 com restantes; divide a mesma trava', async () => {
+  DB = {}; env();
+  const r = await call('auth.js', { op: 'pin-login', body: { code: '654321' } });
+  assert.strictEqual(r.code, 200); assert.ok(r.body.token);
+  assert.strictEqual((await call('state.js', { method: 'GET', headers: { 'x-ank-session': r.body.token } })).code, 200);
+  for (let i = 1; i <= 5; i++) { const e = await call('auth.js', { op: 'pin-login', body: { code: '111111' }, ip: '7.7.7.7' }); assert.strictEqual(e.code, 403); assert.strictEqual(e.body.restantes, 5 - i); }
+  assert.strictEqual((await call('auth.js', { op: 'pin-login', body: { code: '654321' }, ip: '7.7.7.7' })).code, 429);
+  assert.strictEqual((await call('auth.js', { op: 'register-options', body: { code: '654321' }, ip: '7.7.7.7' })).code, 429, 'mesma trava do cadastro');
+});

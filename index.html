@@ -94,7 +94,7 @@ button.cell:active,a.cell:active{background:var(--cell-3);transition:none}
 .lock[hidden]{display:none}
 .lock img{border-radius:20px}
 .lock h1{font:700 24px var(--font);color:var(--label);margin:0 0 10px}
-.lock #lock-in,.lock #lock-reg{width:100%;max-width:320px;display:flex;flex-direction:column;gap:10px}
+.lock #lock-in,.lock #lock-reg,.lock #lock-pin{width:100%;max-width:320px;display:flex;flex-direction:column;gap:10px}
 .lock .btn{width:100%;min-height:50px;font-size:17px}
 .lock-l{font:500 13px var(--font);color:var(--label-2)}
 .lock input{font:600 28px var(--font);letter-spacing:.35em;text-align:center;padding:10px;border:1px solid var(--sep);border-radius:12px;background:var(--cell);color:var(--label)}
@@ -798,6 +798,11 @@ table.iw tr{cursor:pointer} table.iw tr.today td{background:var(--tint-wash)}
     <input id="lock-code" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" placeholder="000000" onkeydown="if(event.key==='Enter') authRegister()">
     <button class="btn fill" id="lock-rg" onclick="authRegister()">Cadastrar com Face ID</button>
   </div>
+  <div id="lock-pin" hidden>
+    <label class="lock-l" for="lock-pinv">PIN</label>
+    <input id="lock-pinv" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" placeholder="••••••" onkeydown="if(event.key==='Enter') authPin()" oninput="if(this.value.replace(/\D/g,'').length===6) authPin()">
+    <button class="btn fill" id="lock-pg" onclick="authPin()">Entrar</button>
+  </div>
   <p class="lock-msg" id="lock-msg" aria-live="polite"></p>
   <button class="lock-sw" id="lock-sw" onclick="lockMode(AUTH.mode==='cadastrar'?'entrar':'cadastrar')">Cadastrar este aparelho</button>
 </div>
@@ -1182,7 +1187,7 @@ if('serviceWorker' in navigator){ navigator.serviceWorker.register('/sw.js').cat
 const STORE_KEY='ank_escala_v1';
 const SCHEMA=2;
 // Versão do código (sobe a cada mudança publicada). Em Ajustes; fora do endereço oficial aparece "cópia local".
-const APP_VERSION='2026.11.10.5-avisos';
+const APP_VERSION='2026.11.10.6-pin';
 const DOW_LABELS=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
 const DOW_SHORT=['SEG','TER','QUA','QUI','SEX','SÁB','DOM'];
 const DOW_MIN=['seg','ter','qua','qui','sex','sáb','dom'];
@@ -1322,6 +1327,8 @@ function saveState(opts){
 // A sessão fica SÓ na memória: cada vez que o app abre, pede o Face ID de novo. Cadastro de aparelho = código de 6 números.
 const AUTH={token:null,busy:false,started:false,mode:null};
 try{ localStorage.removeItem('ank_escala_key'); }catch(e){}   // a chave antiga não é mais usada
+// iPhone/iPad usam Face ID; computador entra só com o PIN (10/11/2026, pedido do dono).
+function isPhone(){ try{ const ua=navigator.userAgent||''; return /iPhone|iPad|iPod|Android/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1); }catch(e){ return false; } }
 function passkeyKnown(){ try{ return localStorage.getItem('ank_passkey')==='1'; }catch(e){ return false; } }
 function b64uBuf(s){ s=String(s).replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4) s+='='; const bin=atob(s), u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return u.buffer; }
 function bufB64u(b){ const u=new Uint8Array(b); let bin=''; for(let i=0;i<u.length;i++) bin+=String.fromCharCode(u[i]); return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
@@ -1337,17 +1344,19 @@ function lockShow(msg){
   AUTH.token=null;
   const L=lockEl('lock'); if(!L) return;
   L.hidden=false; document.documentElement.classList.add('locked');
-  if(!AUTH.mode) AUTH.mode=passkeyKnown()?'entrar':'cadastrar';
+  if(!AUTH.mode) AUTH.mode=!isPhone()?'pin':passkeyKnown()?'entrar':'cadastrar';
   lockRender(msg||'');
 }
 function lockMode(m){ AUTH.mode=m; lockRender(''); if(m==='cadastrar'){ const i=lockEl('lock-code'); if(i){ i.value=''; setTimeout(()=>i.focus(),50); } } }
 function lockRender(msg){
-  const ok=typeof window!=='undefined'&&window.PublicKeyCredential&&navigator.credentials;
+  const pin=AUTH.mode==='pin', ok=pin||(typeof window!=='undefined'&&window.PublicKeyCredential&&navigator.credentials);
   const reg=AUTH.mode==='cadastrar';
-  lockEl('lock-msg').textContent=!ok?'Este navegador não tem Face ID para sites. Abra no Safari do iPhone (ou no Chrome).':(msg||(reg?'Já cadastrou no Safari ou em outro aparelho Apple? Toque no link abaixo.':''));
-  lockEl('lock-in').hidden=reg; lockEl('lock-reg').hidden=!reg;
+  lockEl('lock-msg').textContent=!ok?'Este navegador não tem Face ID para sites. Abra no Safari do iPhone.':(msg||(reg?'Já cadastrou no Safari ou em outro aparelho Apple? Toque no link abaixo.':''));
+  lockEl('lock-in').hidden=reg||pin; lockEl('lock-reg').hidden=!reg; lockEl('lock-pin').hidden=!pin;
+  lockEl('lock-sw').hidden=pin;
   lockEl('lock-sw').textContent=reg?'Este aparelho já foi cadastrado':'Cadastrar este aparelho';
-  lockEl('lock-go').disabled=lockEl('lock-rg').disabled=!ok||AUTH.busy;
+  lockEl('lock-go').disabled=lockEl('lock-rg').disabled=!ok||AUTH.busy; lockEl('lock-pg').disabled=AUTH.busy;
+  if(pin&&!AUTH.busy){ const i=lockEl('lock-pinv'); if(i&&i.focus) setTimeout(()=>i.focus(),50); }
 }
 function credOut(c){
   const r=c.response, o={id:c.id,rawId:bufB64u(c.rawId),type:c.type,response:{clientDataJSON:bufB64u(r.clientDataJSON)}};
@@ -1377,6 +1386,18 @@ async function authLogin(){
     if(v.d.naoCadastrado){ try{ localStorage.removeItem('ank_passkey'); }catch(e){} AUTH.mode='cadastrar'; }
     AUTH.busy=false; lockRender(v.d.error||'Não consegui confirmar. Tente de novo.');
   }catch(e){ AUTH.busy=false; lockRender(e&&e.srv?e.srv:authErr(e)); }
+}
+async function authPin(){
+  if(AUTH.busy) return;
+  const code=(lockEl('lock-pinv').value||'').replace(/\D/g,'');
+  if(code.length!==6){ lockRender('Digite os 6 números do PIN.'); return; }
+  AUTH.busy=true; lockRender('Conferindo…');
+  try{
+    const o=await authPost('pin-login',{code});
+    AUTH.busy=false; lockEl('lock-pinv').value='';
+    if(o.status===200&&o.d.token){ authDone(o.d.token); return; }
+    lockRender(o.status===403?`PIN errado.${o.d.restantes!=null?` Restam ${o.d.restantes} tentativa${o.d.restantes===1?'':'s'}.`:''}`:(o.d.error||'Não consegui entrar.'));
+  }catch(e){ AUTH.busy=false; lockRender('Sem conexão com o servidor. Tente de novo.'); }
 }
 async function authRegister(){
   if(AUTH.busy) return;
