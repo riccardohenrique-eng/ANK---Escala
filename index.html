@@ -90,6 +90,17 @@ button.cell:active,a.cell:active{background:var(--cell-3);transition:none}
 .btn.plain,.btn-plain{background:transparent}
 .btn.danger{background:var(--red-wash);color:var(--red)}
 .btn.danger.fill{background:var(--red);color:#fff}
+.lock{position:fixed;inset:0;z-index:9999;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:max(24px,env(safe-area-inset-top)) 28px max(24px,env(safe-area-inset-bottom));text-align:center}
+.lock[hidden]{display:none}
+.lock img{border-radius:20px}
+.lock h1{font:700 24px var(--font);color:var(--label);margin:0 0 10px}
+.lock #lock-in,.lock #lock-reg{width:100%;max-width:320px;display:flex;flex-direction:column;gap:10px}
+.lock .btn{width:100%;min-height:50px;font-size:17px}
+.lock-l{font:500 13px var(--font);color:var(--label-2)}
+.lock input{font:600 28px var(--font);letter-spacing:.35em;text-align:center;padding:10px;border:1px solid var(--sep);border-radius:12px;background:var(--cell);color:var(--label)}
+.lock-msg{min-height:1.4em;margin:0;max-width:320px;font:15px var(--font);color:var(--label-2)}
+.lock-sw{border:0;background:none;color:var(--tint);font:500 15px var(--font);text-decoration:underline;text-underline-offset:3px;padding:10px;min-height:44px;cursor:pointer}
+html.locked body{overflow:hidden}
 .btn.block{display:flex;width:100%}
 .btn.sm{min-height:36px;padding:0 14px;font-size:15px;border-radius:18px}
 .btn:disabled{opacity:.4}
@@ -760,6 +771,18 @@ table.iw tr{cursor:pointer} table.iw tr.today td{background:var(--tint-wash)}
 </style>
 </head>
 <body>
+<div class="lock" id="lock" role="dialog" aria-modal="true" aria-labelledby="lock-t">
+  <img src="icons/ank-escala-180.png" alt="" width="88" height="88">
+  <h1 id="lock-t">Escala ANK</h1>
+  <div id="lock-in"><button class="btn fill" id="lock-go" onclick="authLogin()">Entrar com Face ID</button></div>
+  <div id="lock-reg" hidden>
+    <label class="lock-l" for="lock-code">Código de cadastro</label>
+    <input id="lock-code" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" placeholder="000000" onkeydown="if(event.key==='Enter') authRegister()">
+    <button class="btn fill" id="lock-rg" onclick="authRegister()">Cadastrar com Face ID</button>
+  </div>
+  <p class="lock-msg" id="lock-msg" aria-live="polite"></p>
+  <button class="lock-sw" id="lock-sw" onclick="lockMode(AUTH.mode==='cadastrar'?'entrar':'cadastrar')">Cadastrar este aparelho</button>
+</div>
 <div class="app">
   <header class="navbar" id="navbar">
     <span class="nb-title" id="nb-title">Escala</span>
@@ -1063,16 +1086,6 @@ table.iw tr{cursor:pointer} table.iw tr.today td{background:var(--tint-wash)}
   </div>
 </div>
 
-<div class="sheet" id="sh-key" role="dialog" aria-modal="true" aria-labelledby="sh-key-t" hidden>
-  <div class="grab"></div>
-  <div class="sh"><h2 id="sh-key-t">Chave de acesso</h2><button class="close" onclick="closeSheet()">Agora não</button></div>
-  <div class="sb">
-    <div class="group-f" style="margin:0 4px 10px">Este aparelho precisa da chave para ver e salvar a escala. Ela fica guardada só neste aparelho.</div>
-    <input type="password" id="key-input" autocomplete="current-password" aria-label="Chave de acesso" placeholder="Chave" onkeydown="if(event.key==='Enter') saveAccessKey()">
-    <div class="btn-row"><button class="btn fill" onclick="saveAccessKey()">Salvar</button></div>
-  </div>
-</div>
-
 <div class="sheet" id="sh-person" role="dialog" aria-modal="true" aria-labelledby="sh-person-t" hidden>
   <div class="grab"></div>
   <div class="sh"><h2 id="sh-person-t"></h2><button class="close" onclick="closeSheet()">OK</button></div>
@@ -1151,7 +1164,7 @@ if('serviceWorker' in navigator){ navigator.serviceWorker.register('/sw.js').cat
 const STORE_KEY='ank_escala_v1';
 const SCHEMA=2;
 // Versão do código (sobe a cada mudança publicada). Em Ajustes; fora do endereço oficial aparece "cópia local".
-const APP_VERSION='2026.11.10.2-antes';
+const APP_VERSION='2026.11.10.3-faceid';
 const DOW_LABELS=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
 const DOW_SHORT=['SEG','TER','QUA','QUI','SEX','SÁB','DOM'];
 const DOW_MIN=['seg','ter','qua','qui','sex','sáb','dom'];
@@ -1287,27 +1300,88 @@ function saveState(opts){
   syncStateToServer(opts&&opts.delay);
 }
 // ---------- CHAVE DE ACESSO (2026-10-07) ----------
-// As APIs exigem a chave (env var ANK_ACCESS_KEY na Vercel). Fica só neste aparelho.
-const KEY_STORE='ank_escala_key';
-function accessKey(){ try{ return localStorage.getItem(KEY_STORE)||''; }catch(e){ return ''; } }
+// 10/11/2026 — entrada com Face ID (passkeys; api/auth.js). Substitui a chave de acesso.
+// A sessão fica SÓ na memória: cada vez que o app abre, pede o Face ID de novo. Cadastro de aparelho = código de 6 números.
+const AUTH={token:null,busy:false,started:false,mode:null};
+try{ localStorage.removeItem('ank_escala_key'); }catch(e){}   // a chave antiga não é mais usada
+function passkeyKnown(){ try{ return localStorage.getItem('ank_passkey')==='1'; }catch(e){ return false; } }
+function b64uBuf(s){ s=String(s).replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4) s+='='; const bin=atob(s), u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return u.buffer; }
+function bufB64u(b){ const u=new Uint8Array(b); let bin=''; for(let i=0;i<u.length;i++) bin+=String.fromCharCode(u[i]); return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
 function apiFetch(url,opts){
   opts=opts||{};
-  const headers=Object.assign({},opts.headers||{}), k=accessKey();
-  if(k) headers['X-ANK-Key']=k;
-  return fetch(url,Object.assign({},opts,{headers})).then(res=>{ if(res.status===401) askAccessKey(); return res; });
+  const headers=Object.assign({},opts.headers||{});
+  if(AUTH.token) headers['X-ANK-Session']=AUTH.token;
+  return fetch(url,Object.assign({},opts,{headers})).then(res=>{ if(res.status===401) lockShow('Entre de novo para continuar.'); return res; });
 }
-function askAccessKey(){
-  if(openSheetEl&&openSheetEl.id==='sh-key') return;
-  document.getElementById('key-input').value='';
-  openSheet('sh-key');
+function askAccessKey(){ lockShow(); }   // nome antigo, usado pelos avisos
+function lockEl(id){ return document.getElementById(id); }
+function lockShow(msg){
+  AUTH.token=null;
+  const L=lockEl('lock'); if(!L) return;
+  L.hidden=false; document.documentElement.classList.add('locked');
+  if(!AUTH.mode) AUTH.mode=passkeyKnown()?'entrar':'cadastrar';
+  lockRender(msg||'');
 }
-function saveAccessKey(){
-  const v=document.getElementById('key-input').value.trim();
-  if(!v) return;
-  try{ localStorage.setItem(KEY_STORE,v); }catch(e){}
-  closeSheet();
-  if(SYNC.st==='chave'){ if(!STATE._updatedAt&&!confirmedCount(STATE)){ setSync('pendente',{err:''}); syncStateFromServerOnLoad(); } else { setSync('falha',{err:'chave digitada de novo'}); syncRetryUI(); } return; }
-  syncStateFromServerOnLoad();
+function lockMode(m){ AUTH.mode=m; lockRender(''); if(m==='cadastrar'){ const i=lockEl('lock-code'); if(i){ i.value=''; setTimeout(()=>i.focus(),50); } } }
+function lockRender(msg){
+  const ok=typeof window!=='undefined'&&window.PublicKeyCredential&&navigator.credentials;
+  const reg=AUTH.mode==='cadastrar';
+  lockEl('lock-msg').textContent=!ok?'Este navegador não tem Face ID para sites. Abra no Safari do iPhone (ou no Chrome).':(msg||(reg?'Já cadastrou no Safari ou em outro aparelho Apple? Toque no link abaixo.':''));
+  lockEl('lock-in').hidden=reg; lockEl('lock-reg').hidden=!reg;
+  lockEl('lock-sw').textContent=reg?'Este aparelho já foi cadastrado':'Cadastrar este aparelho';
+  lockEl('lock-go').disabled=lockEl('lock-rg').disabled=!ok||AUTH.busy;
+}
+function credOut(c){
+  const r=c.response, o={id:c.id,rawId:bufB64u(c.rawId),type:c.type,response:{clientDataJSON:bufB64u(r.clientDataJSON)}};
+  if(r.attestationObject) o.response.attestationObject=bufB64u(r.attestationObject);
+  if(r.authenticatorData){ o.response.authenticatorData=bufB64u(r.authenticatorData); o.response.signature=bufB64u(r.signature); o.response.userHandle=r.userHandle?bufB64u(r.userHandle):null; }
+  return o;
+}
+async function authPost(op,body){
+  const r=await fetch('/api/auth?op='+op,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})});
+  let d=null; try{ d=await r.json(); }catch(e){}
+  return {status:r.status,d:d||{}};
+}
+function authErr(e){
+  if(e&&(e.name==='NotAllowedError'||e.name==='AbortError')) return 'Cancelado. Toque para tentar de novo.';
+  if(e&&e.name==='InvalidStateError') return 'Este aparelho já tem cadastro. Use "Entrar com Face ID".';
+  return 'Sem conexão com o servidor. Tente de novo.';
+}
+async function authLogin(){
+  if(AUTH.busy) return; AUTH.busy=true; lockRender('Confirme com o Face ID…');
+  try{
+    const o=await authPost('login-options');
+    if(o.status!==200) throw Object.assign(new Error(o.d.error||'erro'),{srv:o.d.error});
+    const pk=o.d.publicKey; pk.challenge=b64uBuf(pk.challenge);
+    const c=await navigator.credentials.get({publicKey:pk});
+    const v=await authPost('login-verify',{cred:credOut(c)});
+    if(v.status===200&&v.d.token){ try{ localStorage.setItem('ank_passkey','1'); }catch(e){} AUTH.busy=false; authDone(v.d.token); return; }
+    if(v.d.naoCadastrado){ try{ localStorage.removeItem('ank_passkey'); }catch(e){} AUTH.mode='cadastrar'; }
+    AUTH.busy=false; lockRender(v.d.error||'Não consegui confirmar. Tente de novo.');
+  }catch(e){ AUTH.busy=false; lockRender(e&&e.srv?e.srv:authErr(e)); }
+}
+async function authRegister(){
+  if(AUTH.busy) return;
+  const code=(lockEl('lock-code').value||'').replace(/\D/g,'');
+  if(code.length!==6){ lockRender('Digite os 6 números do código de cadastro.'); return; }
+  AUTH.busy=true; lockRender('Conferindo o código…');
+  try{
+    const o=await authPost('register-options',{code});
+    if(o.status!==200){ AUTH.busy=false; lockRender(o.status===403?`Código errado.${o.d.restantes!=null?` Restam ${o.d.restantes} tentativa${o.d.restantes===1?'':'s'}.`:''}`:(o.d.error||'Não consegui cadastrar.')); return; }
+    const pk=o.d.publicKey; pk.challenge=b64uBuf(pk.challenge); pk.user.id=b64uBuf(pk.user.id);
+    lockRender('Confirme com o Face ID…');
+    const c=await navigator.credentials.create({publicKey:pk});
+    const v=await authPost('register-verify',{cred:credOut(c),label:navigator.userAgent.slice(0,60)});
+    AUTH.busy=false;
+    if(v.status===200&&v.d.token){ try{ localStorage.setItem('ank_passkey','1'); }catch(e){} AUTH.mode='entrar'; toast('Aparelho cadastrado. Nas próximas vezes, é só o Face ID.'); authDone(v.d.token); return; }
+    lockRender(v.d.error||'Não consegui cadastrar. Tente de novo.');
+  }catch(e){ AUTH.busy=false; lockRender(authErr(e)); }
+}
+function authDone(token){
+  AUTH.token=token;
+  const L=lockEl('lock'); if(L) L.hidden=true; document.documentElement.classList.remove('locked');
+  if(!AUTH.started){ AUTH.started=true; syncStateFromServerOnLoad(); return; }
+  if(SYNC.st==='chave'){ if(!STATE._updatedAt&&!confirmedCount(STATE)){ setSync('pendente',{err:''}); syncStateFromServerOnLoad(); } else { setSync('falha',{err:'entrada feita de novo'}); syncRetryUI(); } return; }
 }
 // ---------- SINCRONIZAÇÃO (Upstash via /api/state) ----------
 // Regra de ouro (2026-10-20): o servidor JUNTA o estado deste aparelho com o dele, dia a dia (api/_merge.js) —
@@ -1408,7 +1482,7 @@ function establishBaseline(){
     setSync(SYNC.st==='salvo'?'pendente':SYNC.st==='conflito'?'conflito':(syncBlocked()?SYNC.st:'salvando'));
     let res=null;
     try{ res=await getTimed('/api/state'); }catch(e){ setSync('falha',{err:(e&&e.name==='AbortError')?'o servidor não respondeu a tempo':'sem conexão com o servidor'}); return 'falha'; }
-    if(res.status===401){ setSync('chave',{err:'chave de acesso recusada'}); return 'chave'; }
+    if(res.status===401){ setSync('chave',{err:'entrada expirada'}); return 'chave'; }
     if(!res.ok){ setSync('falha',{err:'o servidor não respondeu, código '+res.status}); return 'falha'; }
     let data=null; try{ data=await res.json(); }catch(e){}
     if(!data||typeof data!=='object'||!('state' in data)||(data.state!==null&&typeof data.state!=='object')){ setSync('falha',{err:'resposta inesperada do servidor'}); return 'falha'; }
@@ -1430,6 +1504,7 @@ function establishBaseline(){
       toast('Este aparelho estava desatualizado. Atualizei com a versão do servidor.'); return 'salvo';
     }
     if(localRev!==rev0) view=JSON.parse(JSON.stringify(STATE));   // editou durante a conferência: guarda a versão atual
+    if(CONFLICT_POLICY==='servidor') return conflictToServer(remote,view,cmp);
     keepConflictCopy(remote,view,cmp); setSync('conflito',{err:'este aparelho e o servidor têm versões diferentes ('+cmp.slice(0,3).join('; ')+(cmp.length>3?'…':'')+')'}); return 'conflito';
   })().finally(()=>{ baseRun=null; });
   return baseRun;
@@ -1446,6 +1521,15 @@ function discardedByMerge(sent,merged){
     if(d.conf&&hashJ(d.conf)!==(SYNC.cH||{})[k]&&stableJ(m.conf||null)!==stableJ(d.conf)) out.push('confirmação de '+br(k));
   });
   return out;
+}
+// 10/11/2026 (Ricardo): conflito entre aparelhos → fica a versão do SERVIDOR. A cópia deste aparelho é guardada
+// (ank_sync_remoto) para recuperação, e o app avisa. CONFLICT_POLICY='parar' volta ao comportamento da 12B (testes antigos).
+let CONFLICT_POLICY='servidor';
+function conflictToServer(remote,local,itens){
+  keepConflictCopy(remote,local,itens);
+  adoptServerState(remote); markSynced(JSON.parse(JSON.stringify(STATE)),remote); setSync('salvo',{err:'',at:Date.now()});
+  toast('Este aparelho tinha uma versão diferente da do servidor. Fiquei com a do servidor.');
+  return 'salvo';
 }
 function keepConflictCopy(remote,local,itens){ try{ localStorage.setItem(SYNC_REMOTE_KEY,JSON.stringify({at:Date.now(),itens,remoto:remote,local})); return true; }catch(e){ return false; } }
 function afterSync(){ if(syncAgain&&!syncBlocked()){ syncAgain=false; Promise.resolve().then(()=>syncNow()); } }
@@ -1466,7 +1550,7 @@ async function syncNow(opts){
   }catch(e){ falhou=(e&&e.name==='AbortError')?'o servidor não respondeu a tempo':'sem conexão com o servidor'; }
   syncInFlight=false;
   if(falhou){ setSync('falha',{err:falhou}); return 'falha'; }
-  if(res.status===401){ setSync('chave',{err:'chave de acesso recusada'}); return 'chave'; }
+  if(res.status===401){ setSync('chave',{err:'entrada expirada'}); return 'chave'; }
   if(res.status===200){
     let ok=null; try{ ok=await res.json(); }catch(e){}
     if(!ok||ok.ok!==true){ setSync('falha',{err:'resposta inesperada do servidor'}); return 'falha'; }   // 12B.3: 200 sem o contrato {ok:true} não é confirmação
@@ -1478,7 +1562,7 @@ async function syncNow(opts){
     if(!data||!data.state||typeof data.state!=='object'||typeof data.state.days!=='object'){ setSync('falha',{err:'resposta inesperada do servidor'}); return 'falha'; }
     if(localRev!==sentRev){ setSync('pendente'); syncAgain=true; afterSync(); return 'reenviar'; }
     const lost=discardedByMerge(sent,data.state);
-    if(lost.length){ keepConflictCopy(data.state,sent,lost); setSync('conflito',{err:lost.join('; ')}); return 'conflito'; }
+    if(lost.length){ if(CONFLICT_POLICY==='servidor'){ const r=conflictToServer(data.state,sent,lost); afterSync(); return r; } keepConflictCopy(data.state,sent,lost); setSync('conflito',{err:lost.join('; ')}); return 'conflito'; }
     const before=confirmedCount(STATE); adoptServerState(data.state); markSynced(JSON.parse(JSON.stringify(STATE)),data.state);
     setSync('salvo',{err:'',at:Date.now()});
     if(confirmedCount(STATE)!==before) toast('Este aparelho estava desatualizado. Juntei com a versão do servidor.');
@@ -1499,23 +1583,23 @@ async function retryNow(){
   if(!SYNC.known) return establishBaseline();   // 12B.3: sem referência → lê e compara, não grava
   let res=null;
   try{ res=await apiFetch('/api/state'); }catch(e){ setSync('falha',{err:'sem conexão com o servidor'}); return 'falha'; }
-  if(res.status===401){ setSync('chave',{err:'chave de acesso recusada'}); return 'chave'; }
+  if(res.status===401){ setSync('chave',{err:'entrada expirada'}); return 'chave'; }
   if(!res.ok){ setSync('falha',{err:'o servidor não respondeu, código '+res.status}); return 'falha'; }
   let data=null; try{ data=await res.json(); }catch(e){}
   if(!data||typeof data!=='object'||!('state' in data)){ setSync('falha',{err:'resposta inesperada do servidor'}); return 'falha'; }
   const remote=data.state;
-  if(SYNC.known==='vazio'?remote!==null:(!remote||hashJ(remote)!==SYNC.known)){ keepConflictCopy(remote,JSON.parse(JSON.stringify(STATE)),['o servidor mudou desde a última gravação confirmada deste aparelho']); setSync('conflito',{err:'o servidor recebeu outra gravação desde a última confirmada deste aparelho'}); return 'conflito'; }
+  if(SYNC.known==='vazio'?remote!==null:(!remote||hashJ(remote)!==SYNC.known)){ if(CONFLICT_POLICY==='servidor'&&remote) return conflictToServer(remote,JSON.parse(JSON.stringify(STATE)),['o servidor mudou desde a última gravação confirmada deste aparelho']); keepConflictCopy(remote,JSON.parse(JSON.stringify(STATE)),['o servidor mudou desde a última gravação confirmada deste aparelho']); setSync('conflito',{err:'o servidor recebeu outra gravação desde a última confirmada deste aparelho'}); return 'conflito'; }
   setSync('pendente',{err:''});
   return syncNow({manual:true});
 }
-function syncRetryUI(){ retryNow().then(r=>{ toast({salvo:'Salvo no servidor.',falha:'Ainda sem sincronizar. As alterações continuam neste aparelho.',chave:'O servidor recusou a chave de acesso.',conflito:'O servidor mudou desde a última gravação deste aparelho. Nada foi enviado.',reenviar:'Enviando a versão mais nova…'}[r]||'Tentando…'); }); }
+function syncRetryUI(){ retryNow().then(r=>{ toast({salvo:'Salvo no servidor.',falha:'Ainda sem sincronizar. As alterações continuam neste aparelho.',chave:'É preciso entrar de novo com o Face ID.',conflito:'O servidor mudou desde a última gravação deste aparelho. Nada foi enviado.',reenviar:'Enviando a versão mais nova…'}[r]||'Tentando…'); }); }
 function syncText(){
   const hh=t=>{ const d=new Date(t); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); };
   const aqui=localSaveOk?'As alterações estão guardadas neste aparelho.':'ATENÇÃO: não foi possível guardar neste aparelho; se fechar o app, as alterações podem ser perdidas.';
   if(baseRun&&SYNC.st==='salvando') return 'Conferindo com o servidor…'+(localSaveOk?'':' '+aqui);
-  if(!localSaveOk&&SYNC.st!=='salvo') return {salvando:'Salvando no servidor… '+aqui, pendente:'Aguardando o servidor. '+aqui, falha:`Não foi possível sincronizar (${SYNC.err}). ${aqui}`, chave:`O servidor recusou a chave de acesso. ${aqui}`, conflito:`Conflito entre aparelhos. ${aqui}`}[SYNC.st]||aqui;
+  if(!localSaveOk&&SYNC.st!=='salvo') return {salvando:'Salvando no servidor… '+aqui, pendente:'Aguardando o servidor. '+aqui, falha:`Não foi possível sincronizar (${SYNC.err}). ${aqui}`, chave:`É preciso entrar de novo com o Face ID. ${aqui}`, conflito:`Conflito entre aparelhos. ${aqui}`}[SYNC.st]||aqui;
   return {salvando:'Salvando…', salvo:SYNC.at?`Salvo no servidor às ${hh(SYNC.at)}`+(localSaveOk?'':' (não foi possível guardar neste aparelho)'):'Salvo no servidor', pendente:'Salvo só neste aparelho · aguardando o servidor',
-    falha:`Não foi possível sincronizar (${SYNC.err}). ${aqui}`, chave:`O servidor recusou a chave de acesso. ${aqui}`,
+    falha:`Não foi possível sincronizar (${SYNC.err}). ${aqui}`, chave:`É preciso entrar de novo com o Face ID. ${aqui}`,
     conflito:`Conflito entre aparelhos: nada foi sobrescrito.`}[SYNC.st]||'';
 }
 function renderSync(){
@@ -1527,7 +1611,7 @@ function syncAlert(){
   const min=Math.max(1,Math.round((Date.now()-(SYNC.since||Date.now()))/60000));
   if(!localSaveOk&&SYNC.st!=='salvo') return ['red','Não foi possível guardar as alterações neste aparelho (armazenamento cheio ou indisponível). Elas existem só na tela: não feche o app até aparecer "Salvo no servidor".','',''];
   if(SYNC.st==='falha') return ['red',`Alterações só neste aparelho: o servidor não confirmou a gravação (${SYNC.err}). Elas estão guardadas aqui; o envio automático está pausado. Evite editar em outro aparelho até resolver.`,'Tentar agora','syncRetryUI()'];
-  if(SYNC.st==='chave') return ['red','O servidor recusou a chave de acesso. As alterações estão guardadas neste aparelho, mas não foram enviadas.','Digitar a chave','askAccessKey()'];
+  if(SYNC.st==='chave') return ['red','O servidor pediu para entrar de novo. As alterações estão guardadas neste aparelho, mas não foram enviadas.','Entrar','lockShow()'];
   if(SYNC.st==='conflito') return ['red',`Conflito entre aparelhos: ${SYNC.err}. Nada foi sobrescrito; a versão deste aparelho e a do servidor estão guardadas. O envio está pausado. Não edite em outro aparelho e peça ajuda para resolver.`,'',''];
   if((SYNC.st==='pendente'||SYNC.st==='salvando')&&Date.now()-(SYNC.since||Date.now())>SYNC_WARN_MS) return ['orange',`Alterações ainda não confirmadas pelo servidor (há ${min} min). Estão guardadas neste aparelho; o envio está em andamento. Evite trocar de aparelho até aparecer "Salvo no servidor".`,'',''];
   return null;
@@ -1535,12 +1619,12 @@ function syncAlert(){
 // Se a página fechar com envio pendente (ex.: janela do "Desfazer"), envia na hora — nunca quando o envio está pausado.
 window.addEventListener('pagehide',()=>{
   if(!syncPending||syncBlocked()) return;
-  const body=JSON.stringify(STATE), k=accessKey();
+  const body=JSON.stringify(STATE), k=AUTH.token;
   try{
     if(body.length<60000){
-      fetch('/api/state',{method:'POST',keepalive:true,headers:Object.assign({'Content-Type':'application/json'},k?{'X-ANK-Key':k}:{}),body});
+      fetch('/api/state',{method:'POST',keepalive:true,headers:Object.assign({'Content-Type':'application/json'},k?{'X-ANK-Session':k}:{}),body});
     }else if(navigator.sendBeacon){
-      navigator.sendBeacon('/api/state'+(k?'?k='+encodeURIComponent(k):''), new Blob([body],{type:'text/plain'}));
+      navigator.sendBeacon('/api/state'+(k?'?s='+encodeURIComponent(k):''), new Blob([body],{type:'text/plain'}));
     }
     syncPending=false;
   }catch(e){}
@@ -1559,8 +1643,8 @@ async function syncStateFromServerOnLoad(){
   renderSync();
   // 12B.3: sem referência (1ª abertura nesta versão, aparelho novo ou falha antes de ter referência): só LÊ e compara —
   // nunca reenvia às cegas. Com referência e envio pausado (falha/chave/conflito): só mostra a situação.
-  if(SYNC.st==='conflito') return;
-  if(!SYNC.known){ if(SYNC.st!=='chave'||accessKey()) await establishBaseline(); return; }
+  if(SYNC.st==='conflito'){ if(CONFLICT_POLICY!=='servidor') return; setSync('pendente',{err:'',known:null}); }
+  if(!SYNC.known){ if(SYNC.st!=='chave'||AUTH.token) await establishBaseline(); return; }
   if(syncBlocked()) return;
   syncStateToServer(1);
 }
@@ -4104,7 +4188,7 @@ function init(){
   periodDefaults();
   renderAll();
   showTab(UI.tab);
-  syncStateFromServerOnLoad();
+  lockShow();   // 10/11/2026: Face ID a cada abertura; a sincronização começa depois da entrada (authDone)
 }
 init();
 

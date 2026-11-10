@@ -4,7 +4,11 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const vm = require('vm');
-const { loadApp, freshState } = require('./harness');
+const H = require('./harness');
+// 10/11/2026: o app passou a ficar com o servidor no conflito (CONFLICT_POLICY='servidor'). Estes testes continuam
+// conferindo o modo anterior ("parar e guardar as duas cópias"), que segue no código como CONFLICT_POLICY='parar'.
+const loadApp = (...a) => { const x = H.loadApp(...a); require('vm').runInContext("CONFLICT_POLICY='parar'", x); return x; };
+const { freshState } = H;
 const { mergeStates, stable } = require('../api/_merge.js');
 const F = (x) => JSON.parse(JSON.stringify(x));
 

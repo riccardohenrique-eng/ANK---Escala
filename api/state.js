@@ -20,7 +20,7 @@ const KV_KEY = 'ank_escala_v1';
 const BAK_KEY = 'ank_escala_v1_bak';
 
 module.exports = async (req, res) => {
-  if (!checkAccess(req, res)) return;
+  if (!(await checkAccess(req, res))) return;
   const base = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
   if (!base || !token) {

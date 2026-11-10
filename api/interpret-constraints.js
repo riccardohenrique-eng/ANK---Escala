@@ -65,7 +65,7 @@ const TOOL_SCHEMA = {
 };
 
 module.exports = async (req, res) => {
-  if (!checkAccess(req, res)) return;
+  if (!(await checkAccess(req, res))) return;
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'method not allowed' });
     return;

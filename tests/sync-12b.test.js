@@ -3,7 +3,11 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const vm = require('vm');
-const { loadApp, freshState } = require('./harness');
+const H = require('./harness');
+// 10/11/2026: o app passou a ficar com o servidor no conflito (CONFLICT_POLICY='servidor'). Estes testes continuam
+// conferindo o modo anterior ("parar e guardar as duas cópias"), que segue no código como CONFLICT_POLICY='parar'.
+const loadApp = (...a) => { const x = H.loadApp(...a); require('vm').runInContext("CONFLICT_POLICY='parar'", x); return x; };
+const { freshState } = H;
 const { mergeStates, stable } = require('../api/_merge.js');
 const F = (x) => JSON.parse(JSON.stringify(x));
 
@@ -54,7 +58,7 @@ test('1. gravação bem-sucedida: só então "Salvo no servidor"', async () => {
   assert.match(a.syncText(), /^Salvo no servidor às \d\d:\d\d$/);
 });
 
-for (const [n, modo, st, re] of [['2', '500', 'falha', /recusou a gravação, código 500/], ['3', '401', 'chave', /recusou a chave/], ['4', 'rede', 'falha', /sem conexão/], ['5', 'tempo', 'falha', /não respondeu a tempo/]]) {
+for (const [n, modo, st, re] of [['2', '500', 'falha', /recusou a gravação, código 500/], ['3', '401', 'chave', /entrar de novo com o Face ID/], ['4', 'rede', 'falha', /sem conexão/], ['5', 'tempo', 'falha', /não respondeu a tempo/]]) {
   test(`${n}/6/15. ${modo}: dado guardado no aparelho, servidor intacto, envio pausado, nenhuma mensagem de sucesso`, async () => {
     const seed = semente(), srv = servidor(seed), a = await aparelho(srv, seed);
     const antes = srv.raw;
